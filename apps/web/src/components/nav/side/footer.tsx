@@ -16,7 +16,7 @@ export default function SideNavFooter() {
   const logInButtonRef = useRef<HTMLDivElement>(null);
   const [cacheBuster, setCacheBuster] = useState('');
 
-  const handleMenuButtonClick = (ref: React.RefObject<HTMLDivElement>) => (e: MouseEvent) => {
+  const handleMenuButtonClick = (ref: React.RefObject<HTMLDivElement | null>) => (e: MouseEvent) => {
     e.preventDefault();
     const userButtonTrigger = ref.current?.querySelector('button');
     if (userButtonTrigger && !userButtonTrigger.contains(e.target as Node)) {
