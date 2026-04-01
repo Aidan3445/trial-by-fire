@@ -1,0 +1,24 @@
+{
+  "timings": ["Draft", "Weekly", "After Merge", "Before Finale", "Weekly (Premerge only)", "Weekly (Postmerge only)"],
+  "labels": {
+    "draft": "Draft",
+    "weekly": "Weekly",
+    "afterMerge": "After Merge",
+    "beforeFinale": "Before Finale",
+    "weeklyPremerge": "Weekly (Premerge only)",
+    "weeklyPostmerge": "Weekly (Postmerge only)"
+  },
+  "descriptions": {
+    "predictionsLocked": "Predictions Locked",
+    "predictionsDropDuringLive": "Predictions drop during live episodes. Pick your answer before time runs out.",
+    "predictionsAndPolls": "Predictions & Polls",
+    "noPredictionsYet": "No predictions or polls yet \u2014 stay tuned!",
+    "noPredictionsMade": "No predictions made yet for this member.",
+    "noPredictionsForEpisode": "No predictions for this episode",
+    "leaderboardAfterFirst": "Leaderboard will appear after the first prediction is resolved."
+  },
+  "validation": {
+    "pointsMustBePositive": "Points must be a positive number",
+    "atLeastOneTimingForPrediction": "At least one timing must be selected for prediction events"
+  }
+}

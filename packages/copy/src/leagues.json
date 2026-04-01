@@ -1,0 +1,47 @@
+{
+  "statuses": {
+    "predraft": "Predraft",
+    "draft": "Draft",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "roles": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "member": "Member"
+  },
+  "validation": {
+    "leagueNameLength": "League name must be between 3 and 64 characters",
+    "displayNameLength": "Display name must be between 2 and 32 characters",
+    "survivalCapRange": "Survival cap must be either 0 (no cap) or less than 15",
+    "eventPointsRange": "Points must be between -100 and 100",
+    "maxBetPositive": "Max bet must be positive or 0 for unlimited.",
+    "maxBetsPerWeekMin": "Max bets per week must be at least 1 or 0 for unlimited.",
+    "maxBetsPerWeekMax": "Max bets per week cannot exceed 10",
+    "atLeastOneBetType": "At least one bet type must be enabled",
+    "customStartWeekRequired": "Custom start week must be set and at least 3 when start week is Custom",
+    "tribeUpdateReferences": "Tribe Update events must reference at least one tribe and one castaway"
+  },
+  "settings": {
+    "survivalCap": "Survival Cap",
+    "preserveStreak": "Preserve Streak",
+    "secondaryPick": "Secondary Pick",
+    "shotInTheDark": "Shot in the Dark",
+    "shauhinMode": "Betting",
+    "isProtected": "Protected League",
+    "draftDate": "Draft Date"
+  },
+  "shauhinModeTimings": ["After Premiere", "After Merge", "Before Finale", "Custom"],
+  "tabs": {
+    "scoreboard": "Scoreboard",
+    "leaderboard": "Leaderboard",
+    "castaways": "Castaways"
+  },
+  "messages": {
+    "draftDateUpdated": "Draft date updated successfully",
+    "draftOrderSaved": "Draft order saved",
+    "survivalStreakSaved": "Survival streak settings saved",
+    "failedToAdmitMember": "Failed to admit member",
+    "leagueDataNotAvailable": "League data not available"
+  }
+}

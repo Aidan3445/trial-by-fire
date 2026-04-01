@@ -1,0 +1,93 @@
+{
+  "appName": "Trial by Fire",
+  "appTagline": "A Fantasy League for Survivor",
+  "appDescription": "Your Fantasy Survivor experience",
+  "metadata": {
+    "title": "Trial by Fire - A Fantasy League for Survivor",
+    "leaguesTitle": "Trial by Fire - Your Leagues on TBF",
+    "supportTitle": "Support \u2014 Trial by Fire",
+    "supportDescription": "Get help with Trial by Fire, your fantasy Survivor experience.",
+    "privacyTitle": "Privacy Policy \u2014 Trial by Fire",
+    "privacyDescription": "Privacy policy for the Trial by Fire fantasy Survivor app.",
+    "leagueNotFoundTitle": "League Not Found - Trial by Fire",
+    "invalidInviteTitle": "Invalid Invite - Trial by Fire"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "create": "Create",
+    "join": "Join",
+    "leave": "Leave",
+    "next": "Next",
+    "back": "Back",
+    "done": "Done",
+    "close": "Close",
+    "submit": "Submit",
+    "retry": "Retry",
+    "signOut": "Sign Out",
+    "signIn": "Sign In"
+  },
+  "status": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "signInError": "Something went wrong. Please try again.",
+    "usernameRequired": "Username is required.",
+    "couldNotCompleteSignUp": "Could not complete sign-up. Please try again.",
+    "failedToSignOut": "Failed to sign out",
+    "failedToUpdateEvent": "Failed to update event",
+    "failedToSubmitResponse": "Failed to submit response",
+    "actionFailed": "Action failed",
+    "failedToResolve": "Failed to resolve",
+    "failedToUpdateDraftDate": "Failed to update draft date",
+    "failedToSaveSurvivalStreak": "Failed to save survival streak settings",
+    "profileUpdated": "Profile updated!"
+  },
+  "dialogs": {
+    "signOutConfirm": "Are you sure you want to sign out?",
+    "deleteAccountTitle": "Delete Account",
+    "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone."
+  },
+  "nav": {
+    "home": "Home",
+    "leagues": "Leagues",
+    "playground": "Playground",
+    "seasons": "Seasons",
+    "profile": "Profile",
+    "support": "Support",
+    "privacy": "Privacy Policy",
+    "backToApp": "Back to Trial by Fire"
+  },
+  "support": {
+    "heading": "Need help with Trial by Fire? We're here for you."
+  },
+  "branding": {
+    "appStoreNotice": "Trial by Fire is on the App Store!",
+    "testflightInvite": "Try Trial by Fire on iOS",
+    "rebrandNotice": "Your Fantasy Survivor is now Trial by Fire.",
+    "copyright": "Trial by Fire."
+  },
+  "emptyStates": {
+    "noScoresAvailable": "No scores available to display the chart.",
+    "noEventsForEpisode": "No events for episode {episodeNumber}",
+    "noEventsWithFilters": "No events for episode {episodeNumber} with the selected filters",
+    "noEpisodesFound": "No episodes found.",
+    "noOptionsFound": "No options found.",
+    "noSeasonsFound": "No seasons found.",
+    "noTimingOptionsFound": "No timing options found."
+  },
+  "events": {
+    "eventUpdated": "Event updated",
+    "pointsAwardedTo": "Points awarded to..."
+  },
+  "invite": {
+    "joinLeagueTitle": "Join {leagueName} - Trial by Fire",
+    "joinLeagueDescription": "You've been invited to join {leagueName} ({season}) on Trial by Fire!"
+  }
+}

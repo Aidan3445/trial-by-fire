@@ -1,0 +1,26 @@
+{
+  "labels": {
+    "season": "Season",
+    "episode": "Episode",
+    "airDate": "Air Date",
+    "merge": "Merge",
+    "finale": "Finale",
+    "premiere": "Premiere",
+    "upcoming": "Upcoming",
+    "airing": "Airing",
+    "aired": "Aired"
+  },
+  "tabs": {
+    "scoreboard": "Scoreboard",
+    "castaways": "Castaways",
+    "leaderboard": "Leaderboard"
+  },
+  "milestones": {
+    "afterPremiere": "After Premiere",
+    "afterMerge": "After Merge",
+    "beforeFinale": "Before Finale"
+  },
+  "startWeekLabels": {
+    "draft": "Draft"
+  }
+}

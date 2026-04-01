@@ -1,0 +1,8 @@
+{
+  "name": "@survivor/tailwind-preset",
+  "version": "1.0.0",
+  "description": "Shared Tailwind CSS preset for Survivor fantasy league apps",
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "private": true
+}

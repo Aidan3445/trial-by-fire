@@ -1,0 +1,112 @@
+{
+  "types": {
+    "reminder_midweek": "Midweek Reminder",
+    "reminder_8hr": "8 Hour Reminder",
+    "reminder_15min": "15 Minute Reminder",
+    "episode_starting": "Episode Starting",
+    "episode_finished": "Episode Finished",
+    "draft_date_changed": "Draft Date Changed",
+    "draft_date_changed_soon": "Draft Date Changed Soon",
+    "draft_reminder_1hr": "Draft in 1 Hour",
+    "selection_changed": "Selection Changed"
+  },
+  "templates": {
+    "predictions": {
+      "midweek": {
+        "title": "Predictions Reminder",
+        "body": "Don't forget to make your predictions for Episode {episodeNumber} - {episodeTitle}!"
+      },
+      "8hr": {
+        "title": "Episode Tonight!",
+        "body": "Episode {episodeNumber} - {episodeTitle} airs in 8 hours. Make your predictions!"
+      },
+      "15min": {
+        "title": "Last Chance!",
+        "body": "Episode {episodeNumber} - {episodeTitle} starts in 15 minutes. Lock in your predictions now!"
+      }
+    },
+    "secondaryPick": {
+      "midweek": {
+        "title": "Secondary Pick Reminder",
+        "body": "Don't forget to make your secondary pick for Episode {episodeNumber} - {episodeTitle}!"
+      },
+      "8hr": {
+        "title": "Episode Tonight!",
+        "body": "Episode {episodeNumber} - {episodeTitle} airs in 8 hours. Make your secondary pick!"
+      },
+      "15min": {
+        "title": "Last Chance!",
+        "body": "Episode {episodeNumber} - {episodeTitle} starts in 15 minutes. Lock in your secondary pick now!"
+      }
+    },
+    "both": {
+      "midweek": {
+        "title": "Predictions Reminder",
+        "body": "Don't forget to make your predictions and secondary pick for Episode {episodeNumber} - {episodeTitle}!"
+      },
+      "8hr": {
+        "title": "Episode Tonight!",
+        "body": "Episode {episodeNumber} - {episodeTitle} airs in 8 hours. Make your predictions and secondary pick!"
+      },
+      "15min": {
+        "title": "Last Chance!",
+        "body": "Episode {episodeNumber} - {episodeTitle} starts in 15 minutes. Lock in your predictions and secondary pick now!"
+      }
+    },
+    "episodeStarting": {
+      "title": "Episode Starting!",
+      "body": "Episode {episodeNumber} - {episodeTitle} is starting. Tap to enable live scoring updates."
+    },
+    "episodeFinished": {
+      "title": "Episode Finished",
+      "body": "Check your leagues to see what happened to the leaderboard!"
+    },
+    "draftUpdate": {
+      "title": "Draft Update",
+      "bodyRescheduled": "The draft for {leagueName} has been rescheduled.",
+      "bodyRescheduledSoon": "The draft for {leagueName} has been rescheduled and starts soon! Tap for details",
+      "bodyManual": "The draft for {leagueName} has been set to start manually by the league admin."
+    },
+    "draftReminder": {
+      "title": "Draft in 1 Hour!",
+      "body": "The draft for {leagueName} starts in 1 hour!"
+    },
+    "selectionUpdate": {
+      "title": "Selection Update",
+      "body": "{memberName} switched to {castawayName} in {leagueName}!"
+    },
+    "livePredictionNew": {
+      "body": "Make your pick now!"
+    },
+    "livePredictionResolved": {
+      "body": "Results: {answerText}. Check how you did!"
+    },
+    "liveEvent": {
+      "body": "Tap to check your scores!"
+    },
+    "liveEventNonScoring": {
+      "body": "Tap to for details!"
+    }
+  },
+  "preferences": {
+    "reminders": {
+      "label": "Reminders",
+      "description": "Predictions and secondary pick reminders before episodes air."
+    },
+    "leagueActivity": {
+      "label": "League Activity",
+      "description": "League admission and draft start notifications."
+    },
+    "episodeUpdates": {
+      "label": "Episode Updates",
+      "description": "Get notified when episodes finish airing."
+    }
+  },
+  "ui": {
+    "notificationsTitle": "Notifications",
+    "notificationsDisabledTap": "Notifications are disabled. Tap to enable.",
+    "allNotificationsPaused": "All notifications are paused. Your preferences below are saved.",
+    "openSettingsForNotifications": "Open Settings to enable notifications for Trial by Fire.",
+    "pushRequiresDevice": "Push notifications require a physical device"
+  }
+}
