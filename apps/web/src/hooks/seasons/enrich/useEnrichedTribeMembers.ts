@@ -34,12 +34,10 @@ export function useEnrichedTribeMembers(seasonId: number | null, episode: number
         }
       }
 
-      if (members.length > 0) {
-        result[parseInt(tribeId)] = {
-          tribe,
-          castaways: members
-        };
-      }
+      result[parseInt(tribeId)] = {
+        tribe,
+        castaways: members
+      };
     }
 
     return result;

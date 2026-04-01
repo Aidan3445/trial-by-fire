@@ -57,11 +57,5 @@ export default async function getTribeMembers(seasonId: number, episodeNumber: n
     }
   }
 
-  Object.keys(currentTribes).forEach(tribeId => {
-    const tid = parseInt(tribeId);
-    if (currentTribes[tid]?.length === 0) {
-      delete currentTribes[tid];
-    }
-  });
   return currentTribes;
 }
