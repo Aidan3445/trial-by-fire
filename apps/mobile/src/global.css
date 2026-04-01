@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .page {
+    @apply flex-1 items-center justify-center bg-background;
+  }
+
+  .transition-keyboard {
+    @apply transition-transform duration-[275ms] ease-out;
+  }
+
+  .w-90p {
+    width: 90%;
+  }
+
+  .h-90p {
+    height: 90%;
+  }
+}

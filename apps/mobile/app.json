@@ -1,0 +1,106 @@
+{
+  "expo": {
+    "scheme": "trialbyfire",
+    "userInterfaceStyle": "automatic",
+    "orientation": "portrait",
+    "name": "Trial by Fire",
+    "slug": "mobile-fantasy-survivor",
+    "version": "2.0.0",
+    "owner": "aidan3445",
+    "icon": "./src/assets/AppIcon.png",
+    "web": {
+      "output": "static"
+    },
+    "splash": {
+      "image": "./src/assets/LogoDisc.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E5BC8F"
+    },
+    "plugins": [
+      "./plugins/xcode-cloud-script.cjs",
+      [
+        "expo-router",
+        {
+          "origin": "https://trialbyfiresurvivor.com"
+        }
+      ],
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "PORTRAIT_UP"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/AppIcon.png",
+          "color": "#E5BC8F"
+        }
+      ],
+      "expo-apple-authentication",
+      "expo-secure-store",
+      "expo-web-browser",
+      "@react-native-community/datetimepicker",
+      "expo-build-properties",
+      ["expo-build-properties", {
+        "ios": {
+          "deploymentTarget": "18.0"
+        }
+      }]
+    ],
+    "extra": {
+      "router": {
+        "origin": "https://trialbyfiresurvivor.com"
+      },
+      "eas": {
+        "projectId": "86931bb6-a035-48fe-8856-ff9c5684bc8e"
+      }
+    },
+    "ios": {
+      "usesAppleSignIn": true,
+      "supportsTablet": true,
+      "requireFullScreen": true,
+      "bundleIdentifier": "com.aidan3445.mobilefantasysurvivor",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "MinimumOSVersion": "18.0",
+      },
+      "associatedDomains": [
+        "applinks:trialbyfiresurvivor.com",
+        "applinks:www.trialbyfiresurvivor.com"
+      ],
+      "appleTeamId": "AXZR9KKTUD"
+    },
+    "android": {
+      "package": "com.aidan3445.mobilefantasysurvivor",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/AppIcon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "softwareKeyboardLayoutMode": "pan",
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "trialbyfiresurvivor.com",
+              "pathPrefix": "/i/"
+            },
+            {
+              "scheme": "https",
+              "host": "trialbyfiresurvivor.com",
+              "pathPrefix": "/leagues/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    }
+  }
+}

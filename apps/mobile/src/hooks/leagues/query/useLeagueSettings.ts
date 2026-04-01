@@ -1,0 +1,36 @@
+import { useQuery } from '@tanstack/react-query';
+import { type LeagueSettings } from '~/types/leagues';
+import { useFetch } from '~/hooks/helpers/useFetch';
+import { useLocalSearchParams } from 'expo-router';
+
+/**
+ * Fetches league settings for a league based on the league hash from the URL parameters.
+ * @param overrideHash Optional hash to override URL parameter.
+ * @returnObj `LeagueRule[]`
+ */
+export function useLeagueSettings(overrideHash?: string) {
+  const fetchData = useFetch();
+  const params = useLocalSearchParams();
+  const hash = overrideHash ?? (params.hash as string);
+
+  return useQuery<LeagueSettings>({
+    queryKey: ['settings', hash],
+    queryFn: async () => {
+      if (!hash) throw new Error('League hash is required');
+
+      const response = await fetchData(`/api/leagues/${hash}/settings`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch league');
+      }
+      return await response
+        .json()
+        .then((data: LeagueSettings) => ({
+          ...data,
+          draftDate: data.draftDate ? new Date(data.draftDate) : null
+        }));
+    },
+    enabled: !!hash,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 10 * 60 * 1000 // 10 minutes
+  });
+}
