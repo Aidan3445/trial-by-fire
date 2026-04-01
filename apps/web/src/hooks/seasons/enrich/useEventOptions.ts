@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useEnrichedTribeMembers } from '~/hooks/seasons/enrich/useEnrichedTribeMembers';
+import { useTribes } from '~/hooks/seasons/useTribes';
 import { type ReferenceType } from '~/types/events';
 
 /**
@@ -9,20 +10,22 @@ import { type ReferenceType } from '~/types/events';
   */
 export function useEventOptions(seasonId: number | null, selectedEpisode: number | null) {
   const tribeMembers = useEnrichedTribeMembers(seasonId, selectedEpisode);
+  const { data: allTribes } = useTribes(seasonId);
 
   const tribeMembersArray = useMemo(() =>
     Object.values(tribeMembers ?? {}),
     [tribeMembers]
   );
 
-  const tribeOptions = useMemo(() =>
-    tribeMembersArray.map(({ tribe }) => ({
+  const tribeOptions = useMemo(() => {
+    const options = (allTribes ?? []).map(tribe => ({
       value: tribe.tribeId,
       label: tribe.tribeName,
       color: tribe.tribeColor,
-    })),
-    [tribeMembersArray]
-  );
+    }));
+    console.log('tribeOptions (all season tribes):', options);
+    return options;
+  }, [allTribes]);
 
   const castawayOptions = useMemo(() =>
     tribeMembersArray.flatMap(({ castaways }) =>
@@ -34,19 +37,23 @@ export function useEventOptions(seasonId: number | null, selectedEpisode: number
     [tribeMembersArray]
   );
 
-  const combinedReferenceOptions = useMemo(() => [
-    { label: 'Tribes', value: null },
-    ...tribeOptions.map(tribe => ({
-      label: tribe.label,
-      value: `Tribe_${tribe.value}`,
-      color: tribe.color,
-    })),
-    { label: 'Castaways', value: null },
-    ...castawayOptions.map(castaway => ({
-      label: castaway.label,
-      value: `Castaway_${castaway.value}`,
-    })),
-  ], [tribeOptions, castawayOptions]);
+  const combinedReferenceOptions = useMemo(() => {
+    const options = [
+      { label: 'Tribes', value: null },
+      ...tribeOptions.map(tribe => ({
+        label: tribe.label,
+        value: `Tribe_${tribe.value}`,
+        color: tribe.color,
+      })),
+      { label: 'Castaways', value: null },
+      ...castawayOptions.map(castaway => ({
+        label: castaway.label,
+        value: `Castaway_${castaway.value}`,
+      })),
+    ];
+    console.log('combinedReferenceOptions:', options);
+    return options;
+  }, [tribeOptions, castawayOptions]);
 
   const handleCombinedReferenceSelection = useCallback((values: (string | number)[]) => {
     return values.map(value => {
