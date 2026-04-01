@@ -6,8 +6,8 @@
     "apps/*"
   ],
   "scripts": {
-    "web": "turbo dev --filter=@survivor/web",
-    "mobile": "turbo dev --filter=@survivor/mobile",
+    "web": "cd apps/web && npm run dev",
+    "mobile": "cd apps/mobile && npm run dev",
     "db:studio": "cd apps/web && npm run db:studio",
     "db:push": "cd apps/web && npm run db:push",
     "build": "turbo build",
