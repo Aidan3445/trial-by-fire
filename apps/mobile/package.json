@@ -12,6 +12,7 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "build:ios": "NODE_ENV=production npx expo prebuild --platform ios --clean",
     "web": "expo start --web",
     "deploy": "npx expo export -p web && npx eas-cli@latest deploy",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
