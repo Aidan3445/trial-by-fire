@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export function useHorizontalResize(ref: React.RefObject<HTMLElement>, onResize: () => void) {
+export function useHorizontalResize(ref: React.RefObject<HTMLElement | null>, onResize: () => void) {
   useEffect(() => {
     if (!ref.current) return;
 

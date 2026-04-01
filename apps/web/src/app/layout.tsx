@@ -3,7 +3,7 @@ import '~/styles/globals.css';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Inter } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
-import { type ReactNode, StrictMode, Suspense } from 'react';
+import { type ReactNode, StrictMode, Suspense, type CSSProperties } from 'react';
 import { SidebarProvider } from '~/components/common/sidebar';
 import Nav from '~/components/nav/navSelector';
 import { type Metadata } from 'next';
@@ -48,7 +48,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           }}>
           <html lang='en'>
             <body className={`font-sans ${inter.variable}`}>
-              <SidebarProvider defaultOpen style={{ '--navbar-height': '2.5rem' } as React.CSSProperties}>
+              <SidebarProvider defaultOpen style={{ '--navbar-height': '2.5rem' } as CSSProperties}>
                 <Nav />
                 <main className='w-full md:w-[calc(100svw-var(--sidebar-width))] md:p-2 pb-0 md:h-svh h-[calc(100svh-(var(--navbar-height)))]'>
                   <div className='w-full md:shadow-lg md:bg-secondary md:rounded-3xl md:border overflow-hidden'>
