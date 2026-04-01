@@ -1,0 +1,215 @@
+import { useMemo } from 'react';
+import { defaultBasePredictionRules } from '~/lib/leagues';
+import { type EnrichedCastaway } from '~/types/castaways';
+import { type EnrichedPrediction, type EnrichedEvent, type Prediction, type ScoringBaseEventName } from '~/types/events';
+import { type LeagueMember } from '~/types/leagueMembers';
+import { type LeagueRules } from '~/types/leagues';
+import { type SeasonsDataQuery } from '~/types/seasons';
+
+/**
+  * Custom hook to get enriched data for a list of predictions.
+  * Combines predictions with their respective rules and references.
+  * @param {SeasonsDataQuery} seasonData The season data containing tribes, castaways, eliminations, and tribes timeline.
+  * @param {LeagueData} leagueData Optional league data containing members, and rules.
+  * @param {EnrichedEvent[]} events The list of to use for enriching predictions.
+  * @param {Prediction[]} predictions The list of predictions to enrich.
+  */
+export function useEnrichPredictions(
+  seasonData: SeasonsDataQuery,
+  events: EnrichedEvent[] | null,
+  predictions: Prediction[] | null,
+  leagueData?: {
+    leagueMembers?: {
+      loggedIn?: LeagueMember;
+      members: LeagueMember[];
+    },
+    leagueRules?: LeagueRules
+  },
+) {
+  const {
+    tribes,
+    castaways,
+    eliminations,
+    tribesTimeline
+  } = seasonData;
+
+  const {
+    leagueRules: rules,
+    leagueMembers
+  } = leagueData ?? {};
+
+
+  const lookupMaps = useMemo(() => {
+    if (!leagueData || !tribes || !castaways || !events || !eliminations) {
+      return null;
+    }
+
+    const tribesById = new Map(tribes.map(tribe => [tribe.tribeId, tribe]));
+    const castawaysById = new Map(castaways.map(castaway => [castaway.castawayId, castaway]));
+    const membersById = new Map((leagueMembers ?? { members: [] }).members.map(member => [member.memberId, member]));
+    const eventsById = new Map(events.map(event => [event.eventId, event]));
+
+    const eliminationEpisodes = new Map<number, number>();
+    eliminations.forEach((episodeElims, index) => {
+      episodeElims.forEach(elim => {
+        if (elim?.castawayId) {
+          eliminationEpisodes.set(elim.castawayId, index + 1);
+        }
+      });
+    });
+    const redemptionsByCastaway = new Map(castaways.map(c => [c.castawayId, c.redemption]));
+
+    return {
+      tribesById,
+      castawaysById,
+      membersById,
+      eventsById,
+      eliminationEpisodes,
+      redemptionsByCastaway
+    };
+  }, [leagueData, tribes, castaways, events, eliminations, leagueMembers]);
+
+  const findTribe = useMemo(() => {
+    if (!tribesTimeline || !lookupMaps) return null;
+
+    return (castawayId: number, episodeNumber: number) => {
+      const sortedTimeline = Object.entries(tribesTimeline)
+        .filter(([epNumStr]) => parseInt(epNumStr) <= episodeNumber)
+        .sort((a, b) => parseInt(b[0]) - parseInt(a[0]));
+
+      for (const [, tribesInEpisode] of sortedTimeline) {
+        for (const [tribeIdStr, tribeMembers] of Object.entries(tribesInEpisode)) {
+          if (tribeMembers.includes(castawayId)) {
+            const tribe = lookupMaps.tribesById.get(parseInt(tribeIdStr));
+            return tribe ? {
+              name: tribe.tribeName,
+              color: tribe.tribeColor
+            } : null;
+          }
+        }
+      }
+      return null;
+    };
+  }, [tribesTimeline, lookupMaps]);
+
+  const enrichedPredictions = useMemo(() => {
+    if (!predictions || !lookupMaps || !findTribe || !rules) {
+      return [];
+    }
+
+    const predictionGroups: Record<string, EnrichedPrediction> = {};
+
+    for (const prediction of predictions) {
+      if (!prediction.eventId || prediction.hit === null) {
+        continue;
+      }
+
+      const eventRef = prediction.eventId ? lookupMaps.eventsById.get(prediction.eventId) : null;
+      if (!eventRef) continue;
+      const event = { ...eventRef };
+
+      let existingPrediction = predictionGroups[prediction.eventName];
+      if (!existingPrediction) {
+        let points: number | null = null;
+        if (event.eventSource === 'Base') {
+          const basePredictionRules = rules.basePrediction ?? defaultBasePredictionRules;
+          points = basePredictionRules[prediction.eventName as ScoringBaseEventName]?.points ?? null;
+        } else {
+          points = rules.custom?.find(r => r.eventName === event.eventName)?.points ?? null;
+        }
+
+        if (points === null) continue;
+
+        existingPrediction = { event, points, hits: [], misses: [] };
+        predictionGroups[prediction.eventName] = existingPrediction;
+      } else if (existingPrediction.event.eventId !== event.eventId) {
+        // we then need to make sure to combine the references if multiple events with the same name exist
+        // only add new references to both referenceMap and references list
+        existingPrediction.event.referenceMap = [
+          ...existingPrediction.event.referenceMap,
+          ...event.referenceMap.filter(newRef =>
+            !existingPrediction!.event.referenceMap.some(existingRef =>
+              JSON.stringify(existingRef) === JSON.stringify(newRef)))
+        ];
+        existingPrediction.event.references = [
+          ...existingPrediction.event.references,
+          ...event.references.filter(newRef =>
+            !existingPrediction!.event.references.some(existingRef =>
+              existingRef.id === newRef.id &&
+              existingRef.type === newRef.type))
+        ];
+        existingPrediction.event.eventId = null;
+        if (!existingPrediction.event.label?.includes(event.label ?? '') && event.label) {
+          const newLabel = existingPrediction.event.label
+            ? `${existingPrediction.event.label}#/& ${event.label}`
+            : event.label;
+          existingPrediction.event.label = newLabel;
+        }
+      }
+
+      const member = lookupMaps.membersById.get(prediction.predictionMakerId);
+      if (!member) continue;
+
+      const entry = {
+        member,
+        hit: prediction.hit,
+        bet: prediction.bet,
+        reference: {
+          type: prediction.referenceType,
+          id: prediction.referenceId,
+          name: '',
+          shortName: '',
+          color: ''
+        }
+      };
+
+      if (prediction.referenceType === 'Castaway') {
+        const castaway = lookupMaps.castawaysById.get(prediction.referenceId);
+        if (!castaway) continue;
+
+        const tribe = findTribe(castaway.castawayId, existingPrediction.event.episodeNumber);
+        if (!tribe) continue;
+
+        const eliminatedEpisode = lookupMaps.eliminationEpisodes.get(castaway.castawayId) ?? null;
+        const redemptionHistory = lookupMaps.redemptionsByCastaway.get(castaway.castawayId);
+
+        const castawayWithTribe: EnrichedCastaway = {
+          ...castaway,
+          tribe,
+          eliminatedEpisode,
+          redemption: redemptionHistory
+        };
+
+        entry.reference = {
+          ...entry.reference,
+          name: castaway.fullName,
+          shortName: castaway.shortName,
+          color: castawayWithTribe.tribe?.color ?? '#AAAAAA'
+        };
+
+      } else if (prediction.referenceType === 'Tribe') {
+        const tribe = lookupMaps.tribesById.get(prediction.referenceId);
+        if (!tribe) continue;
+
+        entry.reference = {
+          ...entry.reference,
+          name: tribe.tribeName,
+          shortName: tribe.tribeName,
+          color: tribe.tribeColor
+        };
+      }
+
+      if (prediction.hit) {
+        existingPrediction.hits.push(entry);
+      } else {
+        existingPrediction.misses.push(entry);
+      }
+    }
+
+    return Object.values(predictionGroups);
+  }, [predictions, lookupMaps, findTribe, rules]);
+
+  return enrichedPredictions;
+}
+
+

@@ -1,0 +1,162 @@
+import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '~/components/common/form';
+import { Input } from '~/components/common/input';
+import { cn } from '~/lib/utils';
+import { type BaseEventSettingsProps, BasePredictionFormField } from '~/components/leagues/customization/events/base/predictions';
+import { BaseEventDescriptions, BaseEventFullName } from '~/lib/events';
+import SettingsWrapper from '~/components/leagues/customization/events/base/settingsWrapper';
+import { PointsIcon } from '~/components/icons/generated';
+
+export default function AdvantageScoreSettings({ disabled, hidePredictions, children }: BaseEventSettingsProps) {
+  return (
+    <SettingsWrapper label='Advantages'>
+      <FormField
+        name='baseEventRules.advFound'
+        render={({ field }) => (
+          <FormItem className={cn('rounded-lg px-3 py-2 h-full transition-all border-2', disabled ? 'bg-accent border-primary/20' : 'bg-primary/5 border-primary/30')}>
+            <FormLabel className='inline-flex gap-2 items-center justify-between w-full text-sm font-bold uppercase tracking-wider'>
+              {BaseEventFullName.advFound}
+              {disabled &&
+                <h2 className={cn(
+                  'text-lg font-bold text-card-foreground flex-nowrap flex',
+                  field.value <= 0 ? 'text-destructive' : 'text-green-600',
+                  field.value === 0 && 'text-muted-foreground')}>
+                  {field.value}
+                  <PointsIcon className={cn('inline align-top w-5 h-5 shrink-0',
+                    field.value <= 0 ? 'fill-destructive' : 'fill-green-600',
+                    field.value === 0 && 'fill-muted-foreground'
+                  )} />
+                </h2>}
+            </FormLabel>
+            <div className='flex-col gap-4 items-top'>
+              {!disabled &&
+                <FormControl>
+                  <Input
+                    type='number'
+                    step={1}
+                    placeholder='Points'
+                    disabled={disabled}
+                    {...field} />
+                </FormControl>}
+              <FormDescription className='max-w-72 lg:max-w-none text-wrap text-sm'>
+                {BaseEventDescriptions.main.advFound}
+              </FormDescription>
+            </div>
+            {!hidePredictions && <BasePredictionFormField eventName={'advFound'} disabled={disabled} />}
+            <FormMessage />
+          </FormItem>
+        )} />
+      <FormField
+        name='baseEventRules.advPlay'
+        render={({ field }) => (
+          <FormItem className={cn('rounded-lg px-3 py-2 h-full transition-all border-2', disabled ? 'bg-accent border-primary/20' : 'bg-primary/5 border-primary/30')}>
+            <FormLabel className='inline-flex gap-2 items-center justify-between w-full text-sm font-bold uppercase tracking-wider'>
+              {BaseEventFullName.advPlay}
+              {disabled &&
+                <h2 className={cn(
+                  'text-lg font-bold text-card-foreground flex-nowrap flex',
+                  field.value <= 0 ? 'text-destructive' : 'text-green-600',
+                  field.value === 0 && 'text-muted-foreground')}>
+                  {field.value}
+                  <PointsIcon className={cn('inline align-top w-5 h-5 shrink-0',
+                    field.value <= 0 ? 'fill-destructive' : 'fill-green-600',
+                    field.value === 0 && 'fill-muted-foreground'
+                  )} />
+                </h2>}
+            </FormLabel>
+            <div className='flex-col gap-4 items-top'>
+              {!disabled &&
+                <FormControl>
+                  <Input
+                    type='number'
+                    step={1}
+                    placeholder='Points'
+                    disabled={disabled}
+                    {...field} />
+                </FormControl>}
+              <FormDescription className='max-w-72 lg:max-w-none text-wrap text-sm'>
+                {BaseEventDescriptions.main.advPlay}
+              </FormDescription>
+            </div>
+            {!hidePredictions && <BasePredictionFormField eventName={'advPlay'} disabled={disabled} />}
+            <FormMessage />
+          </FormItem>
+        )} />
+      <FormField
+        name='baseEventRules.badAdvPlay'
+        render={({ field }) => (
+          <FormItem className={cn('rounded-lg px-3 py-2 h-full transition-all border-2', disabled ? 'bg-accent border-primary/20' : 'bg-primary/5 border-primary/30')}>
+            <FormLabel className='inline-flex gap-2 items-center justify-between w-full text-sm font-bold uppercase tracking-wider'>
+              {BaseEventFullName.badAdvPlay}
+              {disabled &&
+                <h2 className={cn(
+                  'text-lg font-bold text-card-foreground flex-nowrap flex',
+                  field.value <= 0 ? 'text-destructive' : 'text-green-600',
+                  field.value === 0 && 'text-muted-foreground')}>
+                  {field.value}
+                  <PointsIcon className={cn('inline align-top w-5 h-5 shrink-0',
+                    field.value <= 0 ? 'fill-destructive' : 'fill-green-600',
+                    field.value === 0 && 'fill-muted-foreground'
+                  )} />
+                </h2>}
+            </FormLabel>
+            <div className='flex-col gap-4 items-top'>
+              {!disabled &&
+                <FormControl>
+                  <Input
+                    type='number'
+                    step={1}
+                    placeholder='Points'
+                    disabled={disabled}
+                    {...field} />
+                </FormControl>}
+              <FormDescription className='max-w-72 lg:max-w-none text-wrap text-sm'>
+                {BaseEventDescriptions.main.badAdvPlay} <i className='text-xs text-muted-foreground'>
+                  {BaseEventDescriptions.italics.badAdvPlay}</i>
+              </FormDescription>
+            </div>
+            {!hidePredictions && <BasePredictionFormField eventName={'badAdvPlay'} disabled={disabled} />}
+            <FormMessage />
+          </FormItem>
+        )} />
+      <FormField
+        name='baseEventRules.advElim'
+        render={({ field }) => (
+          <FormItem className={cn('rounded-lg px-3 py-2 h-full transition-all border-2', disabled ? 'bg-accent border-primary/20' : 'bg-primary/5 border-primary/30')}>
+            <FormLabel className='inline-flex gap-2 items-center justify-between w-full text-sm font-bold uppercase tracking-wider'>
+              {BaseEventFullName.advElim}
+              {disabled &&
+                <h2 className={cn(
+                  'text-lg font-bold text-card-foreground flex-nowrap flex',
+                  field.value <= 0 ? 'text-destructive' : 'text-green-600',
+                  field.value === 0 && 'text-muted-foreground')}>
+                  {field.value}
+                  <PointsIcon className={cn('inline align-top w-5 h-5 shrink-0',
+                    field.value <= 0 ? 'fill-destructive' : 'fill-green-600',
+                    field.value === 0 && 'fill-muted-foreground'
+                  )} />
+                </h2>}
+            </FormLabel>
+            <div className='flex-col gap-4 items-top'>
+              {!disabled &&
+                <FormControl>
+                  <Input
+                    type='number'
+                    step={1}
+                    placeholder='Points'
+                    disabled={disabled}
+                    {...field} />
+                </FormControl>}
+              <FormDescription className='max-w-72 lg:max-w-none text-wrap text-sm'>
+                {BaseEventDescriptions.main.advElim} <i className='text-xs text-muted-foreground'>
+                  {BaseEventDescriptions.italics.advElim}</i>
+              </FormDescription>
+            </div>
+            {!hidePredictions && <BasePredictionFormField eventName={'advElim'} disabled={disabled} />}
+            <FormMessage />
+          </FormItem>
+        )} />
+      {children}
+    </SettingsWrapper>
+  );
+}
+

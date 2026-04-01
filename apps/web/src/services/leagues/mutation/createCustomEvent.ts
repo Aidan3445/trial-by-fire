@@ -1,0 +1,67 @@
+import 'server-only';
+
+import { db } from '~/server/db';
+import { and, eq } from 'drizzle-orm';
+import { type CustomEventInsert } from '~/types/events';
+import { type VerifiedLeagueMemberAuth } from '~/types/api';
+import { leagueSchema } from '~/server/db/schema/leagues';
+import { customEventReferenceSchema, customEventRuleSchema, customEventSchema } from '~/server/db/schema/customEvents';
+import { sendCustomEventNotification } from '~/services/notifications/events/customEvents';
+
+/**
+ * Create a new custom/league event for the season
+ * @param auth The authenticated league member
+ * @param customEvent Event to create
+ * @throws if the event cannot be created
+ * @returns the id of the created event
+ * @returnObj `{ newEventId }`
+ */
+export default async function createCustomEventLogic(
+  auth: VerifiedLeagueMemberAuth,
+  customEvent: CustomEventInsert
+) {
+  if (auth.status === 'Inactive') throw new Error('League is inactive');
+  // Create custom event in transaction
+  const result = await db.transaction(async (trx) => {
+    // ensure the rule is in the league
+    const rule = await trx
+      .select({ eventName: customEventRuleSchema.eventName })
+      .from(customEventRuleSchema)
+      .innerJoin(leagueSchema, eq(leagueSchema.leagueId, customEventRuleSchema.leagueId))
+      .where(and(
+        eq(leagueSchema.leagueId, auth.leagueId),
+        eq(customEventRuleSchema.customEventRuleId, customEvent.customEventRuleId)))
+      .then((result) => result[0]);
+    if (!rule) throw new Error('Custom event rule not found in league');
+
+    // insert the league event
+    const newEventId = await trx
+      .insert(customEventSchema)
+      .values({
+        ...customEvent,
+        notes: customEvent.notes?.map(note => note.trim()).filter(note => note.length > 0),
+      })
+      .returning({ customEventId: customEventSchema.customEventId })
+      .then((result) => result[0]?.customEventId);
+    if (!newEventId) throw new Error('Failed to create league event');
+
+    const eventRefs = customEvent.references.map((reference) => ({
+      customEventId: newEventId,
+      referenceType: reference.type,
+      referenceId: reference.id,
+    }));
+
+    // insert the references
+    await trx
+      .insert(customEventReferenceSchema)
+      .values(eventRefs);
+
+
+    return { newEventId, rule };
+  });
+
+  // Sending notification outside of transaction
+  void sendCustomEventNotification(customEvent, result.rule.eventName, auth.leagueId);
+
+  return { newEventId: result.newEventId };
+}
