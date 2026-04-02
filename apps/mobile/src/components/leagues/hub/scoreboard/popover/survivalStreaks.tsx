@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { Skull, ShieldCheck, Dices, MoveRight } from 'lucide-react-native';
 import { colors } from '~/lib/colors';
 import Modal from '~/components/common/modal';
@@ -94,7 +95,7 @@ export default function SurvivalStreaks({
       </Pressable>
 
       <Modal visible={isVisible} onClose={() => setIsVisible(false)}>
-        <View className='gap-3'>
+        <View className=''>
           {/* Header */}
           <View className='flex-row items-center justify-center gap-1'>
             <PointsIcon size={16} color={colors.primary} />
@@ -167,56 +168,70 @@ export default function SurvivalStreaks({
             </>
           )}
 
-          {/* Selection History */}
-          {condensedTimeline.length > 0 && (
+          {/* Selection History & Secondaries - Scrollable Section */}
+          {(condensedTimeline.length > 0 || !!secondaryPickList?.slice(1)?.length) && (
             <>
               <View className='h-px bg-primary/20' />
-              <Text className='text-sm font-bold uppercase tracking-wider text-center text-foreground'>
-                Selection History
-              </Text>
-              <View className='gap-1'>
-                {condensedTimeline.map(({ castaway, start, end }, index) => (
-                  <View key={index} className='flex-row items-center gap-3'>
-                    <ColorRow
-                      className='px-2 justify-center font-medium text-sm'
-                      color={castaway.tribe?.color ?? '#AAAAAA'}>
-                      {castaway.fullName}
-                    </ColorRow>
-                    <View className='flex-row gap-1 items-center flex-1'>
-                      <Text className='font-medium text-sm text-foreground'>{start}</Text>
-                      <MoveRight size={16} color={colors.foreground} />
-                      <Text className='font-medium text-sm text-foreground'>
-                        {end ? `${end}` : 'Present'}
-                      </Text>
+              <ScrollView
+                nestedScrollEnabled
+                className='max-h-72 py-2'
+                contentContainerClassName='gap-3 px-1'>
+                {/* Selection History */}
+                {condensedTimeline.length > 0 && (
+                  <View>
+                    <Text className='text-sm font-bold uppercase tracking-wider text-center text-foreground mb-1'>
+                      Selection History
+                    </Text>
+                    <View className='gap-1'>
+                      {condensedTimeline.map(({ castaway, start, end }, index) => (
+                        <View key={index} className='flex-row items-center gap-3'>
+                          <ColorRow
+                            className='px-2 justify-center font-medium text-sm w-3/5'
+                            color={castaway.tribe?.color ?? '#AAAAAA'}>
+                            <Text>
+                              {castaway.fullName}
+                            </Text>
+                          </ColorRow>
+                          <View className='flex-row gap-1 items-center flex-1'>
+                            <Text className='font-medium text-sm text-foreground'>{start}</Text>
+                            <MoveRight size={16} color={colors.foreground} />
+                            <Text className='font-medium text-sm text-foreground'>
+                              {end ? `${end}` : 'Present'}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
                     </View>
                   </View>
-                ))}
-              </View>
-            </>
-          )}
+                )}
 
-          {/* Secondary Pick History */}
-          {!!secondaryPickList?.slice(1)?.length && (
-            <>
-              <View className='h-px bg-primary/20' />
-              <Text className='text-sm font-semibold uppercase tracking-wide text-center text-foreground'>
-                Secondaries
-              </Text>
-              <View className='gap-1'>
-                {secondaryPickList.slice(1).map((castaway, index) => (
-                  <View key={index} className='flex-row items-center gap-1'>
-                    <ColorRow
-                      className='px-2 justify-center font-medium text-sm'
-                      color={castaway?.tribe?.color ?? '#AAAAAA'}>
-                      {castaway?.fullName ?? 'No Pick'}
-                    </ColorRow>
-                    <View className='flex-row gap-1 items-center flex-1'>
-                      <MoveRight size={16} color={colors.foreground} />
-                      <Text className='font-medium text-sm text-foreground'>{index + 1}</Text>
+                {/* Secondary Pick History */}
+                {!!secondaryPickList?.slice(1)?.length && (
+                  <View>
+                    <View className='h-px bg-primary/20 mb-1' />
+                    <Text className='text-sm font-semibold uppercase tracking-wide text-center text-foreground mb-1'>
+                      Secondaries
+                    </Text>
+                    <View className='gap-1'>
+                      {secondaryPickList.slice(1).map((castaway, index) => (
+                        <View key={index} className='flex-row items-center gap-1'>
+                          <ColorRow
+                            className='px-2 justify-center font-medium text-sm w-3/5'
+                            color={castaway?.tribe?.color ?? '#AAAAAA'}>
+                            <Text>
+                              {castaway?.fullName ?? 'No Pick'}
+                            </Text>
+                          </ColorRow>
+                          <View className='flex-row gap-1 items-center flex-1'>
+                            <MoveRight size={16} color={colors.foreground} />
+                            <Text className='font-medium text-sm text-foreground'>{index + 1}</Text>
+                          </View>
+                        </View>
+                      ))}
                     </View>
                   </View>
-                ))}
-              </View>
+                )}
+              </ScrollView>
             </>
           )}
 

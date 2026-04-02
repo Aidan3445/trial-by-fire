@@ -8,6 +8,7 @@
   "scripts": {
     "web": "cd apps/web && npm run dev",
     "mobile": "cd apps/mobile && npm run dev",
+    "xcode": "xed aps/apps/mobile/ios",
     "db:studio": "cd apps/web && npm run db:studio",
     "db:push": "cd apps/web && npm run db:push",
     "build": "turbo build",
@@ -15,9 +16,18 @@
     "lint": "turbo lint",
     "test": "turbo test"
   },
+  "dependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
   "devDependencies": {
     "turbo": "^2.5.0",
     "typescript": "^5.7.3"
   },
-  "packageManager": "npm@10.5.0"
+  "packageManager": "npm@10.5.0",
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "@types/react": "~19.1.10"
+  }
 }
