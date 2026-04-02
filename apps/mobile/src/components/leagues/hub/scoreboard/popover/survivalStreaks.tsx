@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Skull, ShieldCheck, Dices } from 'lucide-react-native';
+import { Skull, ShieldCheck, Dices, MoveRight } from 'lucide-react-native';
 import { colors } from '~/lib/colors';
 import Modal from '~/components/common/modal';
 import { PointsIcon } from '~/components/icons/generated';
+import { type EnrichedCastaway } from '~/types/castaways';
+import ColorRow from '~/components/shared/colorRow';
 
 interface SurvivalStreaksProps {
   survivalCap: number;
@@ -11,6 +13,8 @@ interface SurvivalStreaksProps {
   eliminatedEpisode?: number | null;
   shotInTheDarkStatus?: { episodeNumber: number; status: 'pending' | 'saved' | 'wasted' } | null;
   isLoggedIn?: boolean;
+  selectionList?: (EnrichedCastaway | null)[];
+  secondaryPickList?: (EnrichedCastaway | null)[];
 }
 
 export default function SurvivalStreaks({
@@ -19,6 +23,8 @@ export default function SurvivalStreaks({
   shotInTheDarkStatus,
   survivalCap,
   isLoggedIn = false,
+  selectionList,
+  secondaryPickList,
 }: SurvivalStreaksProps) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -26,6 +32,37 @@ export default function SurvivalStreaks({
   const isSaved =
     shotInTheDarkStatus?.status === 'saved' &&
     shotInTheDarkStatus.episodeNumber === eliminatedEpisode;
+
+  const condensedTimeline = useMemo(() => (selectionList ?? [])
+    .reduce((acc, castaway, index) => {
+      if (castaway === null) return acc;
+      const prev = acc[acc.length - 1];
+      if (prev) {
+        acc[acc.length - 1] = { ...prev, end: index - 1 };
+      }
+      if (acc[acc.length - 1]?.castaway?.fullName === castaway.fullName) {
+        acc[acc.length - 1]!.end = index;
+        return acc;
+      }
+
+      const start = acc.length === 0 ? 'Draft' : index;
+      const isReEntry = typeof start === 'number'
+        && castaway.eliminatedEpisode !== null
+        && start >= castaway.eliminatedEpisode;
+
+      let end: number | null;
+      if (isReEntry && castaway.redemption?.length) {
+        const relevantRedemption = [...castaway.redemption]
+          .sort((a, b) => b.reentryEpisode - a.reentryEpisode)
+          .find(r => typeof start === 'number' && r.reentryEpisode <= start);
+        end = relevantRedemption?.secondEliminationEpisode ?? null;
+      } else {
+        end = castaway.eliminatedEpisode ?? null;
+      }
+
+      return [...acc, { castaway, start, end }];
+    }, [] as { castaway: EnrichedCastaway, start: number | string, end: number | null }[]),
+    [selectionList]);
 
   const renderTriggerContent = () => {
     if (isPending) {
@@ -126,6 +163,59 @@ export default function SurvivalStreaks({
                   Shot in the Dark was used in episode {shotInTheDarkStatus.episodeNumber} but{' '}
                   {isLoggedIn ? 'your' : 'their'} castaway wasn't eliminated.
                 </Text>
+              </View>
+            </>
+          )}
+
+          {/* Selection History */}
+          {condensedTimeline.length > 0 && (
+            <>
+              <View className='h-px bg-primary/20' />
+              <Text className='text-sm font-bold uppercase tracking-wider text-center text-foreground'>
+                Selection History
+              </Text>
+              <View className='gap-1'>
+                {condensedTimeline.map(({ castaway, start, end }, index) => (
+                  <View key={index} className='flex-row items-center gap-3'>
+                    <ColorRow
+                      className='px-2 justify-center font-medium text-sm'
+                      color={castaway.tribe?.color ?? '#AAAAAA'}>
+                      {castaway.fullName}
+                    </ColorRow>
+                    <View className='flex-row gap-1 items-center flex-1'>
+                      <Text className='font-medium text-sm text-foreground'>{start}</Text>
+                      <MoveRight size={16} color={colors.foreground} />
+                      <Text className='font-medium text-sm text-foreground'>
+                        {end ? `${end}` : 'Present'}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+
+          {/* Secondary Pick History */}
+          {!!secondaryPickList?.slice(1)?.length && (
+            <>
+              <View className='h-px bg-primary/20' />
+              <Text className='text-sm font-semibold uppercase tracking-wide text-center text-foreground'>
+                Secondaries
+              </Text>
+              <View className='gap-1'>
+                {secondaryPickList.slice(1).map((castaway, index) => (
+                  <View key={index} className='flex-row items-center gap-1'>
+                    <ColorRow
+                      className='px-2 justify-center font-medium text-sm'
+                      color={castaway?.tribe?.color ?? '#AAAAAA'}>
+                      {castaway?.fullName ?? 'No Pick'}
+                    </ColorRow>
+                    <View className='flex-row gap-1 items-center flex-1'>
+                      <MoveRight size={16} color={colors.foreground} />
+                      <Text className='font-medium text-sm text-foreground'>{index + 1}</Text>
+                    </View>
+                  </View>
+                ))}
               </View>
             </>
           )}

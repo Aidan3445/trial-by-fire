@@ -48,7 +48,10 @@ export function useLeagueData(overrideHash?: string) {
       }
 
       // Check if member's castaway was eliminated that episode
-      const memberCastaway = selectionTimeline.memberCastaways[mid]?.[episode.episodeNumber];
+      // Use Math.min to handle sparse memberCastaways arrays (same as scoring code)
+      const castaways = selectionTimeline.memberCastaways[mid];
+      const mcIndex = Math.min(episode.episodeNumber, (castaways?.length ?? 1) - 1);
+      const memberCastaway = castaways?.[mcIndex];
       const wasEliminated = seasonData.eliminations[episode.episodeNumber]?.some(
         elim => elim?.castawayId === memberCastaway
       );

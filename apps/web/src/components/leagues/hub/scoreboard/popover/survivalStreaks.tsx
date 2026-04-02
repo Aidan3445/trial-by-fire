@@ -1,4 +1,4 @@
-import { Skull, ShieldCheck } from 'lucide-react';
+import { Skull, ShieldCheck, Dices } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/common/popover';
 import { Separator } from '~/components/common/separator';
 import { PointsIcon } from '~/components/icons/generated';
@@ -64,6 +64,17 @@ export default function SurvivalStreaks({
               <ShieldCheck className='w-3 h-3 stroke-green-600' />
               <span className='text-nowrap text-green-600 font-semibold'>
                 Shot in the Dark saved their streak in episode {shotInTheDarkStatus.episodeNumber}
+              </span>
+            </div>
+          </>
+        )}
+        {shotInTheDarkStatus?.status === 'wasted' && (
+          <>
+            <Separator className='my-2 bg-primary/20' />
+            <div className='text-xs flex items-center gap-1'>
+              <Dices className='w-3 h-3 stroke-muted-foreground' />
+              <span className='text-nowrap text-muted-foreground font-semibold'>
+                Shot in the Dark used in episode {shotInTheDarkStatus.episodeNumber} — no effect
               </span>
             </div>
           </>
