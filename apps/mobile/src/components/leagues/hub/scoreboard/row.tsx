@@ -34,7 +34,9 @@ export default function MemberRow({
   member,
   currentStreak,
   castaway,
+  selectionList,
   secondaryPick,
+  secondaryPickList,
   points,
   color,
   dashedAbove: doubleBelow,
@@ -148,7 +150,9 @@ export default function MemberRow({
             currentStreak={currentStreak}
             eliminatedEpisode={castaway?.eliminatedEpisode}
             shotInTheDarkStatus={shotInTheDarkStatus}
-            survivalCap={leagueSettings.survivalCap} />
+            survivalCap={leagueSettings.survivalCap}
+            selectionList={selectionList}
+            secondaryPickList={secondaryPickList} />
         </View>
       )}
     </View>

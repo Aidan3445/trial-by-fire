@@ -1,4 +1,4 @@
-import { MoveRight, History } from 'lucide-react';
+import { MoveRight, History, ShieldCheck, Dices } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/common/popover';
 import { Separator } from '~/components/common/separator';
 import { type EnrichedCastaway } from '~/types/castaways';
@@ -8,9 +8,10 @@ import { useMemo } from 'react';
 interface SelectionHistoryProps {
   selectionList: (EnrichedCastaway | null)[] | undefined;
   secondaryPickList: (EnrichedCastaway | null)[] | undefined;
+  shotInTheDarkStatus?: { episodeNumber: number, status: 'pending' | 'saved' | 'wasted' } | null;
 }
 
-export default function SelectionHistory({ selectionList, secondaryPickList }: SelectionHistoryProps) {
+export default function SelectionHistory({ selectionList, secondaryPickList, shotInTheDarkStatus }: SelectionHistoryProps) {
   const condensedTimeline = useMemo(() => (selectionList ?? [])
     .reduce((acc, castaway, index) => {
       if (castaway === null) return acc;
@@ -89,6 +90,35 @@ export default function SelectionHistory({ selectionList, secondaryPickList }: S
                   </div>
                 </span>
               ))}
+            </div>
+          </>
+        )}
+        {shotInTheDarkStatus && (
+          <>
+            <Separator className='mt-2 bg-primary/20' />
+            <div className='text-xs flex items-center gap-1 justify-center'>
+              {shotInTheDarkStatus.status === 'saved' ? (
+                <>
+                  <ShieldCheck className='w-3 h-3 stroke-green-600' />
+                  <span className='text-green-600 font-semibold'>
+                    Shot in the Dark saved their streak in episode {shotInTheDarkStatus.episodeNumber}
+                  </span>
+                </>
+              ) : shotInTheDarkStatus.status === 'wasted' ? (
+                <>
+                  <Dices className='w-3 h-3 stroke-muted-foreground' />
+                  <span className='text-muted-foreground font-semibold'>
+                    Shot in the Dark used in episode {shotInTheDarkStatus.episodeNumber} — no effect
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Dices className='w-3 h-3 stroke-primary' />
+                  <span className='text-primary font-semibold'>
+                    Shot in the Dark active for upcoming episode
+                  </span>
+                </>
+              )}
             </div>
           </>
         )}

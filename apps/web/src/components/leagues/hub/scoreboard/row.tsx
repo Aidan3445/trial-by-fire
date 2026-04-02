@@ -130,7 +130,7 @@ export default function MemberRow({
       ))}
       <TableCell className='w-0'>
         <div className='flex gap-1 items-center justify-end'>
-          <SelectionHistory selectionList={selectionList} secondaryPickList={secondaryPickList} />
+          <SelectionHistory selectionList={selectionList} secondaryPickList={secondaryPickList} shotInTheDarkStatus={shotInTheDarkStatus} />
           {leagueSettings && leagueSettings.survivalCap > 0 && (
             <SurvivalStreaks
               survivalCap={leagueSettings.survivalCap}
