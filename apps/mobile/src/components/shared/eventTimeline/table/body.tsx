@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { type ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   type EventWithReferencesAndPredOnly,
   type EpisodeEventsProps,
@@ -20,7 +20,9 @@ interface EpisodeEventsTableBodyProps extends EpisodeEventsProps {
   noMembers: boolean;
   noTribes?: boolean;
   onSectionLayout?: (_label: string, _y: number) => void;
-  onRowLayout: (_id: string, _y: number, _height: number, _node: ReactNode) => void
+  onRowLayout: (
+    _id: string, _y: number, _height: number, _event: EnrichedEvent, _seasonId?: number
+  ) => void;
 }
 
 export default function EpisodeEventsTableBody({
@@ -108,11 +110,12 @@ export default function EpisodeEventsTableBody({
           key={`mock-${idx}`}
           className='bg-yellow-500'
           event={mock}
-          editCol={edit}
           isMock
+          editCol={edit}
           noPoints={!leagueData}
           noTribes={noTribes}
           noMembers={noMembers}
+          seasonId={seasonData.season.seasonId}
           onRowLayout={onRowLayout} />
       ))}
 

@@ -1,10 +1,10 @@
 import { View, Text, Pressable } from 'react-native';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { MoveRight } from 'lucide-react-native';
 import { cn } from '~/lib/utils';
 import { useEventLabel } from '~/hooks/helpers/useEventLabel';
 import { BaseEventFullName } from '~/lib/events';
-import { type BaseEventName, type EnrichedPrediction } from '~/types/events';
+import { type EnrichedEvent, type BaseEventName, type EnrichedPrediction } from '~/types/events';
 import PointsCell, { ColoredPoints } from '~/components/shared/eventTimeline/table/row/pointsCell';
 import ColorRow from '~/components/shared/colorRow';
 import CastawayModal from '~/components/shared/castaways/castawayModal';
@@ -14,16 +14,20 @@ import Modal from '~/components/common/modal';
 interface PredictionRowProps {
   className?: string;
   prediction: EnrichedPrediction;
+  seasonId?: number;
   editCol?: boolean;
   defaultOpenMisses?: boolean;
   noMembers?: boolean;
   noTribes?: boolean;
-  onRowLayout?: (_id: string, _y: number, _height: number, _node: ReactNode) => void;
+  onRowLayout?: (
+    _id: string, _y: number, _height: number, _event: EnrichedEvent, _seasonId?: number
+  ) => void;
 }
 
 export default function PredictionRow({
   className,
   prediction,
+  seasonId,
   editCol,
   noMembers,
   noTribes,
@@ -38,29 +42,12 @@ export default function PredictionRow({
 
   const [missesModalVisible, setMissesModalVisible] = useState(false);
 
-  const stickyCell = useMemo<ReactNode>(() => (
-    <View className={cn('h-full flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
-      <View className='w-40 h-full border-r border-secondary'>
-        <View className='py-2 flex-1 justify-center pr-0.5'>
-          {isBaseEvent && (
-            <Text className='text-xs text-muted-foreground'>
-              {BaseEventFullName[event.eventName as BaseEventName]}
-            </Text>
-          )}
-          {label.split('#/').map((part, index) => (
-            <Text key={index} className='text-base text-foreground'>{part}</Text>
-          ))}
-        </View>
-      </View>
-    </View>
-  ), [className, isBaseEvent, event.eventName, label]);
-
   return (
     <View
       className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}
       onLayout={(e) => {
         const { y, height } = e.nativeEvent.layout;
-        onRowLayout?.(`pred-${event.eventId}`, y, height, stickyCell);
+        onRowLayout?.(`pred-${event.eventId}`, y, height, event, seasonId);
       }}>
       {editCol && <View className='w-8' />}
 

@@ -1,12 +1,16 @@
+import { type EnrichedEvent } from '@survivor/types';
 import { useState, useCallback, type ReactNode } from 'react';
 import { View, Text } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { cn } from '~/lib/utils';
+import StickyCell from '~/components/shared/eventTimeline/table/row/stickyCell';
 
 interface ScrollContainerProps {
   children: (
     _onSectionLayout: (_label: string, _y: number) => void,
-    _onRowLayout: (_id: string, _y: number, _height: number, _node: ReactNode) => void,
+    _onRowLayout: (
+      _id: string, _y: number, _height: number, _event: EnrichedEvent, _seasonId?: number
+    ) => void
   ) => ReactNode;
   edit?: boolean;
   hideAll?: boolean;
@@ -15,19 +19,19 @@ interface ScrollContainerProps {
 
 export default function EpisodeScrollContainer({ children, edit, hideAll, filteredRowIds }: ScrollContainerProps) {
   const [labels, setLabels] = useState<Record<string, number>>({});
-  const [rowOverlays, setRowOverlays] = useState<Record<string, { y: number; height: number; node: ReactNode }>>({});
+  const [rowOverlays, setRowOverlays] = useState<Record<string, { y: number; height: number; event: EnrichedEvent, seasonId?: number }>>({});
 
   const onSectionLayout = useCallback((label: string, y: number) => {
     setLabels((prev) => (prev[label] === y ? prev : { ...prev, [label]: y }));
   }, []);
 
-  const onRowLayout = useCallback((id: string, y: number, height: number, node: ReactNode) => {
-    setRowOverlays((prev) => {
-      const ex = prev[id];
-      if (ex?.y === y && ex?.height === height) return prev;
-      return { ...prev, [id]: { y, height, node } };
-    });
-  }, []);
+  const onRowLayout = useCallback(
+    (id: string, y: number, height: number, event: EnrichedEvent, seasonId?: number) => {
+      setRowOverlays((prev) => ({
+        ...prev,
+        [id]: { y, height, event, seasonId },
+      }));
+    }, []);
 
   return (
     <View style={{ position: 'relative' }}>
@@ -47,9 +51,13 @@ export default function EpisodeScrollContainer({ children, edit, hideAll, filter
         <>
           {Object.entries(rowOverlays)
             .filter(([id]) => filteredRowIds.has(id))
-            .map(([id, { y, height, node }]) => (
+            .map(([id, { y, height, event, seasonId }]) => (
               <View key={id} style={{ position: 'absolute', top: y, left: 0, height, zIndex: 5 }}>
-                {node}
+                <StickyCell
+                  event={event}
+                  seasonId={seasonId}
+                  edit={edit}
+                  isMock={event.eventId === undefined} />
               </View>
             ))}
 
