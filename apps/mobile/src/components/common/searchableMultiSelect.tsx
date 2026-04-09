@@ -136,7 +136,9 @@ export default function SearchableMultiSelect<T extends string | number>({
               value={searchText}
               onChangeText={setSearchText}
               placeholderTextColor={colors['muted-foreground']}
-            />
+              autoCorrect={false}
+              autoCapitalize='words'
+              autoComplete='off' />
           </View>
           <Button
             className='rounded-lg bg-primary px-4 py-2.5 active:opacity-80'
@@ -162,7 +164,11 @@ export default function SearchableMultiSelect<T extends string | number>({
         )}
 
         {/* Options List */}
-        <ScrollView className='max-h-64' nestedScrollEnabled showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className='max-h-64'
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps='handled'>
           {filtered.length === 0 ? (
             <View className='items-center py-8'>
               <Text className='text-muted-foreground'>{emptyMessage}</Text>
@@ -198,6 +204,7 @@ export default function SearchableMultiSelect<T extends string | number>({
                   )}
                   disabled={item.disabled}
                   onPress={() => {
+                    console.log('Toggling select for', item.value);
                     if (item.disabled) return;
                     handleToggleSelect(item.value!);
                   }}>

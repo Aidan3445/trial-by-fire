@@ -94,14 +94,17 @@ export default function SearchableSelect<T extends string | number>({
             value={searchText}
             onChangeText={setSearchText}
             placeholderTextColor={colors['muted-foreground']}
-          />
+            autoCorrect={false}
+            autoCapitalize='words'
+            autoComplete='off' />
         </View>
 
         {/* Options List */}
         <ScrollView
           className='mt-2 max-h-64'
           nestedScrollEnabled
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps='handled'>
           {filtered.length === 0 ? (
             <View className='items-center py-8'>
               <Text className='text-muted-foreground'>{emptyMessage}</Text>
