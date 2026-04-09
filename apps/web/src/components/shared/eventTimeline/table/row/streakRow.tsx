@@ -6,21 +6,20 @@ import PointsCell from '~/components/shared/eventTimeline/table/row/pointsCell';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/common/popover';
 import { PopoverArrow } from '@radix-ui/react-popover';
 import { Separator } from '~/components/common/separator';
-import { type LeagueMember } from '~/types/leagueMembers';
+import { type StreakMember } from '~/types/leagueMembers';
 import { ShieldCheck, ShieldAlert } from 'lucide-react';
 
 interface StreakRowProps {
   streakPointValue: number;
-  members: LeagueMember[];
+  streakMembers: StreakMember[];
   streaksMap: Record<number, Record<number, number>>; // memberId -> episodeNumber -> streakCount
   episodeNumber: number;
   shotInTheDarkStatus?: Record<number, { episodeNumber: number, status: 'pending' | 'saved' | 'wasted' } | null>;
-  noTribes?: boolean;
 }
 
 export default function StreakRow({
   streakPointValue,
-  members,
+  streakMembers,
   streaksMap,
   episodeNumber,
   shotInTheDarkStatus,
@@ -31,7 +30,7 @@ export default function StreakRow({
       <PointsCell points={Number(streakPointValue)} />
       <TableCell colSpan={3}>
         <div className='flex flex-wrap gap-2'>
-          {members.map(member => {
+          {streakMembers.map(({ member, castaway, tribeColor }) => {
             const shotStatus = shotInTheDarkStatus?.[member.memberId];
             const shotUsedThisEpisode = shotStatus?.episodeNumber === episodeNumber;
 
@@ -56,6 +55,13 @@ export default function StreakRow({
                     Survival Streak
                   </div>
                   <Separator className='mb-2 bg-primary/20' />
+                  {castaway && (
+                    <ColorRow
+                      className='w-full text-sm leading-none mb-2'
+                      color={tribeColor ?? '#AAAAAA'}>
+                      {castaway.shortName}
+                    </ColorRow>
+                  )}
                   <div className='text-sm'>
                     Total streak: {streaksMap[member.memberId]?.[episodeNumber] ?? 0}
                   </div>

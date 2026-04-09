@@ -1,5 +1,6 @@
 import { View, Text, Pressable } from 'react-native';
 import { useMemo, useState } from 'react';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { MoveRight } from 'lucide-react-native';
 import { cn } from '~/lib/utils';
 import { useEventLabel } from '~/hooks/helpers/useEventLabel';
@@ -19,9 +20,7 @@ interface PredictionRowProps {
   defaultOpenMisses?: boolean;
   noMembers?: boolean;
   noTribes?: boolean;
-  onRowLayout?: (
-    _id: string, _y: number, _height: number, _event: EnrichedEvent, _seasonId?: number
-  ) => void;
+  scrollX?: SharedValue<number>;
 }
 
 export default function PredictionRow({
@@ -31,7 +30,7 @@ export default function PredictionRow({
   editCol,
   noMembers,
   noTribes,
-  onRowLayout,
+  scrollX,
 }: PredictionRowProps) {
   const isBaseEvent = useMemo(
     () => prediction.event.eventSource === 'Base',
@@ -42,16 +41,39 @@ export default function PredictionRow({
 
   const [missesModalVisible, setMissesModalVisible] = useState(false);
 
+  const stickyStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: scrollX?.value ?? 0 }],
+  }));
+
   return (
     <View
-      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}
-      onLayout={(e) => {
-        const { y, height } = e.nativeEvent.layout;
-        onRowLayout?.(`pred-${event.eventId}`, y, height, event, seasonId);
-      }}>
+      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}>
+      {/* Sticky overlay — stays fixed during horizontal scroll */}
+      <Animated.View
+        style={[{
+          position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 5,
+        }, stickyStyle]}>
+        <View className={cn('h-full flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
+          {editCol && <View className='w-8' />}
+          <View className='w-40 h-full flex-row border-r border-secondary'>
+            <View className='py-2 flex-1 justify-center pr-0.5'>
+              {isBaseEvent && (
+                <Text className='text-xs text-muted-foreground'>
+                  {BaseEventFullName[event.eventName as BaseEventName]}
+                </Text>
+              )}
+              {label.split('#/').map((part, index) => (
+                <Text key={index} className='text-base text-foreground'>{part}</Text>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Animated.View>
+
+      {/* In-flow cells for layout */}
       {editCol && <View className='w-8' />}
 
-      {/* Event Name */}
+      {/* Event Name — in flow for height/width, covered by sticky overlay */}
       <View className='flex-row w-40 h-full'>
         <View className='py-2 flex-1 justify-center pr-0.5'>
           {isBaseEvent && (

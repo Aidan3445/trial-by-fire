@@ -196,10 +196,24 @@ export default function EpisodeEvents({
 
 
 
-        const castawayMatch = filters.castaway.length === 0 || event.references.some((ref) =>
-          ref.type === 'Castaway' && filters.castaway.includes(ref.id));
-        const tribeMatch = filters.tribe.length === 0 || event.references.some((ref) =>
-          ref.type === 'Tribe' && filters.tribe.includes(ref.id));
+        const castawayMatch = filters.castaway.length === 0 || event.references.some((ref) => {
+          if (ref.type === 'Castaway') return filters.castaway.includes(ref.id);
+          if (ref.type === 'Tribe') {
+            const tribeCastaways = findTribeCastaways(tribesTimeline ?? {}, eliminations ?? [], ref.id, numKey);
+            return tribeCastaways.some((cid) => filters.castaway.includes(cid));
+          }
+          return false;
+        });
+        const tribeMatch = filters.tribe.length === 0 || event.references.some((ref) => {
+          if (ref.type === 'Tribe') return filters.tribe.includes(ref.id);
+          if (ref.type === 'Castaway') {
+            // Check if this castaway belongs to a filtered tribe
+            const tribeCastaways = filters.tribe.flatMap((tribeId) =>
+              findTribeCastaways(tribesTimeline ?? {}, eliminations ?? [], tribeId, numKey));
+            return tribeCastaways.includes(ref.id);
+          }
+          return false;
+        });
         const memberMatch = filters.member.length === 0 || eventMembers.some((ref) =>
           filters.member.includes(ref));
         const eventMatch = filters.event.length === 0 || filters.event.includes(event.eventName);

@@ -1,4 +1,5 @@
 import z from 'zod';
+import { Castaway } from './castaways';
 
 export const LeagueMemberRoles = ['Owner', 'Admin', 'Member'] as const;
 export const DISPLAY_NAME_MIN_LENGTH = 2;
@@ -14,6 +15,12 @@ export type LeagueMember = {
   draftOrder: number;
   loggedIn: boolean;
 };
+
+export type StreakMember = {
+  member: LeagueMember;
+  castaway: Castaway | null;
+  tribeColor: string | null;
+}
 
 export type LeagueMemberInsert = {
   displayName: string;

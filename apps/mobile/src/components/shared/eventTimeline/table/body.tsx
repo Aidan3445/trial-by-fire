@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { useMemo } from 'react';
+import { type SharedValue } from 'react-native-reanimated';
 import {
   type EventWithReferencesAndPredOnly,
   type EpisodeEventsProps,
@@ -19,10 +20,7 @@ interface EpisodeEventsTableBodyProps extends EpisodeEventsProps {
   predictionEnrichmentEvents?: EventWithReferencesAndPredOnly[];
   noMembers: boolean;
   noTribes?: boolean;
-  onSectionLayout?: (_label: string, _y: number) => void;
-  onRowLayout: (
-    _id: string, _y: number, _height: number, _event: EnrichedEvent, _seasonId?: number
-  ) => void;
+  scrollX: SharedValue<number>;
 }
 
 export default function EpisodeEventsTableBody({
@@ -37,8 +35,7 @@ export default function EpisodeEventsTableBody({
   filters,
   noMembers,
   noTribes,
-  onSectionLayout,
-  onRowLayout,
+  scrollX,
 }: EpisodeEventsTableBodyProps) {
   const enrichedEvents = useEnrichEvents(seasonData, filteredEvents, leagueData);
   const enrichedMockEvents = useEnrichEvents(seasonData, mockEvents ?? [], leagueData);
@@ -104,7 +101,7 @@ export default function EpisodeEventsTableBody({
           noTribes={noTribes}
           noMembers={noMembers}
           label='Events'
-          onSectionLayout={onSectionLayout} />
+          scrollX={scrollX} />
       )}
 
       {enrichedMockEvents.map((mock, idx) => (
@@ -118,7 +115,7 @@ export default function EpisodeEventsTableBody({
           noTribes={noTribes}
           noMembers={noMembers}
           seasonId={seasonData.season.seasonId}
-          onRowLayout={onRowLayout} />
+          scrollX={scrollX} />
       ))}
 
       {baseEventsToUse
@@ -131,7 +128,7 @@ export default function EpisodeEventsTableBody({
             noTribes={noTribes}
             noMembers={noMembers}
             seasonId={seasonData.season.seasonId}
-            onRowLayout={onRowLayout} />
+            scrollX={scrollX} />
         ))}
 
       {customEvents.length > 0 && (
@@ -141,7 +138,7 @@ export default function EpisodeEventsTableBody({
           noTribes={noTribes}
           noMembers={noMembers}
           label='Custom Events'
-          onSectionLayout={onSectionLayout} />
+          scrollX={scrollX} />
       )}
       {customEvents
         .filter((event) => !filteredEvents.some((fe) => fe.eventId === event.eventId && fe.predOnly))
@@ -153,7 +150,7 @@ export default function EpisodeEventsTableBody({
             noPoints={!leagueData}
             noTribes={noTribes}
             noMembers={noMembers}
-            onRowLayout={onRowLayout} />
+            scrollX={scrollX} />
         ))}
 
       {enrichedPredictions.length + enrichedMockPredictions.length > 0 && (
@@ -164,7 +161,7 @@ export default function EpisodeEventsTableBody({
           noMembers={noMembers}
           noNotes
           label='Predictions'
-          onSectionLayout={onSectionLayout} />
+          scrollX={scrollX} />
       )}
       {enrichedMockPredictions.map((mock, idx) => (
         <PredictionRow
@@ -174,7 +171,7 @@ export default function EpisodeEventsTableBody({
           editCol={edit}
           noMembers={noMembers}
           noTribes={noTribes}
-          onRowLayout={onRowLayout} />
+          scrollX={scrollX} />
       ))}
       {enrichedPredictions.map((prediction, idx) => (
         <PredictionRow
@@ -190,7 +187,7 @@ export default function EpisodeEventsTableBody({
                 filters.castaway.includes(miss.reference.id)) ||
               (miss.reference?.type === 'Tribe' && filters.tribe.includes(miss.reference.id))
           )}
-          onRowLayout={onRowLayout} />
+          scrollX={scrollX} />
       ))}
     </View>
   );
