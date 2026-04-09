@@ -93,9 +93,11 @@ export default function EpisodeEventsTableBody({
     );
   }
 
+  const baseEventsToUse = baseEvents.filter((event) => !filteredEvents.some((fe) => fe.eventId === event.eventId && fe.predOnly));
+
   return (
     <View className='min-w-full'>
-      {enrichedEvents.length + enrichedMockEvents.length > 0 && (
+      {baseEventsToUse.length + enrichedMockEvents.length > 0 && (
         <HeaderRow
           edit={edit}
           leagueData={!!leagueData}
@@ -119,8 +121,7 @@ export default function EpisodeEventsTableBody({
           onRowLayout={onRowLayout} />
       ))}
 
-      {baseEvents
-        .filter((event) => !filteredEvents.some((fe) => fe.eventId === event.eventId && fe.predOnly))
+      {baseEventsToUse
         .map((event, idx) => (
           <EventRow
             key={`base-${idx}`}

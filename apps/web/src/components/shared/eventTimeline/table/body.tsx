@@ -99,14 +99,18 @@ export default function EpisodeEventsTableBody({
     return acc;
   }, {} as Record<number, LeagueMember[]>);
 
+  const baseEventsToUse = baseEvents
+    .filter(event => !filteredEvents.some(fe => fe.eventId === event.eventId && fe.predOnly))
+    .sort((a, b) => eventSortOrder(a.eventName) - eventSortOrder(b.eventName));
+
   return (
     <>
       {enrichedMockEvents.map((mock, index) =>
         <EventRow key={index} className='bg-yellow-500' event={mock} editCol={edit} isMock noMembers={noMembers} noPoints={!leagueData} />
       )}
-      {index > 0 &&
+      {index > 0 && baseEventsToUse.length + enrichedMockEvents.length > 0 &&
         <TableRow className='bg-white border-b-2 border-primary/20 hover:bg-white/80 px-4 gap-4 items-center text-nowrap'>
-          {edit && (
+          {edit && (baseEventsToUse.length + enrichedMockEvents.length > 0 &&
             <TableHead className='sticky left-0 bg-white w-0 font-bold uppercase text-xs tracking-wider'>
               <div className='sm:border-r-none border-r-2 border-r-secondary h-full place-content-center'>
                 Edit
@@ -139,9 +143,7 @@ export default function EpisodeEventsTableBody({
           </TableHead>
         </TableRow>
       }
-      {baseEvents
-        .filter(event => !filteredEvents.some(fe => fe.eventId === event.eventId && fe.predOnly))
-        .sort((a, b) => eventSortOrder(a.eventName) - eventSortOrder(b.eventName))
+      {baseEventsToUse
         .map((event, index) => (
           <EventRow key={index} event={event} editCol={edit} noMembers={noMembers} noPoints={!leagueData} />
         ))}
