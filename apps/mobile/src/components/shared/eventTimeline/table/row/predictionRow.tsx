@@ -1,16 +1,16 @@
 import { View, Text, Pressable } from 'react-native';
 import { useMemo, useState } from 'react';
-import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { MoveRight } from 'lucide-react-native';
 import { cn } from '~/lib/utils';
 import { useEventLabel } from '~/hooks/helpers/useEventLabel';
 import { BaseEventFullName } from '~/lib/events';
-import { type EnrichedEvent, type BaseEventName, type EnrichedPrediction } from '~/types/events';
+import { type BaseEventName, type EnrichedPrediction } from '~/types/events';
 import PointsCell, { ColoredPoints } from '~/components/shared/eventTimeline/table/row/pointsCell';
 import ColorRow from '~/components/shared/colorRow';
 import CastawayModal from '~/components/shared/castaways/castawayModal';
 import MarqueeText from '~/components/common/marquee';
 import Modal from '~/components/common/modal';
+import { StickyCell } from '~/components/shared/eventTimeline/table/stickyTable';
 
 interface PredictionRowProps {
   className?: string;
@@ -20,17 +20,14 @@ interface PredictionRowProps {
   defaultOpenMisses?: boolean;
   noMembers?: boolean;
   noTribes?: boolean;
-  scrollX?: SharedValue<number>;
 }
 
 export default function PredictionRow({
   className,
   prediction,
-  seasonId,
   editCol,
   noMembers,
   noTribes,
-  scrollX,
 }: PredictionRowProps) {
   const isBaseEvent = useMemo(
     () => prediction.event.eventSource === 'Base',
@@ -41,40 +38,10 @@ export default function PredictionRow({
 
   const [missesModalVisible, setMissesModalVisible] = useState(false);
 
-  const stickyStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: scrollX?.value ?? 0 }],
-  }));
-
-  return (
-    <View
-      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}>
-      {/* Sticky overlay — stays fixed during horizontal scroll */}
-      <Animated.View
-        style={[{
-          position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 5,
-        }, stickyStyle]}>
-        <View className={cn('h-full flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
-          {editCol && <View className='w-8' />}
-          <View className='w-40 h-full flex-row border-r border-secondary'>
-            <View className='py-2 flex-1 justify-center pr-0.5'>
-              {isBaseEvent && (
-                <Text className='text-xs text-muted-foreground'>
-                  {BaseEventFullName[event.eventName as BaseEventName]}
-                </Text>
-              )}
-              {label.split('#/').map((part, index) => (
-                <Text key={index} className='text-base text-foreground'>{part}</Text>
-              ))}
-            </View>
-          </View>
-        </View>
-      </Animated.View>
-
-      {/* In-flow cells for layout */}
+  const stickyContent = (
+    <View className={cn('flex-1 flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
       {editCol && <View className='w-8' />}
-
-      {/* Event Name — in flow for height/width, covered by sticky overlay */}
-      <View className='flex-row w-40 h-full'>
+      <View className='w-40 h-full flex-row border-r border-secondary'>
         <View className='py-2 flex-1 justify-center pr-0.5'>
           {isBaseEvent && (
             <Text className='text-xs text-muted-foreground'>
@@ -86,6 +53,13 @@ export default function PredictionRow({
           ))}
         </View>
       </View>
+    </View>
+  );
+
+  return (
+    <View
+      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}>
+      <StickyCell>{stickyContent}</StickyCell>
 
       {/* Points */}
       <PointsCell points={prediction.points} />

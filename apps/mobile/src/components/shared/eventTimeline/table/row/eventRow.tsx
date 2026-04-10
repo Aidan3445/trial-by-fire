@@ -1,6 +1,5 @@
 import { View, Text } from 'react-native';
 import { useMemo, useState } from 'react';
-import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { cn } from '~/lib/utils';
 import ColorRow from '~/components/shared/colorRow';
 import PointsCell from '~/components/shared/eventTimeline/table/row/pointsCell';
@@ -13,6 +12,7 @@ import CastawayModal from '~/components/shared/castaways/castawayModal';
 import Modal from '~/components/common/modal';
 import MarqueeText from '~/components/common/marquee';
 import Button from '~/components/common/button';
+import { StickyCell } from '~/components/shared/eventTimeline/table/stickyTable';
 
 interface EventRowProps {
   className?: string;
@@ -23,7 +23,6 @@ interface EventRowProps {
   noTribes?: boolean;
   noMembers?: boolean;
   noPoints?: boolean;
-  scrollX?: SharedValue<number>;
 }
 
 export default function EventRow({
@@ -35,7 +34,6 @@ export default function EventRow({
   noTribes,
   noMembers,
   noPoints,
-  scrollX,
 }: EventRowProps) {
   const isBaseEvent = useMemo(() => event.eventSource === 'Base', [event.eventSource]);
   const label = useEventLabel(event.eventName, isBaseEvent, event.label);
@@ -52,47 +50,17 @@ export default function EventRow({
     setSecondaryModalVisible(true);
   };
 
-  const stickyStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: scrollX?.value ?? 0 }],
-  }));
-
-  return (
-    <View
-      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}>
-      {/* Sticky overlay — stays fixed during horizontal scroll */}
-      <Animated.View
-        style={[{
-          position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 5,
-        }, stickyStyle]}>
-        <View className={cn('h-full flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
-          {edit && (
-            isMock ? (
-              <View className='w-8' />
-            ) : (
-              <View className='w-8'>
-                <EditEvent event={event} overrideSeasonId={seasonId} />
-              </View>
-            ))}
-          <View className='w-40 h-full flex-row border-r border-secondary'>
-            <View className='py-2 flex-1 justify-center pr-0.5'>
-              {isBaseEvent && (
-                <Text className='text-xs text-muted-foreground'>
-                  {BaseEventFullName[event.eventName as BaseEventName]}
-                </Text>
-              )}
-              {label.split('#/').map((part, index) => (
-                <Text key={index} className='text-base text-foreground'>{part}</Text>
-              ))}
-            </View>
+  const stickyContent = (
+    <View className={cn('flex-1 flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
+      {edit && (
+        isMock ? (
+          <View className='w-8' />
+        ) : (
+          <View className='w-8'>
+            <EditEvent event={event} overrideSeasonId={seasonId} />
           </View>
-        </View>
-      </Animated.View>
-
-      {/* Edit Column — in flow for width, covered by sticky overlay */}
-      {edit ? <View className='w-8' /> : null}
-
-      {/* Event Name — in flow for height/width, covered by sticky overlay */}
-      <View className='w-40 h-full'>
+        ))}
+      <View className='w-40 h-full flex-row border-r border-secondary'>
         <View className='py-2 flex-1 justify-center pr-0.5'>
           {isBaseEvent && (
             <Text className='text-xs text-muted-foreground'>
@@ -104,7 +72,13 @@ export default function EventRow({
           ))}
         </View>
       </View>
+    </View>
+  );
 
+  return (
+    <View
+      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}>
+      <StickyCell>{stickyContent}</StickyCell>
 
       {/* Points */}
       {!noPoints && <PointsCell points={event.points} />}

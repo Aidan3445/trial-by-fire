@@ -5,7 +5,7 @@ import { cn, findTribeCastaways } from '~/lib/utils';
 import { type Prediction, type EventWithReferences } from '~/types/events';
 import { type SeasonsDataQuery } from '~/types/seasons';
 import type { LeagueData } from '~/components/shared/eventTimeline/filters';
-import EpisodeScrollContainer from '~/components/shared/eventTimeline/table/scrollContainer';
+import { StickyScrollView } from '~/components/shared/eventTimeline/table/stickyTable';
 import StreakRow from '~/components/shared/eventTimeline/table/row/streakRow';
 import { type StreakMember } from '~/types/leagueMembers';
 
@@ -311,24 +311,21 @@ export default function EpisodeEvents({
               </View>
             )}
 
-            <EpisodeScrollContainer>
-              {(scrollX) => (
-                <EpisodeEventsTableBody
-                  seasonId={episode.seasonId}
-                  episodeNumber={episode.episodeNumber}
-                  mockEvents={mockEvents}
-                  filteredEvents={filteredEvents[episode.episodeNumber] ?? []}
-                  filteredPredictions={filteredPredictionsWithPredOnly[episode.episodeNumber] ?? []}
-                  predictionEnrichmentEvents={enrichmentOnlyEvents}
-                  edit={edit}
-                  noTribes={noTribes}
-                  filters={filters}
-                  noMembers={noMembers}
-                  seasonData={seasonData}
-                  leagueData={leagueData}
-                  scrollX={scrollX} />
-              )}
-            </EpisodeScrollContainer>
+            <StickyScrollView>
+              <EpisodeEventsTableBody
+                seasonId={episode.seasonId}
+                episodeNumber={episode.episodeNumber}
+                mockEvents={mockEvents}
+                filteredEvents={filteredEvents[episode.episodeNumber] ?? []}
+                filteredPredictions={filteredPredictionsWithPredOnly[episode.episodeNumber] ?? []}
+                predictionEnrichmentEvents={enrichmentOnlyEvents}
+                edit={edit}
+                noTribes={noTribes}
+                filters={filters}
+                noMembers={noMembers}
+                seasonData={seasonData}
+                leagueData={leagueData} />
+            </StickyScrollView>
 
             {!edit && Object.keys(streakGroupsByEpisode[episode.episodeNumber] ?? {}).length > 0 && (
               <>

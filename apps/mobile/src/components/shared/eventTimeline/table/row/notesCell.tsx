@@ -3,6 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { ScrollText, ExternalLink } from 'lucide-react-native';
 import Modal from '~/components/common/modal';
+import { colors } from '~/lib/colors';
 
 interface NotesCellProps {
   notes: string[] | null;
@@ -27,7 +28,7 @@ export default function NotesCell({ notes }: NotesCellProps) {
   return (
     <View className='w-20 items-end justify-center'>
       <Pressable onPress={() => setModalVisible(true)} className='active:opacity-50'>
-        <ScrollText size={32} className='text-primary' />
+        <ScrollText size={32} color={colors.primary} />
       </Pressable>
 
       <Modal visible={modalVisible} onClose={() => setModalVisible(false)}>
