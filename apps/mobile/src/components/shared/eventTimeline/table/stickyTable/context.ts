@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react';
-import { type SharedValue } from 'react-native-reanimated';
+import { type Animated } from 'react-native';
 
 interface StickyScrollContextType {
-  scrollX: SharedValue<number>;
+  scrollX: Animated.Value;
 }
 
 export const StickyScrollContext = createContext<StickyScrollContextType | null>(null);

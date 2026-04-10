@@ -1,6 +1,5 @@
 import { type ReactNode } from 'react';
-import { View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { View, Animated } from 'react-native';
 import { useStickyScroll } from '~/components/shared/eventTimeline/table/stickyTable/context';
 
 interface StickyCellProps {
@@ -25,25 +24,20 @@ export default function StickyCell({
 }: StickyCellProps) {
   const { scrollX } = useStickyScroll();
 
-  const stickyStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: scrollX.value }],
-  }));
-
   return (
     <>
       {/* Absolute overlay — stays fixed during horizontal scroll */}
       <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            zIndex,
-            display: 'flex',
-          },
-          stickyStyle,
-        ]}
+        renderToHardwareTextureAndroid
+        shouldRasterizeIOS
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex,
+          transform: [{ translateX: scrollX }],
+        }}
         className={className}>
         {children}
       </Animated.View>

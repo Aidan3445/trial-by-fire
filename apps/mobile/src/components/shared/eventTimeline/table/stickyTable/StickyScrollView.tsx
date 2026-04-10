@@ -1,9 +1,5 @@
-import { type ReactNode, useMemo } from 'react';
-import { View } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedScrollHandler,
-} from 'react-native-reanimated';
+import { type ReactNode, useRef, useMemo } from 'react';
+import { View, Animated } from 'react-native';
 import { StickyScrollContext } from '~/components/shared/eventTimeline/table/stickyTable/context';
 
 interface StickyScrollViewProps {
@@ -11,13 +7,16 @@ interface StickyScrollViewProps {
 }
 
 export default function StickyScrollView({ children }: StickyScrollViewProps) {
-  const scrollX = useSharedValue(0);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-    },
-  });
+  const handleScroll = useMemo(
+    () =>
+      Animated.event(
+        [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+        { useNativeDriver: true }
+      ),
+    [scrollX]
+  );
 
   const contextValue = useMemo(() => ({ scrollX }), [scrollX]);
 
@@ -29,8 +28,8 @@ export default function StickyScrollView({ children }: StickyScrollViewProps) {
         bounces={false}
         alwaysBounceVertical={false}
         alwaysBounceHorizontal={false}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}>
+        onScroll={handleScroll}
+        scrollEventThrottle={1}>
         <StickyScrollContext.Provider value={contextValue}>
           <View className='min-w-full'>
             {children}
