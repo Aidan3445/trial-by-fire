@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from 'react-native';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { MoveRight } from 'lucide-react-native';
 import { cn } from '~/lib/utils';
 import { useEventLabel } from '~/hooks/helpers/useEventLabel';
@@ -10,15 +10,16 @@ import ColorRow from '~/components/shared/colorRow';
 import CastawayModal from '~/components/shared/castaways/castawayModal';
 import MarqueeText from '~/components/common/marquee';
 import Modal from '~/components/common/modal';
+import { StickyCell } from '~/components/shared/eventTimeline/table/stickyTable';
 
 interface PredictionRowProps {
   className?: string;
   prediction: EnrichedPrediction;
+  seasonId?: number;
   editCol?: boolean;
   defaultOpenMisses?: boolean;
   noMembers?: boolean;
   noTribes?: boolean;
-  onRowLayout?: (_id: string, _y: number, _height: number, _node: ReactNode) => void;
 }
 
 export default function PredictionRow({
@@ -27,7 +28,6 @@ export default function PredictionRow({
   editCol,
   noMembers,
   noTribes,
-  onRowLayout,
 }: PredictionRowProps) {
   const isBaseEvent = useMemo(
     () => prediction.event.eventSource === 'Base',
@@ -38,9 +38,10 @@ export default function PredictionRow({
 
   const [missesModalVisible, setMissesModalVisible] = useState(false);
 
-  const stickyCell = useMemo<ReactNode>(() => (
-    <View className={cn('h-full flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
-      <View className='w-40 h-full border-r border-secondary'>
+  const stickyContent = (
+    <View className={cn('flex-1 flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
+      {editCol && <View className='w-8' />}
+      <View className='w-40 h-full flex-row border-r border-secondary'>
         <View className='py-2 flex-1 justify-center pr-0.5'>
           {isBaseEvent && (
             <Text className='text-xs text-muted-foreground'>
@@ -53,30 +54,12 @@ export default function PredictionRow({
         </View>
       </View>
     </View>
-  ), [className, isBaseEvent, event.eventName, label]);
+  );
 
   return (
     <View
-      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}
-      onLayout={(e) => {
-        const { y, height } = e.nativeEvent.layout;
-        onRowLayout?.(`pred-${event.eventId}`, y, height, stickyCell);
-      }}>
-      {editCol && <View className='w-8' />}
-
-      {/* Event Name */}
-      <View className='flex-row w-40 h-full'>
-        <View className='py-2 flex-1 justify-center pr-0.5'>
-          {isBaseEvent && (
-            <Text className='text-xs text-muted-foreground'>
-              {BaseEventFullName[event.eventName as BaseEventName]}
-            </Text>
-          )}
-          {label.split('#/').map((part, index) => (
-            <Text key={index} className='text-base text-foreground'>{part}</Text>
-          ))}
-        </View>
-      </View>
+      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}>
+      <StickyCell>{stickyContent}</StickyCell>
 
       {/* Points */}
       <PointsCell points={prediction.points} />

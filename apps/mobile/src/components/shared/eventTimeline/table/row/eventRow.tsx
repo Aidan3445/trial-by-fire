@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { cn } from '~/lib/utils';
 import ColorRow from '~/components/shared/colorRow';
 import PointsCell from '~/components/shared/eventTimeline/table/row/pointsCell';
@@ -12,6 +12,7 @@ import CastawayModal from '~/components/shared/castaways/castawayModal';
 import Modal from '~/components/common/modal';
 import MarqueeText from '~/components/common/marquee';
 import Button from '~/components/common/button';
+import { StickyCell } from '~/components/shared/eventTimeline/table/stickyTable';
 
 interface EventRowProps {
   className?: string;
@@ -22,7 +23,6 @@ interface EventRowProps {
   noTribes?: boolean;
   noMembers?: boolean;
   noPoints?: boolean;
-  onRowLayout?: (_id: string, _y: number, _height: number, _node: ReactNode) => void;
 }
 
 export default function EventRow({
@@ -34,7 +34,6 @@ export default function EventRow({
   noTribes,
   noMembers,
   noPoints,
-  onRowLayout,
 }: EventRowProps) {
   const isBaseEvent = useMemo(() => event.eventSource === 'Base', [event.eventSource]);
   const label = useEventLabel(event.eventName, isBaseEvent, event.label);
@@ -51,10 +50,8 @@ export default function EventRow({
     setSecondaryModalVisible(true);
   };
 
-  // Sticky overlay cell — rendered outside the ScrollView by EpisodeScrollContainer.
-  // Uses h-full so it fills the measured height the container provides.
-  const stickyCell = useMemo<ReactNode>(() => (
-    <View className={cn('h-full flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
+  const stickyContent = (
+    <View className={cn('flex-1 flex-row items-center gap-4 border-b border-primary/10 pl-4', className ?? 'bg-card')}>
       {edit && (
         isMock ? (
           <View className='w-8' />
@@ -76,40 +73,12 @@ export default function EventRow({
         </View>
       </View>
     </View>
-  ), [className, edit, isMock, event, seasonId, isBaseEvent, label]);
+  );
 
   return (
     <View
-      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}
-      onLayout={(e) => {
-        const { y, height } = e.nativeEvent.layout;
-        onRowLayout?.(`event-${event.eventId}`, y, height, stickyCell);
-      }}>
-      {/* Edit Column */}
-      {edit ? (
-        isMock ? (
-          <View className='w-8' />
-        ) : (
-          <View className='w-8'>
-            <EditEvent event={event} overrideSeasonId={seasonId} />
-          </View>
-        )
-      ) : null}
-
-      {/* Event Name */}
-      <View className='w-40 h-full'>
-        <View className='py-2 flex-1 justify-center pr-0.5'>
-          {isBaseEvent && (
-            <Text className='text-xs text-muted-foreground'>
-              {BaseEventFullName[event.eventName as BaseEventName]}
-            </Text>
-          )}
-          {label.split('#/').map((part, index) => (
-            <Text key={index} className='text-base text-foreground'>{part}</Text>
-          ))}
-        </View>
-      </View>
-
+      className={cn('flex-row items-center gap-4 border-b border-primary/10 bg-card px-4 py-2', className)}>
+      <StickyCell>{stickyContent}</StickyCell>
 
       {/* Points */}
       {!noPoints && <PointsCell points={event.points} />}

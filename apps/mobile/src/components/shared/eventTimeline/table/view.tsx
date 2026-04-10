@@ -5,9 +5,9 @@ import { cn, findTribeCastaways } from '~/lib/utils';
 import { type Prediction, type EventWithReferences } from '~/types/events';
 import { type SeasonsDataQuery } from '~/types/seasons';
 import type { LeagueData } from '~/components/shared/eventTimeline/filters';
-import EpisodeScrollContainer from '~/components/shared/eventTimeline/table/scrollContainer';
+import { StickyScrollView } from '~/components/shared/eventTimeline/table/stickyTable';
 import StreakRow from '~/components/shared/eventTimeline/table/row/streakRow';
-import { type LeagueMember } from '~/types/leagueMembers';
+import { type StreakMember } from '~/types/leagueMembers';
 
 export interface EpisodeEventsProps {
   episodeNumber: number;
@@ -173,8 +173,23 @@ export default function EpisodeEvents({
             if (event.references.some((ref) => ref.type === 'Castaway' && picks[numKey] === ref.id))
               eventMembers.push(Number(memberId));
           });
-          const castawayMatch = filters.castaway.length === 0 || event.references.some((ref) => ref.type === 'Castaway' && filters.castaway.includes(ref.id));
-          const tribeMatch = filters.tribe.length === 0 || event.references.some((ref) => ref.type === 'Tribe' && filters.tribe.includes(ref.id));
+          const castawayMatch = filters.castaway.length === 0 || event.references.some((ref) => {
+            if (ref.type === 'Castaway') return filters.castaway.includes(ref.id);
+            if (ref.type === 'Tribe') {
+              const tribeCastaways = findTribeCastaways(tribesTimeline ?? {}, eliminations ?? [], ref.id, numKey);
+              return tribeCastaways.some((cid) => filters.castaway.includes(cid));
+            }
+            return false;
+          });
+          const tribeMatch = filters.tribe.length === 0 || event.references.some((ref) => {
+            if (ref.type === 'Tribe') return filters.tribe.includes(ref.id);
+            if (ref.type === 'Castaway') {
+              const tribeCastaways = filters.tribe.flatMap((tribeId) =>
+                findTribeCastaways(tribesTimeline ?? {}, eliminations ?? [], tribeId, numKey));
+              return tribeCastaways.includes(ref.id);
+            }
+            return false;
+          });
           const memberMatch = filters.member.length === 0 || eventMembers.some((ref) => filters.member.includes(ref));
           const eventMatch = filters.event.length === 0 || filters.event.includes(event.eventName);
           const keep = castawayMatch && tribeMatch && memberMatch && eventMatch;
@@ -211,47 +226,76 @@ export default function EpisodeEvents({
 
   const noMembers = useMemo(() => !selectionTimeline || !league, [selectionTimeline, league]);
 
-  const filteredRowIds = useMemo(() => {
-    const ids = new Set<string>();
-    Object.values(filteredEvents).forEach((events) =>
-      events?.forEach((event) => {
-        if (filters.event.length === 0 || filters.event.includes(event.eventName)) {
-          ids.add(`event-${event.eventId}`);
-        }
-      })
-    );
-    Object.values(filteredPredictions).forEach((predictions) =>
-      predictions?.forEach((prediction) => {
-        const event = allEvents[prediction.eventEpisodeNumber ?? -1]?.find(
-          (e) => e.eventName === prediction.eventName
-        );
-        if (event && (filters.event.length === 0 || filters.event.includes(event.eventName))) {
-          ids.add(`pred-${prediction.eventId}`);
-        }
-      })
-    );
-    return ids;
-  }, [allEvents, filteredEvents, filteredPredictions, filters.event]);
+  const streakGroupsByEpisode = useMemo(() => {
+    const { tribesTimeline: tt, eliminations: el, tribes, castaways } = seasonData;
+    const memberCastaways = leagueData?.selectionTimeline?.memberCastaways;
+    const tribesById = new Map((tribes ?? []).map((t) => [t.tribeId, t]));
+    const castawaysById = new Map((castaways ?? []).map((c) => [c.castawayId, c]));
 
-  const streakGroups = Object.entries(leagueData?.streaks ?? {}).reduce(
-    (acc, [memberId, episodeStreaks]) => {
-      const streakValue = episodeStreaks[episodeNumber] ?? 0;
-      if (streakValue > 0) {
-        const mid = Number(memberId);
-        const member = leagueData?.leagueMembers?.members.find((m) => m.memberId === mid);
-        if (member) {
-          const streakPointValue = Math.min(
-            streakValue,
-            leagueData?.leagueSettings?.survivalCap ?? streakValue
-          );
-          acc[streakPointValue] ??= [];
-          acc[streakPointValue].push(member);
+    const findCastawayTribeColor = (castawayId: number, epNum: number): string | null => {
+      if (!tt) return null;
+      const timeline = Object.entries(tt)
+        .filter(([ep]) => parseInt(ep) <= epNum)
+        .sort((a, b) => parseInt(b[0]) - parseInt(a[0]));
+      for (const [, tribesInEp] of timeline) {
+        for (const [tribeIdStr, members] of Object.entries(tribesInEp)) {
+          if (members.includes(castawayId)) {
+            return tribesById.get(parseInt(tribeIdStr))?.tribeColor ?? null;
+          }
         }
       }
-      return acc;
-    },
-    {} as Record<number, LeagueMember[]>
-  );
+      return null;
+    };
+
+    const buildGroupsForEpisode = (epNum: number): Record<number, StreakMember[]> => {
+      const groups: Record<number, StreakMember[]> = {};
+
+      Object.entries(leagueData?.streaks ?? {}).forEach(([memberId, episodeStreaks]) => {
+        const streakValue = episodeStreaks[epNum] ?? 0;
+        if (streakValue <= 0) return;
+
+        const mid = Number(memberId);
+        const member = leagueData?.leagueMembers?.members.find((m) => m.memberId === mid);
+        if (!member) return;
+
+        const castawaySelections = memberCastaways?.[mid];
+        const selectionLength = castawaySelections?.length ?? 0;
+        const castawayId = castawaySelections?.[Math.min(selectionLength - 1, epNum)] ?? null;
+        const castaway = castawayId ? castawaysById.get(castawayId) ?? null : null;
+        const tribeColor = castawayId ? findCastawayTribeColor(castawayId, epNum) : null;
+
+        if (filters.member.length > 0 && !filters.member.includes(mid)) return;
+        if (filters.castaway.length > 0) {
+          if (!castawayId || !filters.castaway.includes(castawayId)) return;
+        }
+        if (filters.tribe.length > 0 && castawayId) {
+          const memberInFilteredTribe = filters.tribe.some((tribeId) => {
+            const tribeCastaways = findTribeCastaways(tt ?? {}, el ?? [], tribeId, epNum);
+            return tribeCastaways.includes(castawayId);
+          });
+          if (!memberInFilteredTribe) return;
+        }
+
+        const streakPointValue = Math.min(
+          streakValue,
+          leagueData?.leagueSettings?.survivalCap ?? streakValue
+        );
+        groups[streakPointValue] ??= [];
+        groups[streakPointValue].push({ member, castaway: castaway ?? null, tribeColor });
+      });
+
+      return groups;
+    };
+
+    const result: Record<number, Record<number, StreakMember[]>> = {};
+    const episodeNumbers = episodeNumber === -1
+      ? (episodes ?? []).map((ep) => ep.episodeNumber)
+      : [episodeNumber];
+    for (const epNum of episodeNumbers) {
+      result[epNum] = buildGroupsForEpisode(epNum);
+    }
+    return result;
+  }, [episodeNumber, episodes, filters.castaway, filters.member, filters.tribe, leagueData, seasonData]);
 
   return (
     <View className={cn('bg-card', className)}>
@@ -267,30 +311,23 @@ export default function EpisodeEvents({
               </View>
             )}
 
-            <EpisodeScrollContainer
-              edit={edit}
-              hideAll={filteredEvents[episode.episodeNumber]?.length === 0 && filteredPredictions[episode.episodeNumber]?.length === 0}
-              filteredRowIds={filteredRowIds}>
-              {(onSectionLayout, onRowLayout) => (
-                <EpisodeEventsTableBody
-                  seasonId={episode.seasonId}
-                  episodeNumber={episode.episodeNumber}
-                  mockEvents={mockEvents}
-                  filteredEvents={filteredEvents[episode.episodeNumber] ?? []}
-                  filteredPredictions={filteredPredictionsWithPredOnly[episode.episodeNumber] ?? []}
-                  predictionEnrichmentEvents={enrichmentOnlyEvents}
-                  edit={edit}
-                  noTribes={noTribes}
-                  filters={filters}
-                  noMembers={noMembers}
-                  seasonData={seasonData}
-                  leagueData={leagueData}
-                  onSectionLayout={onSectionLayout}
-                  onRowLayout={onRowLayout} />
-              )}
-            </EpisodeScrollContainer>
+            <StickyScrollView>
+              <EpisodeEventsTableBody
+                seasonId={episode.seasonId}
+                episodeNumber={episode.episodeNumber}
+                mockEvents={mockEvents}
+                filteredEvents={filteredEvents[episode.episodeNumber] ?? []}
+                filteredPredictions={filteredPredictionsWithPredOnly[episode.episodeNumber] ?? []}
+                predictionEnrichmentEvents={enrichmentOnlyEvents}
+                edit={edit}
+                noTribes={noTribes}
+                filters={filters}
+                noMembers={noMembers}
+                seasonData={seasonData}
+                leagueData={leagueData} />
+            </StickyScrollView>
 
-            {!edit && Object.keys(streakGroups).length > 0 && (
+            {!edit && Object.keys(streakGroupsByEpisode[episode.episodeNumber] ?? {}).length > 0 && (
               <>
                 <View
                   className='w-full bg-white pl-4 justify-center border-b-2 border-primary/20'
@@ -301,15 +338,15 @@ export default function EpisodeEvents({
                     Survival Streaks
                   </Text>
                 </View>
-                {Object.entries(streakGroups)
+                {Object.entries(streakGroupsByEpisode[episode.episodeNumber] ?? {})
                   .sort(([a], [b]) => Number(b) - Number(a))
-                  .map(([streakPointValue, members]) => (
+                  .map(([streakPointValue, streakMembers]) => (
                     <StreakRow
                       key={streakPointValue}
                       streakPointValue={Number(streakPointValue)}
-                      members={members}
+                      streakMembers={streakMembers}
                       streaksMap={leagueData!.streaks!}
-                      episodeNumber={episodeNumber}
+                      episodeNumber={episode.episodeNumber}
                       shotInTheDarkStatus={leagueData?.shotInTheDarkStatus} />
                   ))}
               </>

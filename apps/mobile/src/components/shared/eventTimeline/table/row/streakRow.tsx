@@ -1,14 +1,14 @@
 import { View, Text, Pressable } from 'react-native';
 import { useState } from 'react';
 import { ShieldCheck, ShieldAlert } from 'lucide-react-native';
-import { type LeagueMember } from '~/types/leagueMembers';
+import { type StreakMember } from '~/types/leagueMembers';
 import ColorRow from '~/components/shared/colorRow';
 import PointsCell from '~/components/shared/eventTimeline/table/row/pointsCell';
 import Modal from '~/components/common/modal';
 
 interface StreakRowProps {
   streakPointValue: number;
-  members: LeagueMember[];
+  streakMembers: StreakMember[];
   streaksMap: Record<number, Record<number, number>>; // memberId -> episodeNumber -> streakCount
   episodeNumber: number;
   shotInTheDarkStatus?: Record<
@@ -19,21 +19,21 @@ interface StreakRowProps {
 
 export default function StreakRow({
   streakPointValue,
-  members,
+  streakMembers,
   streaksMap,
   episodeNumber,
   shotInTheDarkStatus,
 }: StreakRowProps) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<LeagueMember | null>(null);
+  const [selectedStreakMember, setSelectedStreakMember] = useState<StreakMember | null>(null);
 
-  const openMemberModal = (member: LeagueMember) => {
-    setSelectedMember(member);
+  const openMemberModal = (streakMember: StreakMember) => {
+    setSelectedStreakMember(streakMember);
     setModalVisible(true);
   };
 
-  const selectedShotStatus = selectedMember
-    ? shotInTheDarkStatus?.[selectedMember.memberId]
+  const selectedShotStatus = selectedStreakMember
+    ? shotInTheDarkStatus?.[selectedStreakMember.member.memberId]
     : null;
   const selectedShotUsedThisEpisode = selectedShotStatus?.episodeNumber === episodeNumber;
 
@@ -44,12 +44,12 @@ export default function StreakRow({
 
       {/* Members */}
       <View className='w-[75vw] flex-row flex-wrap gap-2'>
-        {members.map((member) => {
+        {streakMembers.map(({ member, castaway, tribeColor }) => {
           const shotStatus = shotInTheDarkStatus?.[member.memberId];
           const shotUsedThisEpisode = shotStatus?.episodeNumber === episodeNumber;
 
           return (
-            <Pressable key={member.memberId} onPress={() => openMemberModal(member)}>
+            <Pressable key={member.memberId} onPress={() => openMemberModal({ member, castaway, tribeColor })}>
               <ColorRow className='flex-row items-center gap-1 text-sm' color={member.color}>
                 <Text className='text-sm font-medium'>{member.displayName}</Text>
                 {shotUsedThisEpisode && shotStatus.status === 'saved' && (
@@ -70,10 +70,21 @@ export default function StreakRow({
           Survival Streak
         </Text>
         <View className='my-2 h-px bg-primary/20' />
-        {selectedMember !== null && (
+        {selectedStreakMember !== null && (
           <>
+            {selectedStreakMember.castaway && (
+              <View className='mb-2'>
+                <ColorRow
+                  className='flex-row items-center text-sm'
+                  color={selectedStreakMember.tribeColor ?? '#AAAAAA'}>
+                  <Text className='text-sm font-medium'>
+                    {selectedStreakMember.castaway.shortName}
+                  </Text>
+                </ColorRow>
+              </View>
+            )}
             <Text className='text-sm'>
-              Total streak: {streaksMap[selectedMember.memberId]?.[episodeNumber] ?? 0}
+              Total streak: {streaksMap[selectedStreakMember.member.memberId]?.[episodeNumber] ?? 0}
             </Text>
             {selectedShotUsedThisEpisode && (
               <>

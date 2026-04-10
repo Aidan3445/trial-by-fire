@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { type ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   type EventWithReferencesAndPredOnly,
   type EpisodeEventsProps,
@@ -19,8 +19,6 @@ interface EpisodeEventsTableBodyProps extends EpisodeEventsProps {
   predictionEnrichmentEvents?: EventWithReferencesAndPredOnly[];
   noMembers: boolean;
   noTribes?: boolean;
-  onSectionLayout?: (_label: string, _y: number) => void;
-  onRowLayout: (_id: string, _y: number, _height: number, _node: ReactNode) => void
 }
 
 export default function EpisodeEventsTableBody({
@@ -35,8 +33,6 @@ export default function EpisodeEventsTableBody({
   filters,
   noMembers,
   noTribes,
-  onSectionLayout,
-  onRowLayout,
 }: EpisodeEventsTableBodyProps) {
   const enrichedEvents = useEnrichEvents(seasonData, filteredEvents, leagueData);
   const enrichedMockEvents = useEnrichEvents(seasonData, mockEvents ?? [], leagueData);
@@ -91,16 +87,17 @@ export default function EpisodeEventsTableBody({
     );
   }
 
+  const baseEventsToUse = baseEvents.filter((event) => !filteredEvents.some((fe) => fe.eventId === event.eventId && fe.predOnly));
+
   return (
     <View className='min-w-full'>
-      {enrichedEvents.length + enrichedMockEvents.length > 0 && (
+      {baseEventsToUse.length + enrichedMockEvents.length > 0 && (
         <HeaderRow
           edit={edit}
           leagueData={!!leagueData}
           noTribes={noTribes}
           noMembers={noMembers}
-          label='Events'
-          onSectionLayout={onSectionLayout} />
+          label='Events' />
       )}
 
       {enrichedMockEvents.map((mock, idx) => (
@@ -108,16 +105,15 @@ export default function EpisodeEventsTableBody({
           key={`mock-${idx}`}
           className='bg-yellow-500'
           event={mock}
-          editCol={edit}
           isMock
+          editCol={edit}
           noPoints={!leagueData}
           noTribes={noTribes}
           noMembers={noMembers}
-          onRowLayout={onRowLayout} />
+          seasonId={seasonData.season.seasonId} />
       ))}
 
-      {baseEvents
-        .filter((event) => !filteredEvents.some((fe) => fe.eventId === event.eventId && fe.predOnly))
+      {baseEventsToUse
         .map((event, idx) => (
           <EventRow
             key={`base-${idx}`}
@@ -126,8 +122,7 @@ export default function EpisodeEventsTableBody({
             noPoints={!leagueData}
             noTribes={noTribes}
             noMembers={noMembers}
-            seasonId={seasonData.season.seasonId}
-            onRowLayout={onRowLayout} />
+            seasonId={seasonData.season.seasonId} />
         ))}
 
       {customEvents.length > 0 && (
@@ -136,8 +131,7 @@ export default function EpisodeEventsTableBody({
           leagueData={!!leagueData}
           noTribes={noTribes}
           noMembers={noMembers}
-          label='Custom Events'
-          onSectionLayout={onSectionLayout} />
+          label='Custom Events' />
       )}
       {customEvents
         .filter((event) => !filteredEvents.some((fe) => fe.eventId === event.eventId && fe.predOnly))
@@ -148,8 +142,7 @@ export default function EpisodeEventsTableBody({
             editCol={edit}
             noPoints={!leagueData}
             noTribes={noTribes}
-            noMembers={noMembers}
-            onRowLayout={onRowLayout} />
+            noMembers={noMembers} />
         ))}
 
       {enrichedPredictions.length + enrichedMockPredictions.length > 0 && (
@@ -159,8 +152,7 @@ export default function EpisodeEventsTableBody({
           noTribes={noTribes}
           noMembers={noMembers}
           noNotes
-          label='Predictions'
-          onSectionLayout={onSectionLayout} />
+          label='Predictions' />
       )}
       {enrichedMockPredictions.map((mock, idx) => (
         <PredictionRow
@@ -169,8 +161,7 @@ export default function EpisodeEventsTableBody({
           prediction={mock}
           editCol={edit}
           noMembers={noMembers}
-          noTribes={noTribes}
-          onRowLayout={onRowLayout} />
+          noTribes={noTribes} />
       ))}
       {enrichedPredictions.map((prediction, idx) => (
         <PredictionRow
@@ -185,8 +176,7 @@ export default function EpisodeEventsTableBody({
               (miss.reference?.type === 'Castaway' &&
                 filters.castaway.includes(miss.reference.id)) ||
               (miss.reference?.type === 'Tribe' && filters.tribe.includes(miss.reference.id))
-          )}
-          onRowLayout={onRowLayout} />
+          )} />
       ))}
     </View>
   );
