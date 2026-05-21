@@ -81,7 +81,7 @@ export const BaseEventLabels: Record<BaseEventName, readonly [string, ...string[
   fireWin: ['Won Fire Making'],
   soleSurvivor: ['Sole Survivor'],
   elim: ['Voted Out', 'Blindside', 'Rock Draw'],
-  noVoteExit: ['Med Evacuation', 'Quit', 'Removed'],
+  noVoteExit: ['Med Evacuation', 'Quit', 'Removed', 'Lost Fire Making'],
   tribeUpdate: ['Starting Tribes', 'Merge Tribe', 'Tribe Swap', 'New Tribes'],
   redemption: ['Redemption', 'Second Chance', 'Outcasts', 'Edge of Extinction'],
   otherNotes: ['Other Notes']
