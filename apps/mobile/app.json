@@ -5,7 +5,7 @@
     "orientation": "portrait",
     "name": "Trial by Fire",
     "slug": "mobile-fantasy-survivor",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "owner": "aidan3445",
     "icon": "./src/assets/AppIcon.png",
     "web": {

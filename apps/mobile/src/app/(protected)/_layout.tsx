@@ -9,6 +9,7 @@ import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useChangeLeaderboardUsername } from '~/hooks/livePredictions/mutation/useChangeLeaderboardUsername';
 import { useAuth } from '@clerk/expo';
+import SeasonOverNotice from '~/components/sys/seasonOverNotice';
 
 export const FIRST_LOGIN_KEY = 'hasEstablishedLeaderboardUsername';
 const LogoImage = require('~/assets/LogoFull.png');
@@ -65,6 +66,7 @@ export default function ProtectedLayout() {
       <QueryClientContextProvider>
         <NotificationManager />
         <FirstLoginManager />
+        <SeasonOverNotice />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
           <Stack.Screen
