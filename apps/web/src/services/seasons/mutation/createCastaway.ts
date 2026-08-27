@@ -37,7 +37,11 @@ export async function createCastawayLogic(
       .innerJoin(seasonSchema, eq(seasonSchema.seasonId, tribeSchema.seasonId))
       .where(and(
         eq(seasonSchema.name, seasonName),
-        eq(tribeSchema.tribeName, castaway.tribe)))
+        or(
+         eq(tribeSchema.tribeName, castaway.tribe),
+         and(
+          eq(tribe.tribeName, 'Castaways'),
+          eq(castaway.tribe, '')))))
       .then((res) => res[0]);
     if (!res) throw new Error('Season or tribe not found');
     const { seasonId, tribeId } = res;
