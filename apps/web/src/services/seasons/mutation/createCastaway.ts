@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { seasonSchema } from '~/server/db/schema/seasons';
 import { type CastawayInsert } from '~/types/castaways';
