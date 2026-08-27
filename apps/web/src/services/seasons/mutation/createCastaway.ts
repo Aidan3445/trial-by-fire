@@ -40,7 +40,7 @@ export async function createCastawayLogic(
         or(
          eq(tribeSchema.tribeName, castaway.tribe),
          and(
-          eq(tribe.tribeName, 'Castaways'),
+          eq(tribeSchema.tribeName, 'Castaways'),
           eq(castaway.tribe, '')))))
       .then((res) => res[0]);
     if (!res) throw new Error('Season or tribe not found');
