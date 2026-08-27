@@ -25,6 +25,9 @@ export async function createCastawayLogic(
   seasonName: string,
   castaway: CastawayInsert
 ) {
+
+ const tribeNameToMatch = castaway.tribe === '' ? 'Castaways' : castaway.tribe;
+ 
   // Transaction to create the castaway
   return await db.transaction(async (trx) => {
     // Get the season ID
@@ -37,11 +40,7 @@ export async function createCastawayLogic(
       .innerJoin(seasonSchema, eq(seasonSchema.seasonId, tribeSchema.seasonId))
       .where(and(
         eq(seasonSchema.name, seasonName),
-        or(
-         eq(tribeSchema.tribeName, castaway.tribe),
-         and(
-          eq(tribeSchema.tribeName, 'Castaways'),
-          eq(castaway.tribe, '')))))
+        eq(tribeSchema.tribeName, tribeNameToMatch)))
       .then((res) => res[0]);
     if (!res) throw new Error('Season or tribe not found');
     const { seasonId, tribeId } = res;
