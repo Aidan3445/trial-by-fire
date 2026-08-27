@@ -484,7 +484,7 @@ export default async function getExternalData(seasonName: string) {
           residence: residence ?? 'Hometown N/A',
           occupation: occupation ?? 'Occupation N/A',
           imageUrl: chosenUrl.startsWith('//') ? `https:${chosenUrl}` : chosenUrl,
-          tribe: tribeName,
+          tribe: tribeName ?? 'Castaways',
           previouslyOn,
         });
       }
