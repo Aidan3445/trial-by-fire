@@ -29,7 +29,7 @@ export function SeasonOverNotice() {
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'>
-      <div className='bg-card rounded-xl p-6 max-w-sm mx-4 shadow-xl space-y-4 border-2 border-primary/20'>
+      <div className='bg-card rounded-xl p-6 max-w-md mx-4 shadow-xl space-y-4 border-2 border-primary/20'>
         <div className='space-y-1'>
           <h2 className='text-lg font-bold'>Thanks for playing Survivor 50 with us!</h2>
           <p className='text-muted-foreground text-sm'>

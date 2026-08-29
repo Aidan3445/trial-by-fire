@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { seasonSchema } from '~/server/db/schema/seasons';
 import { type CastawayInsert } from '~/types/castaways';
@@ -25,6 +25,9 @@ export async function createCastawayLogic(
   seasonName: string,
   castaway: CastawayInsert
 ) {
+
+ const tribeNameToMatch = castaway.tribe === '' ? 'Castaways' : castaway.tribe;
+ 
   // Transaction to create the castaway
   return await db.transaction(async (trx) => {
     // Get the season ID
@@ -37,7 +40,7 @@ export async function createCastawayLogic(
       .innerJoin(seasonSchema, eq(seasonSchema.seasonId, tribeSchema.seasonId))
       .where(and(
         eq(seasonSchema.name, seasonName),
-        eq(tribeSchema.tribeName, castaway.tribe)))
+        eq(tribeSchema.tribeName, tribeNameToMatch)))
       .then((res) => res[0]);
     if (!res) throw new Error('Season or tribe not found');
     const { seasonId, tribeId } = res;
