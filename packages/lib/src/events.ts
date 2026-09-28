@@ -69,8 +69,8 @@ const advList = ['Advantage', 'Idol', 'Beware Advantage', 'Extra Vote', 'Block a
 
 export const BaseEventLabels: Record<BaseEventName, readonly [string, ...string[]]> = {
   advFound: advList,
-  advPlay: [...advList, 'Shot in the Dark'],
-  badAdvPlay: [...advList, 'Shot in the Dark'],
+  advPlay: advList,
+  badAdvPlay: advList,
   advElim: advList,
   spokeEpTitle: ['Spoke Episode Title'],
   tribe1st: ['Tribe Immunity and Reward', 'Tribe Immunity', 'Tribe Reward'],
