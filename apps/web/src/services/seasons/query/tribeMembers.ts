@@ -35,7 +35,10 @@ export default async function getTribeMembers(seasonId: number, episodeNumber: n
           });
         });
 
-        currentTribes[tid] = castawayIds;
+        // add to the tribe rather than replace it so partial updates
+        // (e.g. a single castaway joining) don't drop existing members
+        currentTribes[tid] ??= [];
+        currentTribes[tid].push(...castawayIds);
       });
     }
 
