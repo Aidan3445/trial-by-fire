@@ -224,8 +224,8 @@ export default function PredictionCards({
             <SubmissionCard
               prediction={prediction}
               options={getOptions(
-            prediction.referenceTypes,
-            prediction.eventSource === 'Base' ? prediction.eventName : undefined)}
+                prediction.referenceTypes,
+                prediction.eventSource === 'Base' ? prediction.eventName : undefined)}
               wallet={wallet}
               updateBetTotal={updateFormBetValue}
               totalBet={totalBet}
