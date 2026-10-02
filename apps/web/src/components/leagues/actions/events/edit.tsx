@@ -48,7 +48,7 @@ export default function EditEvent({ event }: EditEventProps) {
     combinedReferenceOptions,
     handleCombinedReferenceSelection,
     getDefaultStringValues
-  } = useEventOptions(league?.seasonId ?? null, event.episodeNumber);
+  } = useEventOptions(league?.seasonId ?? null, event.episodeNumber, event.eventName);
   const [eventClearer, setEventClearer] = useState(0);
 
   const clearReferences = () => {

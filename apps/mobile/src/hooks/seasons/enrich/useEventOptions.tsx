@@ -2,20 +2,36 @@ import { useMemo, useCallback } from 'react';
 import { Text, View } from 'react-native';
 import ColorRow from '~/components/shared/colorRow';
 import { useEnrichedTribeMembers } from '~/hooks/seasons/enrich/useEnrichedTribeMembers';
+import { useTribes } from '~/hooks/seasons/useTribes';
+import { useCastaways } from '~/hooks/seasons/useCastaways';
 import { type ReferenceType } from '~/types/events';
 
 /**
  * Custom hook to get event options for tribes and castaways.
  * @param {number} seasonId The season ID to get options for.
  * @param {number} selectedEpisode The episode number to get options for.
+ * @param {string} eventName The event being created/edited, used to tailor the options.
  */
-export function useEventOptions(seasonId: number | null, selectedEpisode: number | null) {
+export function useEventOptions(
+  seasonId: number | null,
+  selectedEpisode: number | null,
+  eventName?: string | null
+) {
   const tribeMembers = useEnrichedTribeMembers(seasonId, selectedEpisode);
+  const { data: allTribes } = useTribes(seasonId);
+  const { data: allCastaways } = useCastaways(seasonId);
 
   const tribeMembersArray = useMemo(() => Object.values(tribeMembers ?? {}), [tribeMembers]);
 
   const tribeOptions = useMemo(() =>
-    tribeMembersArray.map(({ tribe }) => ({
+    // tribe updates can move castaways onto empty tribes (e.g. a merge),
+    // otherwise only tribes with members at this episode are selectable
+    (eventName === 'tribeUpdate'
+      ? (allTribes ?? [])
+      : tribeMembersArray
+        .filter(({ castaways }) => castaways.length > 0)
+        .map(({ tribe }) => tribe)
+    ).map((tribe) => ({
       value: tribe.tribeId,
       label: tribe.tribeName,
       renderLabel: () => (
@@ -26,11 +42,11 @@ export function useEventOptions(seasonId: number | null, selectedEpisode: number
         </View>
       ),
     })),
-    [tribeMembersArray]
+    [allTribes, tribeMembersArray, eventName]
   );
 
-  const castawayOptions = useMemo(() =>
-    tribeMembersArray.flatMap(({ tribe, castaways }) =>
+  const castawayOptions = useMemo(() => {
+    const options = tribeMembersArray.flatMap(({ tribe, castaways }) =>
       castaways.map(castaway => ({
         value: castaway.castawayId,
         label: castaway.fullName,
@@ -43,9 +59,21 @@ export function useEventOptions(seasonId: number | null, selectedEpisode: number
           </View>
         )
       }))
-    ),
-    [tribeMembersArray]
-  );
+    );
+    // Jeff (and any other production castaways) have no season
+    if (eventName === 'spokeEpTitle') {
+      (allCastaways ?? [])
+        .filter((castaway) => castaway.seasonId === null)
+        .forEach((castaway) => options.push({
+          value: castaway.castawayId,
+          label: castaway.fullName,
+          renderLabel: () => (
+            <Text className='text-base font-medium'>{castaway.fullName}</Text>
+          )
+        }));
+    }
+    return options;
+  }, [tribeMembersArray, allCastaways, eventName]);
 
   const combinedReferenceOptions = useMemo(() => [
     { label: 'Tribes', value: null },

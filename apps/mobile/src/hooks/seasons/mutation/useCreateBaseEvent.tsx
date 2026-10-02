@@ -56,7 +56,8 @@ export function useCreateBaseEvent(seasonId: number | null) {
   // Reference options for the selected episode
   const { combinedReferenceOptions, handleCombinedReferenceSelection } = useEventOptions(
     seasonId,
-    selectedEpisode ?? 1
+    selectedEpisode ?? 1,
+    selectedEventName
   );
 
   // Clear key for resetting MultiSelect
