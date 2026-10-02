@@ -2,18 +2,21 @@ import { useMemo, useCallback } from 'react';
 import { useEnrichedTribeMembers } from '~/hooks/seasons/enrich/useEnrichedTribeMembers';
 import { useTribes } from '~/hooks/seasons/useTribes';
 import { useCastaways } from '~/hooks/seasons/useCastaways';
-import { type ReferenceType } from '~/types/events';
+import { type EventReference, type ReferenceType } from '~/types/events';
 
 /**
   * Custom hook to get event options for tribes and castaways.
   * @param {number} seasonId The season ID to get options for.
   * @param {number} selectedEpisode The episode number to get options for.
   * @param {string} eventName The event being created/edited, used to tailor the options.
+  * @param {EventReference[]} savedReferences References already saved on the event being edited,
+  * these are always included so they remain selectable until the edit is saved.
   */
 export function useEventOptions(
   seasonId: number | null,
   selectedEpisode: number | null,
-  eventName?: string | null
+  eventName?: string | null,
+  savedReferences?: EventReference[]
 ) {
   const tribeMembers = useEnrichedTribeMembers(seasonId, selectedEpisode);
   const { data: allTribes } = useTribes(seasonId);
@@ -27,17 +30,22 @@ export function useEventOptions(
   const tribeOptions = useMemo(() => {
     // tribe updates can move castaways onto empty tribes (e.g. a merge),
     // otherwise only tribes with members at this episode are selectable
-    const tribes = eventName === 'tribeUpdate'
-      ? (allTribes ?? [])
-      : tribeMembersArray
-        .filter(({ castaways }) => castaways.length > 0)
-        .map(({ tribe }) => tribe);
+    const savedTribeIds = new Set(savedReferences
+      ?.filter(ref => ref.type === 'Tribe')
+      .map(ref => ref.id));
+    const activeTribeIds = new Set(tribeMembersArray
+      .filter(({ castaways }) => castaways.length > 0)
+      .map(({ tribe }) => tribe.tribeId));
+    const tribes = (allTribes ?? []).filter(tribe =>
+      eventName === 'tribeUpdate' ||
+      activeTribeIds.has(tribe.tribeId) ||
+      savedTribeIds.has(tribe.tribeId));
     return tribes.map(tribe => ({
       value: tribe.tribeId,
       label: tribe.tribeName,
       color: tribe.tribeColor,
     }));
-  }, [allTribes, tribeMembersArray, eventName]);
+  }, [allTribes, tribeMembersArray, eventName, savedReferences]);
 
   const castawayOptions = useMemo(() => {
     const options = tribeMembersArray.flatMap(({ castaways }) =>
@@ -55,8 +63,15 @@ export function useEventOptions(
           label: castaway.fullName,
         }));
     }
+    // keep saved castaways selectable even if they are no longer active
+    savedReferences
+      ?.filter(ref => ref.type === 'Castaway' && !options.some(o => o.value === ref.id))
+      .forEach(ref => {
+        const castaway = allCastaways?.find(c => c.castawayId === ref.id);
+        if (castaway) options.push({ value: castaway.castawayId, label: castaway.fullName });
+      });
     return options;
-  }, [tribeMembersArray, allCastaways, eventName]);
+  }, [tribeMembersArray, allCastaways, eventName, savedReferences]);
 
   const combinedReferenceOptions = useMemo(() => {
     const options = [

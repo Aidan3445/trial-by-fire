@@ -42,7 +42,12 @@ export function useEditEvent(event: EnrichedEvent, seasonIdOverride?: number) {
     combinedReferenceOptions,
     handleCombinedReferenceSelection,
     getDefaultStringValues,
-  } = useEventOptions(seasonId ?? null, event.episodeNumber, event.eventName);
+  } = useEventOptions(
+    seasonId ?? null,
+    event.episodeNumber,
+    event.eventName,
+    event.references
+  );
 
   // Clear key for resetting MultiSelect
   const [clearKey, setClearKey] = useState(0);
