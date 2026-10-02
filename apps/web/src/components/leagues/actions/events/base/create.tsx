@@ -46,7 +46,7 @@ export default function CreateBaseEvent() {
   const setLabel = reactForm.watch('label');
   const setNotes = reactForm.watch('notes');
 
-  const { combinedReferenceOptions, handleCombinedReferenceSelection } = useEventOptions(league?.seasonId ?? null, selectedEpisode ?? 1);
+  const { combinedReferenceOptions, handleCombinedReferenceSelection } = useEventOptions(league?.seasonId ?? null, selectedEpisode ?? 1, selectedEvent);
 
   const [eventSubtype, setEventSubtype] = useState('');
 

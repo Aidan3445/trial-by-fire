@@ -9,6 +9,8 @@ import { type MakePredictionsProps } from '~/components/leagues/actions/events/p
 import { type ScoringBaseEventName, type ReferenceType, type MakePrediction } from '~/types/events';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useShauhinActive } from '~/hooks/leagues/enrich/useShauhinActive';
+import { useLeague } from '~/hooks/leagues/useLeague';
+import { useCastaways } from '~/hooks/seasons/useCastaways';
 import { loadOverrideConfig } from '~/lib/devEpisodeOverride';
 import { PointsIcon } from '~/components/icons/generated';
 
@@ -24,6 +26,8 @@ export default function PredictionCards({
 }: MakePredictionsProps) {
   const { enabled: devConfig } = loadOverrideConfig() ?? {};
   const shauhinActive = useShauhinActive();
+  const { data: league } = useLeague();
+  const { data: seasonCastaways } = useCastaways(league?.seasonId ?? null);
 
   const enabledBasePredictions = useMemo(() =>
     Object.entries(rules?.basePrediction ?? {})
@@ -65,7 +69,7 @@ export default function PredictionCards({
           pred.eventName === rule.eventName) ?? null,
       })) ?? [], [rules, predictionsMade]);
 
-  const getOptions = useCallback((referenceTypes: ReferenceType[]) => {
+  const getOptions = useCallback((referenceTypes: ReferenceType[], eventName?: string) => {
     const options: Record<ReferenceType | 'Direct Castaway', Record<string, {
       id: number,
       color: string,
@@ -90,6 +94,18 @@ export default function PredictionCards({
       };
     });
 
+    // Jeff (and any other production castaways) have no season
+    if (eventName === 'spokeEpTitle') {
+      seasonCastaways?.filter((castaway) => castaway.seasonId === null)
+        .forEach((castaway) => {
+          options[castawayKey][castaway.fullName] = {
+            id: castaway.castawayId,
+            color: '#AAAAAA',
+            tribeName: 'No Tribe'
+          };
+        });
+    }
+
     if (referenceTypes.length === 0 || referenceTypes.includes('Tribe')) {
       tribes.forEach((tribe) => {
         options.Tribe[tribe.tribeName] = {
@@ -99,7 +115,7 @@ export default function PredictionCards({
       });
     }
     return options;
-  }, [castaways, tribes, devConfig]);
+  }, [castaways, tribes, devConfig, seasonCastaways]);
 
   const [formBetValues, setFormBetValues] = useState<Record<string, number>>({});
   const updateFormBetValue = useCallback((eventName: string, bet: number) => {
@@ -137,7 +153,9 @@ export default function PredictionCards({
         <p className='text-sm px-2 py-2 bg-secondary font-medium'>{prediction.description}</p>
         <BaseSubmissionCard
           prediction={prediction}
-          options={getOptions(prediction.referenceTypes)}
+          options={getOptions(
+            prediction.referenceTypes,
+            prediction.eventSource === 'Base' ? prediction.eventName : undefined)}
           wallet={wallet}
           updateBetTotal={updateFormBetValue}
           totalBet={totalBet}
@@ -169,7 +187,9 @@ export default function PredictionCards({
       footer: (
         <SubmissionCard
           prediction={prediction}
-          options={getOptions(prediction.referenceTypes)}
+          options={getOptions(
+            prediction.referenceTypes,
+            prediction.eventSource === 'Base' ? prediction.eventName : undefined)}
           wallet={wallet}
           updateBetTotal={updateFormBetValue}
           totalBet={totalBet}

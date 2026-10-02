@@ -44,8 +44,8 @@ export default function PlaygroundPage() {
 
   // Auto-select most recent season on mount
   useEffect(() => {
-    if (!selectedSeasonId && seasons && seasons.length > 1) {
-      setSelectedSeasonId(seasons[1]!.seasonId);
+    if (!selectedSeasonId && seasons && seasons.length > 0) {
+      setSelectedSeasonId(seasons[0]!.seasonId);
     }
   }, [seasons, selectedSeasonId]);
 
