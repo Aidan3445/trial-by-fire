@@ -5,7 +5,7 @@
     "orientation": "portrait",
     "name": "Trial by Fire",
     "slug": "mobile-fantasy-survivor",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "owner": "aidan3445",
     "icon": "./src/assets/AppIcon.png",
     "web": {
@@ -18,6 +18,7 @@
     },
     "plugins": [
       "./plugins/xcode-cloud-script.cjs",
+      "./plugins/pod-deployment-target.cjs",
       [
         "expo-router",
         {
@@ -41,12 +42,18 @@
       "expo-secure-store",
       "expo-web-browser",
       "@react-native-community/datetimepicker",
-      "expo-build-properties",
-      ["expo-build-properties", {
-        "ios": {
-          "deploymentTarget": "18.0"
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "18.0",
+            "extraPods": [
+              { "name": "GoogleUtilities", "modular_headers": true },
+              { "name": "RecaptchaInterop", "modular_headers": true }
+            ]
+          }
         }
-      }]
+      ]
     ],
     "extra": {
       "router": {
