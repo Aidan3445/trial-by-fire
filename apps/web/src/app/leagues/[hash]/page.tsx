@@ -1,5 +1,8 @@
 import MemberEditForm from '~/components/leagues/customization/member/view';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/common/tabs';
+import { TabsContent, TabsList, TabsTrigger } from '~/components/common/tabs';
+import LeagueTabs from '~/components/leagues/layout/leagueTabs';
+import { AutoEventProvider } from '~/context/autoEventContext';
+import AutoEvents from '~/components/leagues/actions/events/autoEvents/view';
 import { leagueMemberAuth, systemAdminAuth } from '~/lib/auth';
 import { type LeaguePageProps } from '~/app/leagues/[hash]/layout';
 import ChangeCastaway from '~/components/leagues/hub/picks/changeSurvivor/view';
@@ -38,65 +41,75 @@ export default async function LeaguePage({ params }: LeaguePageProps) {
   }
 
   return (
-    <Tabs className='w-full overflow-hidden' defaultValue='scores'>
-      <TabsList className='sticky flex w-full px-10 rounded-none z-50 bg-accent'>
-        <TabsTrigger className='flex-1' value='scores'>Scores</TabsTrigger>
-        {isActive && auth.role !== 'Member' && (
-          <TabsTrigger className='flex-1' value='events'>Commish</TabsTrigger>
-        )}
-        {isActive && userId && (
-          <TabsTrigger className='flex-1' value='Base'>Base</TabsTrigger>
-        )}
-        <TabsTrigger className='flex-none w-fit' value='settings'>Settings</TabsTrigger>
-      </TabsList>
-      <ScrollArea className='px-4 md:h-[calc(100svh-10.5rem)] h-[calc(100svh-9rem-var(--navbar-height))]'>
-        <div className='pb-4 overflow-hidden'>
-          <TabsContent className='space-y-4 data-[state=inactive]:hidden' value='scores' forceMount>
-            <Scores isActive={isActive} />
-            <ChangeCastaway />
-            <Predictions />
-            {seasonData && <LeagueTimeline initialSeasonData={seasonData} />}
-          </TabsContent>
+    <AutoEventProvider defaultTab='scores'>
+      <LeagueTabs className='w-full overflow-hidden'>
+        <TabsList className='sticky flex w-full px-10 rounded-none z-50 bg-accent'>
+          <TabsTrigger className='flex-1' value='scores'>Scores</TabsTrigger>
           {isActive && auth.role !== 'Member' && (
-            <TabsContent value='events'>
-              <CreateCustomEvent />
-            </TabsContent>
+            <TabsTrigger className='flex-1' value='events'>Commish</TabsTrigger>
           )}
-          {userId && (
-            <TabsContent value='Base'>
-              <CreateBaseEvent />
-            </TabsContent>
+          {isActive && userId && (
+            <TabsTrigger className='flex-1' value='Base'>Base</TabsTrigger>
           )}
-          <TabsContent value='settings' className='space-y-4'>
-            {league?.status !== 'Inactive' && (
-              <>
-                <MemberEditForm className='flex-1' />
-                <div className='w-full flex flex-wrap gap-4 justify-center'>
-                  <div className='flex flex-col gap-4 w-full lg:w-1/2 lg:max-w-lg'>
-                    <LeagueSettings />
-                    <DeleteLeague />
-                  </div>
-                  <ManageMembers />
-                </div>
-                <div className='w-full flex items-center gap-2 justify-center p-2 bg-card rounded-lg shadow-md shadow-primary/10 border-2 border-primary/20'>
-                  <span className='h-5 w-0.5 bg-primary rounded-full' />
-                  <h2 className='text-2xl font-black uppercase tracking-tight text-center'>
-                    Scoring
-                  </h2>
-                  <span className='h-5 w-0.5 bg-primary rounded-full' />
-                </div>
-              </>
+          <TabsTrigger className='flex-none w-fit' value='settings'>Settings</TabsTrigger>
+        </TabsList>
+        {userId && league && (
+          // Pinned under the tabs; the page content scrolls beneath it
+          <div className='relative z-50'>
+            <div className='absolute top-5 right-12'>
+              <AutoEvents seasonId={league.seasonId} />
+            </div>
+          </div>
+        )}
+        <ScrollArea className='px-4 md:h-[calc(100svh-10.5rem)] h-[calc(100svh-9rem-var(--navbar-height))]'>
+          <div className='pb-4 overflow-hidden'>
+            <TabsContent className='space-y-4 data-[state=inactive]:hidden' value='scores' forceMount>
+              <Scores isActive={isActive} />
+              <ChangeCastaway />
+              <Predictions />
+              {seasonData && <LeagueTimeline initialSeasonData={seasonData} />}
+            </TabsContent>
+            {isActive && auth.role !== 'Member' && (
+              <TabsContent value='events'>
+                <CreateCustomEvent />
+              </TabsContent>
             )}
-            <SurvivalSettings />
-            <SecondaryPickSettings />
-            <LeagueScoring />
-            <ShauhinMode />
-            <CustomEvents />
-          </TabsContent>
-        </div>
-        <Spacer />
-        <ScrollBar className='pb-4 pt-2' />
-      </ScrollArea>
-    </Tabs>
+            {userId && (
+              <TabsContent value='Base'>
+                <CreateBaseEvent />
+              </TabsContent>
+            )}
+            <TabsContent value='settings' className='space-y-4'>
+              {league?.status !== 'Inactive' && (
+                <>
+                  <MemberEditForm className='flex-1' />
+                  <div className='w-full flex flex-wrap gap-4 justify-center'>
+                    <div className='flex flex-col gap-4 w-full lg:w-1/2 lg:max-w-lg'>
+                      <LeagueSettings />
+                      <DeleteLeague />
+                    </div>
+                    <ManageMembers />
+                  </div>
+                  <div className='w-full flex items-center gap-2 justify-center p-2 bg-card rounded-lg shadow-md shadow-primary/10 border-2 border-primary/20'>
+                    <span className='h-5 w-0.5 bg-primary rounded-full' />
+                    <h2 className='text-2xl font-black uppercase tracking-tight text-center'>
+                      Scoring
+                    </h2>
+                    <span className='h-5 w-0.5 bg-primary rounded-full' />
+                  </div>
+                </>
+              )}
+              <SurvivalSettings />
+              <SecondaryPickSettings />
+              <LeagueScoring />
+              <ShauhinMode />
+              <CustomEvents />
+            </TabsContent>
+          </div>
+          <Spacer />
+          <ScrollBar className='pb-4 pt-2' />
+        </ScrollArea>
+      </LeagueTabs>
+    </AutoEventProvider>
   );
 }
