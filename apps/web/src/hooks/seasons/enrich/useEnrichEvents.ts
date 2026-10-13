@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { type EnrichedEvent, type EventWithReferences } from '~/types/events';
 import { defaultBaseRules } from '~/lib/leagues';
+import { ScoringAliases } from '~/lib/events';
 import { type Tribe } from '~/types/tribes';
 import { type EnrichedCastaway } from '~/types/castaways';
 import { findTribeCastaways } from '~/lib/utils';
@@ -70,6 +71,10 @@ export function useEnrichEvents(
     const baseRules = rules.base ?? defaultBaseRules;
     Object.entries(baseRules).forEach(([eventName, points]) => {
       lookup.set(`base-${eventName}`, points);
+    });
+    // e.g. a no-vote exit earns the elimination points
+    Object.entries(ScoringAliases).forEach(([eventName, scoredAs]) => {
+      lookup.set(`base-${eventName}`, baseRules[scoredAs]);
     });
 
     rules.custom?.forEach(customRule => {

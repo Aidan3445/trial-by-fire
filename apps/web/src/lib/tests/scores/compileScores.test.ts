@@ -309,6 +309,56 @@ describe('compileScores', () => {
       expect(scores.Tribe[3]?.[11]).toBe(0);
       expect(scores.Tribe[4]?.[11]).toBe(0);
     });
+
+    it('should score a no vote exit with the elim points', () => {
+      const exitEvent = (eventId: number, eventName: string, castawayId: number): EventWithReferences => ({
+        eventId,
+        eventName,
+        references: [{ type: 'Castaway', id: castawayId }],
+        eventSource: 'Base',
+        episodeId: 9,
+        episodeNumber: 5,
+        eventType: 'Direct',
+        label: null,
+        notes: null,
+      });
+      const baseEvents: Events = {
+        1: initialTribesEvents,
+        5: {
+          20: exitEvent(20, 'noVoteExit', 3),
+          21: exitEvent(21, 'elim', 4),
+        },
+      };
+      const rules: LeagueRules = {
+        base: { ...defaultBaseRules, elim: -4 },
+        basePrediction: defaultBasePredictionRules,
+        shauhinMode: {
+          enabled: false,
+          maxBet: 0,
+          maxBetsPerWeek: 0,
+          startWeek: 'After Merge',
+          customStartWeek: null,
+          enabledBets: []
+        },
+        custom: [],
+        secondaryPick: null
+      };
+
+      const { scores } = compileScores(
+        baseEvents,
+        basicEliminations,
+        basicTribesTimeline,
+        basicKeyEpisodes,
+        { castawayMembers: {}, memberCastaways: {} },
+        { events: [], predictions: [] },
+        {},
+        rules
+      );
+
+      expect(scores.Castaway[3]?.[5]).toBe(-4);
+      expect(scores.Castaway[4]?.[5]).toBe(-4);
+      expect(scores.Castaway[1]?.[5]).toBe(0);
+    });
   });
 
   describe('Member Scoring', () => {

@@ -1,8 +1,8 @@
 import 'server-only';
-import { type ScoringBaseEventName, type BaseEventInsert } from '~/types/events';
+import { type BaseEventInsert } from '~/types/events';
 import { sendLiveScoringNotification } from '~/services/notifications/events/liveScoring';
 import { formatEventTitle } from '~/lib/qStash';
-import { ScoringBaseEventNames } from '~/lib/events';
+import { scoringEventName } from '~/lib/events';
 
 /**
  * Send a push notification to users who have opted in for live scoring updates
@@ -15,7 +15,7 @@ export async function sendBaseEventNotification(event: BaseEventInsert) {
   await sendLiveScoringNotification({
     episodeId: event.episodeId,
     title,
-    body: ScoringBaseEventNames.includes(event.eventName as ScoringBaseEventName)
+    body: scoringEventName(event.eventName)
       ? 'Tap to check your scores!'
       : 'Tap to for details!',
     data: event,
