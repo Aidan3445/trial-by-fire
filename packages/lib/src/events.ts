@@ -11,6 +11,21 @@ export const ScoringBaseEventNames = [
   'elim'
 ] as const;
 
+/** Events scored by another event's rule: a quit, med evac or removal scores as an elimination */
+export const ScoringAliases: Partial<Record<BaseEventName, ScoringBaseEventName>> = {
+  noVoteExit: 'elim',
+};
+
+/**
+  * The rule an event scores under, for points and predictions
+  * @param eventName The base event
+  * @returns the scoring event, or null if the event earns no points
+  */
+export function scoringEventName(eventName: string): ScoringBaseEventName | null {
+  if ((ScoringBaseEventNames as readonly string[]).includes(eventName)) return eventName as ScoringBaseEventName;
+  return ScoringAliases[eventName as BaseEventName] ?? null;
+}
+
 export const BaseEventNames = [
   ...ScoringBaseEventNames,
   'noVoteExit',
