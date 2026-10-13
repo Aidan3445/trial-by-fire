@@ -156,7 +156,8 @@ export default function CreateCustomEvent() {
                       <FormControl>
                         <Select
                           disabled={!selectedEpisode}
-                          value={field.value as string}
+                          // '' rather than undefined after a reset, or Select keeps showing the old choice
+                          value={(field.value as string | undefined) ?? ''}
                           onValueChange={(value) => {
                             field.onChange(Number(value));
                             clearReferences();
