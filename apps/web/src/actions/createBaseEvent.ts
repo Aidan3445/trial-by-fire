@@ -1,20 +1,22 @@
 'use server';
 
-import { requireSystemAdminAuth } from '~/lib/auth';
+import { auth, requireSystemAdminAuth } from '~/lib/auth';
 import createBaseEventLogic from '~/services/seasons/mutation/createBaseEvent';
 import { type BaseEventInsert } from '~/types/events';
 
 /**
   * Create a new base event for the season
   * @param baseEvent event to create
+  * @param autoEventId the detected auto event the form was filled from, if any
   * @throws if the user is not a system admin
   * @throws if the event cannot be created
   * @returns the id of the created base event
   * @returnObj `newEventId`
   */
-export default async function createBaseEvent(baseEvent: BaseEventInsert) {
+export default async function createBaseEvent(baseEvent: BaseEventInsert, autoEventId?: number) {
   try {
-    return await requireSystemAdminAuth(createBaseEventLogic)(baseEvent);
+    const fromAutoEvent = autoEventId ? { autoEventId, userId: (await auth()).userId ?? null } : undefined;
+    return await requireSystemAdminAuth(createBaseEventLogic)(baseEvent, fromAutoEvent);
   } catch (e) {
     let message: string;
     if (e instanceof Error) message = e.message;

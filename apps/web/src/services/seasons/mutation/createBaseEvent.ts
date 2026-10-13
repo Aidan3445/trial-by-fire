@@ -5,15 +5,21 @@ import { db } from '~/server/db';
 import { baseEventReferenceSchema, baseEventSchema } from '~/server/db/schema/baseEvents';
 import { type BaseEventInsert } from '~/types/events';
 import { sendBaseEventNotification } from '~/services/notifications/events/baseEvents';
+import { acceptAutoEvent } from '~/services/autoEvents/mutation/updateAutoEvents';
+import { revalidateAutoEvents } from '~/services/autoEvents/query/autoEvents';
 
 /**
   * Create a new base event for the season
   * @param baseEvent event to create
+  * @param fromAutoEvent the detected auto event the event was filled from, if any
   * @throws if the event cannot be created
   * @returns the id of the created base event
   * @returnObj `{ newEventId }`
   */
-export default async function createBaseEventLogic(baseEvent: BaseEventInsert) {
+export default async function createBaseEventLogic(
+  baseEvent: BaseEventInsert,
+  fromAutoEvent?: { autoEventId: number; userId: string | null }
+) {
   // create transaction for the event and reference insertions
   const result = await db.transaction(async (trx) => {
     // insert the base event
@@ -48,14 +54,21 @@ export default async function createBaseEventLogic(baseEvent: BaseEventInsert) {
 
     revalidateTag('base-events', 'max');
 
+    const autoEventEpisodeId = fromAutoEvent
+      ? await acceptAutoEvent(trx, fromAutoEvent.autoEventId, baseEvent, newEventId, fromAutoEvent.userId)
+      : null;
+
     return {
       newEventId,
+      autoEventEpisodeId,
       episodeId: baseEvent.episodeId,
       eventName: baseEvent.eventName,
       label: baseEvent.label,
       references: baseEvent.references,
     };
   });
+
+  if (result.autoEventEpisodeId) await revalidateAutoEvents(result.autoEventEpisodeId);
 
   // Send live scoring notification outside transaction
   void sendBaseEventNotification(baseEvent);
