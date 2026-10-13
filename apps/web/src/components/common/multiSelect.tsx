@@ -157,10 +157,13 @@ export const MultiSelect = React.forwardRef<
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
     const [isAnimating, setIsAnimating] = React.useState(false);
 
+    // Clear when the clear prop changes, not on mount, so a defaultValue survives a remount
+    const lastClear = React.useRef(clear);
     React.useEffect(() => {
-      if (clear) {
+      if (clear && clear !== lastClear.current) {
         setSelectedValues([]);
       }
+      lastClear.current = clear;
     }, [clear]);
 
     const handleInputKeyDown = (
