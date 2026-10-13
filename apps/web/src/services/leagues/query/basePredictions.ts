@@ -8,6 +8,7 @@ import { baseEventPredictionRulesSchema, baseEventPredictionSchema, baseEventRef
 import { type ReferenceType, type Predictions } from '~/types/events';
 import { type VerifiedLeagueMemberAuth } from '~/types/api';
 import { basePredictionRulesSchemaToObject } from '~/lib/utils';
+import { ScoringAliases } from '~/lib/events';
 import { type BaseEventPredictionRules } from '~/types/leagues';
 import { leagueSchema } from '~/server/db/schema/leagues';
 
@@ -56,10 +57,7 @@ export default async function getBasePredictions(auth: VerifiedLeagueMemberAuth)
     .innerJoin(leagueSchema, eq(leagueSchema.leagueId, leagueMemberSchema.leagueId))
     // result
     .leftJoin(baseEventSchema, and(
-      eq(
-        sql`cast(${baseEventSchema.eventName} as varchar)`,
-        sql`cast(${baseEventPredictionSchema.baseEventName} as varchar)`
-      ),
+      predictedEventMatches(),
       or(
         and(
           eq(baseEventSchema.episodeId, baseEventPredictionSchema.episodeId),
@@ -126,6 +124,18 @@ export default async function getBasePredictions(auth: VerifiedLeagueMemberAuth)
         });
         return acc;
       }, {} as Predictions));
+}
+
+// A prediction resolves on its own event, or on one scored as it (an elim
+// prediction hits on a no-vote exit too)
+function predictedEventMatches() {
+  const eventName = sql`cast(${baseEventSchema.eventName} as varchar)`;
+  const predicted = sql`cast(${baseEventPredictionSchema.baseEventName} as varchar)`;
+  return or(
+    eq(eventName, predicted),
+    ...Object.entries(ScoringAliases).map(([alias, scoredAs]) =>
+      and(eq(predicted, scoredAs), eq(eventName, alias)))
+  )!;
 }
 
 // Helper function - returns timing type for an event
