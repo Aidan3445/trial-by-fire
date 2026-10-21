@@ -12,11 +12,13 @@ interface PlaygroundHeaderProps {
   seasons: SeasonsDataQuery[];
   value: string;
   setValue: (_: string) => void;
+  /** Lets the page open the season select from its cards */
+  selectOpenState?: [boolean, (_open: boolean) => void];
   extraHeight?: number;
   className?: string;
 }
 
-export default function PlaygroundHeader({ seasons, value, setValue, extraHeight, className }: PlaygroundHeaderProps) {
+export default function PlaygroundHeader({ seasons, value, setValue, selectOpenState, extraHeight, className }: PlaygroundHeaderProps) {
   const height = useHeaderHeight(extraHeight);
 
   const seasonOptions: SearchableOption<string>[] = seasons.map(season => ({
@@ -45,6 +47,7 @@ export default function PlaygroundHeader({ seasons, value, setValue, extraHeight
             seasons={seasonOptions}
             value={value}
             setValue={setValue}
+            openState={selectOpenState}
             className='right-4 top-1/2 translate-y-[-50%]' />
         </View>
       </View>

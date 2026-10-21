@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { cn } from '~/lib/utils';
+import { hasEvents } from '~/lib/events';
 import { useRefresh } from '~/hooks/helpers/refresh/useRefresh';
 import SeasonsHeader from '~/components/seasons/header/view';
 import { useSeasonsData } from '~/hooks/seasons/useSeasonsData';
@@ -14,14 +15,19 @@ export default function SeasonsScreen() {
   const { refreshing, onRefresh, scrollY, handleScroll } = useRefresh([['seasons']]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const { data: scoreData } = useSeasonsData(true);
+  // The header owns the season select; its cards open it through this
+  const seasonSelectState = useState(false);
+  const openSeasonSelect = () => seasonSelectState[1](true);
 
   const selectedSeasonData = useMemo(() => {
     if (!scoreData) return null;
     const selected = scoreData.find(season => season.season.name === selectedSeason);
     if (selected) return selected;
-    if (scoreData.length > 0) {
-      setSelectedSeason(scoreData[0]!.season.name);
-      return scoreData[0];
+    // default to the most recent season that has events
+    const fallback = scoreData.find(season => hasEvents(season.baseEvents)) ?? scoreData[0];
+    if (fallback) {
+      setSelectedSeason(fallback.season.name);
+      return fallback;
     }
     return null;
   }, [scoreData, selectedSeason]);
@@ -35,7 +41,8 @@ export default function SeasonsScreen() {
           <SeasonsHeader
             seasons={scoreData ?? []}
             value={selectedSeason}
-            setValue={setSelectedSeason} />
+            setValue={setSelectedSeason}
+            selectOpenState={seasonSelectState} />
         }
         refreshing={refreshing}
         onRefresh={onRefresh}
@@ -47,7 +54,7 @@ export default function SeasonsScreen() {
           refreshing && Platform.OS === 'ios' && 'pt-22'
         )}>
           <TabsContent value='events'>
-            <EventTimeline seasonData={selectedSeasonData} hideMemberFilter />
+            <EventTimeline seasonData={selectedSeasonData} hideMemberFilter onSeasonPress={openSeasonSelect} />
           </TabsContent>
           <TabsContent value='castaways'>
             <CastawaysView seasonData={selectedSeasonData} />

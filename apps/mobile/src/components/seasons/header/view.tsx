@@ -12,9 +12,11 @@ interface SeasonsHeaderProps {
   seasons: SeasonsDataQuery[];
   value: string;
   setValue: (_: string) => void;
+  /** Lets the page open the season select from its cards */
+  selectOpenState?: [boolean, (_open: boolean) => void];
 }
 
-export default function SeasonsHeader({ seasons, value, setValue }: SeasonsHeaderProps) {
+export default function SeasonsHeader({ seasons, value, setValue, selectOpenState }: SeasonsHeaderProps) {
   const height = useHeaderHeight(51);
 
   const seasonOptions: SearchableOption<string>[] = seasons.map(season => ({
@@ -40,6 +42,7 @@ export default function SeasonsHeader({ seasons, value, setValue }: SeasonsHeade
             seasons={seasonOptions}
             value={value}
             setValue={setValue}
+            openState={selectOpenState}
             className='right-4 top-1/2 translate-y-[-50%]' />
         </View>
         <TabsList className='h-10 border-t-2 border-primary/20'>

@@ -257,3 +257,7 @@ export const NEW_TRIBE_COLOR = '#888888';
 /** Whether a tribe name is already used, ignoring case and surrounding spaces */
 export const tribeNameTaken = (name: string, takenNames: string[]) =>
   takenNames.some((taken) => taken.toLowerCase() === name.trim().toLowerCase());
+
+/** Whether a season's events have at least one event in any episode */
+export const hasEvents = (events: Events) =>
+  Object.values(events).some((episode) => Object.keys(episode).length > 0);

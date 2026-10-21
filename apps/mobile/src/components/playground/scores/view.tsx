@@ -20,6 +20,8 @@ interface PlaygroundScoresProps {
   scoreData: SeasonsDataQuery[];
   someHidden?: boolean;
   overrideBaseRules?: BaseEventRules;
+  /** Called when the season name is tapped, e.g. to open the page's season select */
+  onSeasonPress?: () => void;
   className?: string;
 }
 
@@ -27,6 +29,7 @@ export default function PlaygroundScores({
   scoreData,
   someHidden,
   overrideBaseRules,
+  onSeasonPress,
   className,
 }: PlaygroundScoresProps) {
   const { width: screenWidth } = useWindowDimensions();
@@ -181,11 +184,15 @@ export default function PlaygroundScores({
           <View className='h-6 w-1 bg-primary rounded-full' />
           <Text className='text-xl font-black tracking-tight uppercase'>{title}</Text>
         </View>
-        <View className='flex-row items-center gap-2 ml-2.5'>
+        <Pressable
+          className='flex-row items-center gap-2 ml-2.5 self-start active:opacity-70'
+          onPress={onSeasonPress}
+          disabled={!onSeasonPress}
+          hitSlop={8}>
           <Text className='text-xs font-bold text-primary uppercase tracking-wider'>
             {selectedSeasonData.data.season.name}
           </Text>
-        </View>
+        </Pressable>
         {scoreData.length > 1 && (
           <SelectSeason
             seasons={scoreData.map((s) => ({ value: s.season.name, label: s.season.name }))}
