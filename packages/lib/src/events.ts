@@ -1,4 +1,4 @@
-import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate, type Predictions } from '@survivor/types';
+import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate, type Predictions, type Events } from '@survivor/types';
 
 export const EventSources = ['Base', 'Custom'] as const;
 export const EventTypes = ['Direct', 'Prediction'] as const;
@@ -163,6 +163,21 @@ export const BasePredictionReferenceTypes: Record<ScoringBaseEventName, Referenc
 
 
 
+
+/**
+  * A short signature of a season's base events that changes whenever an event is
+  * added, removed, or edited in a way that can change prediction results
+  * @param events The season's base events
+  */
+export function baseEventsVersion(events: Events | undefined) {
+  if (!events) return '';
+  return Object.entries(events)
+    .flatMap(([episodeNumber, episodeEvents]) => Object.values(episodeEvents).map((event) =>
+      `${episodeNumber}:${event.eventId}:${event.eventName}:` +
+      event.references.map((ref) => `${ref.type[0]}${ref.id}`).sort().join(',')))
+    .sort()
+    .join('|');
+}
 
 /**
   * Whether anyone in the league made a prediction in an episode that has aired
