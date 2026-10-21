@@ -13,7 +13,7 @@ vi.mock('~/hooks/seasons/enrich/useEnrichedTribeMembers', () => ({
   useEnrichedTribeMembers: vi.fn(),
 }));
 
-vi.mock('~/hooks/leagues/useRules', () => ({
+vi.mock('~/hooks/leagues/useLeagueRules', () => ({
   useLeagueRules: vi.fn(),
 }));
 
@@ -53,8 +53,8 @@ vi.mock('~/hooks/leagues/enrich/usePredictionsMade', () => ({
   usePredictionsMade: vi.fn(),
 }));
 
-vi.mock('~/hooks/seasons/useCastaways', () => ({
-  useCastaways: vi.fn(),
+vi.mock('~/hooks/seasons/useSeasonsData', () => ({
+  useSeasonsData: vi.fn(),
 }));
 
 import { useEnrichedTribeMembers } from '~/hooks/seasons/enrich/useEnrichedTribeMembers';
@@ -68,7 +68,7 @@ import { useEliminations } from '~/hooks/seasons/useEliminations';
 import { useRouter } from 'next/navigation';
 import { useLeagueSettings } from '~/hooks/leagues/useLeagueSettings';
 import { usePredictionsMade } from '~/hooks/leagues/enrich/usePredictionsMade';
-import { useCastaways } from '~/hooks/seasons/useCastaways';
+import { useSeasonsData } from '~/hooks/seasons/useSeasonsData';
 
 const mockUseEnrichedTribeMembers = useEnrichedTribeMembers as ReturnType<typeof vi.fn>;
 const mockUseLeagueRules = useLeagueRules as ReturnType<typeof vi.fn>;
@@ -81,7 +81,10 @@ const mockUseEliminations = useEliminations as ReturnType<typeof vi.fn>;
 const mockUseRouter = useRouter as ReturnType<typeof vi.fn>;
 const mockUseLeagueSettings = useLeagueSettings as ReturnType<typeof vi.fn>;
 const mockUsePredictionsMade = usePredictionsMade as ReturnType<typeof vi.fn>;
-const mockUseCastaways = useCastaways as ReturnType<typeof vi.fn>;
+const mockUseSeasonsData = useSeasonsData as ReturnType<typeof vi.fn>;
+
+// The hook reads castaways from the league's season in the seasons data
+const seasonsWith = (castaways: Castaway[]) => ({ data: [{ season: { seasonId: 1 }, castaways }] });
 
 describe('useLeagueActionDetails', () => {
   const mockCastaway: Castaway = {
@@ -145,7 +148,7 @@ describe('useLeagueActionDetails', () => {
     mockUseRouter.mockReturnValue({ push: vi.fn() });
     mockUseLeagueSettings.mockReturnValue({ data: null });
     mockUsePredictionsMade.mockReturnValue({ basePredictionsMade: {}, customPredictionsMade: {} });
-    mockUseCastaways.mockReturnValue({ data: null });
+    mockUseSeasonsData.mockReturnValue({ data: null });
   });
 
   it('should return undefined actionDetails when dependencies are not loaded', () => {
@@ -183,7 +186,7 @@ describe('useLeagueActionDetails', () => {
       }
     });
     mockUseEliminations.mockReturnValue({ data: mockEliminations });
-    mockUseCastaways.mockReturnValue({ data: [mockCastaway] });
+    mockUseSeasonsData.mockReturnValue(seasonsWith([mockCastaway]));
 
     const { result } = renderHook(() => useLeagueActionDetails());
 
@@ -355,7 +358,7 @@ describe('useLeagueActionDetails', () => {
       }
     });
     mockUseEliminations.mockReturnValue({ data: null });
-    mockUseCastaways.mockReturnValue({ data: [mockCastaway] });
+    mockUseSeasonsData.mockReturnValue(seasonsWith([mockCastaway]));
 
     const { result } = renderHook(() => useLeagueActionDetails());
 
@@ -420,7 +423,7 @@ describe('useLeagueActionDetails', () => {
       2: { tribe: tribe2, castaways: [castaway2] }
     });
     mockUseEliminations.mockReturnValue({ data: [] });
-    mockUseCastaways.mockReturnValue({ data: [castaway1, castaway2] });
+    mockUseSeasonsData.mockReturnValue(seasonsWith([castaway1, castaway2]));
 
     const { result } = renderHook(() => useLeagueActionDetails());
 

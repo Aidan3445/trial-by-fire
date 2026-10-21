@@ -16,25 +16,16 @@ describe('setToNY8PM', () => {
     expect(result2).toBeInstanceOf(Date);
   });
 
-  it('should return future date (+7 days) on parse error', () => {
-    const now = new Date();
+  it('should return null for invalid date strings', () => {
     const result = setToNY8PM('invalid-date');
 
-    // Should be approximately 7 days from now
-    expect(result).toBeInstanceOf(Date);
-    const daysDiff = (result!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-    expect(daysDiff).toBeGreaterThan(6);
-    expect(daysDiff).toBeLessThan(8);
+    expect(result).toBeNull();
   });
 
-  it('should return future date for empty string', () => {
-    const now = new Date();
+  it('should return null for empty date string', () => {
     const result = setToNY8PM('');
 
-    expect(result).toBeInstanceOf(Date);
-    const daysDiff = (result!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-    expect(daysDiff).toBeGreaterThan(6);
-    expect(daysDiff).toBeLessThan(8);
+    expect(result).toBeNull();
   });
 
   it('should use EST timezone in parsing', () => {
