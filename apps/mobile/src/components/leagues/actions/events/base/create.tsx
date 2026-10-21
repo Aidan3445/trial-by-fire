@@ -8,6 +8,7 @@ import SearchableSelect from '~/components/common/searchableSelect';
 import SearchableMultiSelect from '~/components/common/searchableMultiSelect';
 import EpisodeEvents from '~/components/shared/eventTimeline/table/view';
 import type { BaseEventName } from '~/types/events';
+import TribeFields from '~/components/leagues/actions/events/base/tribeFields';
 
 interface CreateBaseEventProps {
   seasonId: number | null;
@@ -25,6 +26,9 @@ export default function CreateBaseEvent({ seasonId }: CreateBaseEventProps) {
     eventSubtype,
     handleEventChange,
     handleSubtypeChange,
+    newTribe,
+    updateNewTribe,
+    tribeNames,
     episodeOptions,
     eventNameOptions,
     subtypeOptions,
@@ -149,6 +153,17 @@ export default function CreateBaseEvent({ seasonId }: CreateBaseEventProps) {
                 disabled={eventSubtype === ''} />
             )} />
         </View>
+
+        {selectedEventName === 'tribeUpdate' && (
+          <TribeFields
+            label='New Tribe (optional)'
+            placeholder='Tribe name, if it does not exist yet'
+            takenHint='select it in References instead'
+            value={newTribe}
+            onChange={updateNewTribe}
+            takenNames={tribeNames}
+            disabled={eventSubtype === ''} />
+        )}
 
         {/* Notes Input */}
         <View className='gap-1'>
