@@ -39,10 +39,11 @@ export function useBasePredictions(overrideHash?: string) {
       }
       return response.json();
     },
-    // Wait for the events so the first load isn't immediately refetched
-    enabled: !!hash && !!league && !eventsPending,
     // Keep showing the last results while new ones load
     placeholderData: keepPreviousData,
-    ...refreshConfig
+    ...refreshConfig,
+    // Wait for the events so the first load isn't immediately refetched; the refresh config's
+    // focus check is on top of this, not instead of it
+    enabled: !!hash && !!league && !eventsPending && (refreshConfig.enabled ?? true),
   });
 }

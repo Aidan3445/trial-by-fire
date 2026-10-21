@@ -32,7 +32,8 @@ export function usePredictionTiming(overrideHash?: string) {
       };
       return predictionTiming;
     },
-    enabled: !!hash,
-    ...refreshConfig
+    ...refreshConfig,
+    // The refresh config's focus check is on top of, not instead of, needing a hash
+    enabled: !!hash && (refreshConfig.enabled ?? true),
   });
 }

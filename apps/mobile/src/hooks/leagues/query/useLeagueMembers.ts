@@ -31,7 +31,8 @@ export function useLeagueMembers(overrideHash?: string) {
       const loggedIn = leagueMembers.find(member => member.loggedIn);
       return { loggedIn, members: leagueMembers };
     },
-    enabled: !!hash,
-    ...refreshConfig
+    ...refreshConfig,
+    // The refresh config's focus check is on top of, not instead of, needing a hash
+    enabled: !!hash && (refreshConfig.enabled ?? true),
   });
 }
