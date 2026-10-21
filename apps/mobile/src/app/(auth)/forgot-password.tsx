@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
   type TextInputEndEditingEvent,
+  type TextInputInstance,
 } from 'react-native';
 import { useSignIn } from '@clerk/expo';
 import { useRouter } from 'expo-router';
@@ -25,7 +26,7 @@ export default function ForgotPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState('');
 
-  const confirmRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInputInstance>(null);
   const isLoading = fetchStatus === 'fetching';
 
   const handleEndEditing = useCallback(

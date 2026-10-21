@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import {
-  type ScrollView,
+  type ScrollViewInstance,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
@@ -16,7 +16,7 @@ export function useTabsCarousel<T extends string>({
   defaultTab,
   width,
 }: UseTabsCarouselOptions<T>) {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const [activeTab, setActiveTab] = useState<T>(defaultTab ?? tabs[0]);
   const isProgrammaticScroll = useRef(false);
 

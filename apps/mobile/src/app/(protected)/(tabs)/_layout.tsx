@@ -73,7 +73,7 @@ export default function TabLayout() {
           options={{
             title: 'Leagues',
             tabBarIcon: ({ color }) => (
-              <LeaguesIcon color={isLeaguesPath ? colors!.primary : color} size={32} allowFontScaling={false} />
+              <LeaguesIcon color={isLeaguesPath ? colors!.primary : color as string} size={32} allowFontScaling={false} />
             ),
             tabBarLabelStyle: {
               fontSize: 12,
@@ -85,7 +85,7 @@ export default function TabLayout() {
           options={{
             title: 'Seasons',
             tabBarIcon: ({ color }) => (
-              <SeasonsIcon color={color} size={32} allowFontScaling={false} />
+              <SeasonsIcon color={color as string} size={32} allowFontScaling={false} />
             ),
           }} />
         <Tabs.Screen
@@ -93,7 +93,7 @@ export default function TabLayout() {
           options={{
             title: 'Playground',
             tabBarIcon: ({ color }) => (
-              <PlaygroundIcon color={color} size={32} allowFontScaling={false} />
+              <PlaygroundIcon color={color as string} size={32} allowFontScaling={false} />
             ),
           }} />
         <Tabs.Screen
@@ -101,7 +101,7 @@ export default function TabLayout() {
           options={{
             title: 'Profile',
             tabBarIcon: ({ color }) => (
-              <UserIcon color={color} size={32} strokeWidth={0.5} allowFontScaling={false} />
+              <UserIcon color={color as string} size={32} strokeWidth={0.5} allowFontScaling={false} />
             ),
           }} />
       </Tabs>
