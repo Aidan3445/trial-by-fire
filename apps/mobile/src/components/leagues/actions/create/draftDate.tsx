@@ -1,4 +1,4 @@
-import { type Control, Controller } from 'react-hook-form';
+import { type Control, Controller, type FieldValues } from 'react-hook-form';
 import { View, Text, Platform, Pressable } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { colors } from '~/lib/colors';
@@ -6,8 +6,9 @@ import Button from '~/components/common/button';
 import { Calendar, Clock, Zap } from 'lucide-react-native';
 import { useState } from 'react';
 
-interface DraftDateProps {
-  control: Control<any>;
+interface DraftDateProps<T extends FieldValues> {
+  // Generic so any typed form can pass its control; widened to FieldValues where used
+  control: Control<T>;
   editing?: boolean;
   onDraftJoin?: () => void;
 }
@@ -27,7 +28,7 @@ function formatTime(date: Date) {
   });
 }
 
-export default function DraftDate({ control, editing, onDraftJoin }: DraftDateProps) {
+export default function DraftDate<T extends FieldValues>({ control, editing, onDraftJoin }: DraftDateProps<T>) {
   const [androidPicker, setAndroidPicker] = useState<'date' | 'time' | null>(null);
 
   return (
@@ -46,7 +47,7 @@ export default function DraftDate({ control, editing, onDraftJoin }: DraftDatePr
       </View>
 
       <Controller
-        control={control}
+        control={control as unknown as Control<FieldValues>}
         name='draftDate'
         render={({ field: { onChange, onBlur, value } }) => {
           const currentValue = value ?? new Date(Date.now() + 604800000);

@@ -1,4 +1,4 @@
-import { type Control, Controller } from 'react-hook-form';
+import { type Control, Controller, type FieldValues } from 'react-hook-form';
 import { TextInput, View, Text } from 'react-native';
 import { LEAGUE_NAME_MAX_LENGTH } from '~/lib/leagues';
 import { useEffect, useState } from 'react';
@@ -8,13 +8,14 @@ import { Type } from 'lucide-react-native';
 
 const placeholderOptions = ['Jeff Probst Fan Club', 'Torch Snuffers', 'Jury\'s Out'];
 
-interface LeagueNameProps {
-  control: Control<any>;
+interface LeagueNameProps<T extends FieldValues> {
+  // Generic so any typed form can pass its control; widened to FieldValues where used
+  control: Control<T>;
   onSubmitEditing?: () => void;
   canGoNext?: boolean;
 }
 
-export default function LeagueName({ control, onSubmitEditing, canGoNext }: LeagueNameProps) {
+export default function LeagueName<T extends FieldValues>({ control, onSubmitEditing, canGoNext }: LeagueNameProps<T>) {
   const [placeholder, setPlaceholder] = useState(0);
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function LeagueName({ control, onSubmitEditing, canGoNext }: Leag
 
       {/* Input */}
       <Controller
-        control={control}
+        control={control as unknown as Control<FieldValues>}
         name='leagueName'
         render={({ field: { onChange, onBlur, value } }) => (
           <View className='w-full'>
