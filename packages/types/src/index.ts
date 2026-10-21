@@ -3,6 +3,7 @@ export * from './castaways';
 export * from './autoEvents';
 export * from './episodes';
 export * from './events';
+export * from './funding';
 export * from './leagueMembers';
 export * from './leagues';
 export * from './notifications';
