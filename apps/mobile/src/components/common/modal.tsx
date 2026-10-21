@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from 'react';
 import { Pressable, Modal as RNModal, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -50,20 +50,23 @@ export default function Modal({
     });
   };
 
-  const handlePanGesture = Gesture.Pan()
-    .enabled(swipeToDismiss)
-    .onUpdate((e) => {
+  const handlePanGesture = usePanGesture({
+    enabled: swipeToDismiss,
+    onUpdate: (e) => {
+      'worklet';
       if (e.translationY > 0) {
         translateY.value = e.translationY;
       }
-    })
-    .onEnd((e) => {
+    },
+    onDeactivate: (e) => {
+      'worklet';
       if (e.velocityY > 800 || translateY.value > DISMISS_THRESHOLD) {
         dismiss();
       } else {
         translateY.value = withSpring(0);
       }
-    });
+    },
+  });
 
   const modalStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
