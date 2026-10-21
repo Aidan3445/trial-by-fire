@@ -102,6 +102,7 @@ describe('useLeagueActionDetails', () => {
     tribeName: 'Red Tribe',
     tribeColor: '#FF0000',
     seasonId: 1,
+    createdByEventId: null,
   };
 
   const mockMember: LeagueMember = {
@@ -397,8 +398,8 @@ describe('useLeagueActionDetails', () => {
     const castaway1: Castaway = { ...mockCastaway, castawayId: 10, fullName: 'John Doe' };
     const castaway2: Castaway = { ...mockCastaway, castawayId: 20, fullName: 'Jane Smith' };
 
-    const tribe1: Tribe = { tribeId: 1, tribeName: 'Red Tribe', tribeColor: '#FF0000', seasonId: 1 };
-    const tribe2: Tribe = { tribeId: 2, tribeName: 'Blue Tribe', tribeColor: '#0000FF', seasonId: 1 };
+    const tribe1: Tribe = { tribeId: 1, tribeName: 'Red Tribe', tribeColor: '#FF0000', seasonId: 1, createdByEventId: null };
+    const tribe2: Tribe = { tribeId: 2, tribeName: 'Blue Tribe', tribeColor: '#0000FF', seasonId: 1, createdByEventId: null };
 
     mockUseLeague.mockReturnValue({ data: mockLeague });
     mockUseLeagueRules.mockReturnValue({ data: mockRules });

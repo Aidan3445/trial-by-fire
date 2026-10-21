@@ -24,6 +24,10 @@ import deleteBaseEvent from '~/actions/deleteBaseEvent';
 import deleteCustomEvent from '~/actions/deleteCustomEvent';
 import { useSysAdmin } from '~/hooks/user/useSysAdmin';
 import { ScrollArea, ScrollBar } from '~/components/common/scrollArea';
+import { useTribes } from '~/hooks/seasons/useTribes';
+import { editableEventTribe, tribeNameTaken } from '~/lib/events';
+import { type TribeInsert } from '~/types/tribes';
+import TribeFields from '~/components/leagues/actions/events/base/tribeFields';
 
 interface EditEventProps {
   event: EnrichedEvent;
@@ -56,6 +60,18 @@ export default function EditEvent({ event }: EditEventProps) {
   );
   const [eventClearer, setEventClearer] = useState(0);
 
+  // A tribe update that created its tribe can rename and recolor it, while that is its only tribe
+  const { data: tribes } = useTribes(league?.seasonId ?? null);
+  const selectedReferences = reactForm.watch('references');
+  const createdTribe = editableEventTribe(event, selectedReferences ?? [], tribes ?? []);
+  const [tribeEdit, setTribeEdit] = useState<TribeInsert | null>(null);
+  const tribeFields = tribeEdit ?? (createdTribe && { tribeName: createdTribe.tribeName, tribeColor: createdTribe.tribeColor });
+  const otherTribeNames = (tribes ?? [])
+    .filter((tribe) => tribe.tribeId !== createdTribe?.tribeId)
+    .map((tribe) => tribe.tribeName);
+  const tribeEditInvalid = !!createdTribe && !!tribeEdit &&
+    (tribeEdit.tribeName.trim() === '' || tribeNameTaken(tribeEdit.tribeName, otherTribeNames));
+
   const clearReferences = () => {
     setEventClearer(eventClearer + 1);
     reactForm.resetField('references');
@@ -75,9 +91,12 @@ export default function EditEvent({ event }: EditEventProps) {
     const isBaseEvent = event.eventSource === 'Base';
     try {
       if (isBaseEvent) {
-        await updateBaseEvent(event.eventId, data as BaseEventInsert);
+        const edit = createdTribe && tribeEdit ? { ...tribeEdit, tribeName: tribeEdit.tribeName.trim() } : null;
+        await updateBaseEvent(event.eventId, { ...data as BaseEventInsert, tribeEdit: edit });
         await queryClient.invalidateQueries({ queryKey: ['baseEvents', league?.seasonId] });
         await queryClient.invalidateQueries({ queryKey: ['seasons', league?.seasonId] });
+        if (edit) await queryClient.invalidateQueries({ queryKey: ['tribes', league?.seasonId] });
+        setTribeEdit(null);
       } else {
         if (!event.customEventRuleId) throw new Error('Missing customEventRuleId for custom event');
         if (!league?.hash) throw new Error('Missing league hash');
@@ -125,7 +144,12 @@ export default function EditEvent({ event }: EditEventProps) {
 
   return (
     <Form {...reactForm}>
-      <AlertDialog open={modalsOpen} onOpenChange={setModalsOpen}>
+      <AlertDialog
+        open={modalsOpen}
+        onOpenChange={(open) => {
+          setModalsOpen(open);
+          if (!open) setTribeEdit(null);
+        }}>
         <AlertDialogTrigger>
           <Pencil size={20} />
         </AlertDialogTrigger>
@@ -166,8 +190,16 @@ export default function EditEvent({ event }: EditEventProps) {
                         clear={eventClearer}
                         placeholder={'Select References'} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )} />
+              {createdTribe && tribeFields && (
+                <TribeFields
+                  label='Tribe created by this event'
+                  value={tribeFields}
+                  onChange={setTribeEdit}
+                  takenNames={otherTribeNames} />
+              )}
               <FormField
                 name='notes'
                 render={({ field }) => (
@@ -189,7 +221,7 @@ export default function EditEvent({ event }: EditEventProps) {
                   <AlertDialogCancel variant='secondary'>
                     Cancel
                   </AlertDialogCancel>
-                  <Button type='submit'>
+                  <Button type='submit' disabled={tribeEditInvalid}>
                     Save
                   </Button>
                 </span>

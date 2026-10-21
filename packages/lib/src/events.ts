@@ -1,4 +1,4 @@
-import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate, type Predictions, type Events } from '@survivor/types';
+import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate, type Predictions, type Events, type Tribe, type EnrichedEvent, type EventReference } from '@survivor/types';
 
 export const EventSources = ['Base', 'Custom'] as const;
 export const EventTypes = ['Direct', 'Prediction'] as const;
@@ -231,3 +231,29 @@ export const LIVE_PREDICTION_TEMPLATES: LivePredictionTemplate[] = [
     optionType: 'Castaway',
   },
 ];
+
+/**
+ * The tribe a tribe update event created, when it is still the event's only tribe,
+ * so the event's edit form can rename and recolor it. Null otherwise.
+ * @param event the event being edited
+ * @param references the references selected in the edit form
+ * @param tribes the season's tribes
+ */
+export function editableEventTribe<T extends Pick<Tribe, 'tribeId' | 'createdByEventId'>>(
+  event: Pick<EnrichedEvent, 'eventSource' | 'eventName' | 'eventId'>,
+  references: EventReference[],
+  tribes: T[]
+) {
+  if (event.eventSource !== 'Base' || event.eventName !== 'tribeUpdate' || !event.eventId) return null;
+  const selected = references.filter((ref) => ref.type === 'Tribe');
+  if (selected.length !== 1) return null;
+  return tribes.find((tribe) =>
+    tribe.tribeId === selected[0]!.id && tribe.createdByEventId === event.eventId) ?? null;
+}
+
+/** Default color for a tribe created from a tribe update */
+export const NEW_TRIBE_COLOR = '#888888';
+
+/** Whether a tribe name is already used, ignoring case and surrounding spaces */
+export const tribeNameTaken = (name: string, takenNames: string[]) =>
+  takenNames.some((taken) => taken.toLowerCase() === name.trim().toLowerCase());

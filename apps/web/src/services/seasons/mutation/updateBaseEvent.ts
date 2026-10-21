@@ -3,19 +3,25 @@ import 'server-only';
 import { db } from '~/server/db';
 import { eq } from 'drizzle-orm';
 import { baseEventReferenceSchema, baseEventSchema } from '~/server/db/schema/baseEvents';
-import { type BaseEventInsert } from '~/types/events';
+import { type BaseEventInsert, tribeUpdateProblem } from '~/types/events';
+import { editEventTribe } from '~/services/seasons/mutation/eventTribe';
 import { EliminationEventNames } from '~/lib/events';
 import { revalidateTag } from 'next/cache';
 
 /**
   * Update a base event for the season
   * @param baseEventId id of the event to update
-  * @param baseEvent updated event
+  * @param baseEvent updated event, with a new name and color for the tribe it created if it edits one
   * @throws if the event cannot be updated
+  * @throws if a tribe update does not have exactly one tribe
+  * @throws if it edits a tribe the event did not create, or renames it to a taken name
   * @returns the success status of the update
   * @returnObj `{ success }`
   */
 export default async function updateBaseEventLogic(baseEventId: number, baseEvent: BaseEventInsert) {
+  const problem = tribeUpdateProblem({ ...baseEvent, newTribe: null });
+  if (problem) throw new Error(problem);
+
   // create a transaction to ensure both the base event and references are updated
   return await db.transaction(async (trx) => {
     // Update the base event
@@ -43,6 +49,11 @@ export default async function updateBaseEventLogic(baseEventId: number, baseEven
 
     if (eventRefs.length > 0) {
       await trx.insert(baseEventReferenceSchema).values(eventRefs);
+    }
+
+    const tribeId = baseEvent.references.find((ref) => ref.type === 'Tribe')?.id;
+    if (baseEvent.tribeEdit && tribeId !== undefined) {
+      await editEventTribe(trx, baseEventId, tribeId, baseEvent.tribeEdit);
     }
 
     if (['tribeUpdate', ...EliminationEventNames].includes(event[0]!.eventName)) {

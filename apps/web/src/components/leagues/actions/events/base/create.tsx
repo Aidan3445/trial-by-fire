@@ -13,13 +13,14 @@ import EpisodeEvents from '~/components/shared/eventTimeline/table/view';
 import { useLeague } from '~/hooks/leagues/useLeague';
 import { BaseEventInsertZod, type EventWithReferences, type BaseEventInsert } from '~/types/events';
 import { useEpisodes } from '~/hooks/seasons/useEpisodes';
-import { BaseEventLabelPrefixes, BaseEventLabels, BaseEventNames, autoEventFormSubtype, autoEventLabel } from '~/lib/events';
+import { BaseEventLabelPrefixes, BaseEventLabels, BaseEventNames, NEW_TRIBE_COLOR, autoEventFormSubtype, autoEventLabel, tribeNameTaken } from '~/lib/events';
 import createBaseEvent from '~/actions/createBaseEvent';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEventOptions } from '~/hooks/seasons/enrich/useEventOptions';
 import { cn } from '~/lib/utils';
 import { useSeasonsData } from '~/hooks/seasons/useSeasonsData';
 import { useAutoEventContext } from '~/context/autoEventContext';
+import TribeFields from '~/components/leagues/actions/events/base/tribeFields';
 
 export default function CreateBaseEvent() {
   const queryClient = useQueryClient();
@@ -48,9 +49,18 @@ export default function CreateBaseEvent() {
   const setLabel = reactForm.watch('label');
   const setNotes = reactForm.watch('notes');
 
-  const { combinedReferenceOptions, handleCombinedReferenceSelection, getDefaultStringValues } = useEventOptions(league?.seasonId ?? null, selectedEpisode ?? 1, selectedEvent);
+  const { tribeOptions, combinedReferenceOptions, handleCombinedReferenceSelection, getDefaultStringValues } = useEventOptions(league?.seasonId ?? null, selectedEpisode ?? 1, selectedEvent);
 
   const [eventSubtype, setEventSubtype] = useState('');
+
+  // A tribe update can create the tribe it moves castaways onto (a merge tribe, or a tribe added in a swap)
+  const [newTribe, setNewTribe] = useState({ tribeName: '', tribeColor: NEW_TRIBE_COLOR });
+  const newTribeTaken = tribeNameTaken(newTribe.tribeName, tribeOptions.map((tribe) => tribe.label));
+  const updateNewTribe = (next: typeof newTribe) => {
+    setNewTribe(next);
+    reactForm.setValue('newTribe', next.tribeName.trim() ? { ...next, tribeName: next.tribeName.trim() } : null);
+  };
+  const resetNewTribe = () => updateNewTribe({ tribeName: '', tribeColor: NEW_TRIBE_COLOR });
 
   // Fill the form from an auto event accepted in the auto events panel
   useEffect(() => {
@@ -63,11 +73,16 @@ export default function CreateBaseEvent() {
       notes: activeAutoEvent.notes,
     });
     setEventSubtype(autoEventFormSubtype(activeAutoEvent.eventName, activeAutoEvent.subtype));
+    // A tribe the detector named that the season doesn't have yet
+    const tribeName = activeAutoEvent.eventName === 'tribeUpdate' ? activeAutoEvent.unmatched[0]?.slice(0, 16) ?? '' : '';
+    setNewTribe({ tribeName, tribeColor: NEW_TRIBE_COLOR });
+    if (tribeName) reactForm.setValue('newTribe', { tribeName, tribeColor: NEW_TRIBE_COLOR });
   }, [activeAutoEvent, reactForm]);
 
   const discardAutoEvent = () => {
     clearAutoEvent();
     setEventSubtype('');
+    resetNewTribe();
     reactForm.reset({
       episodeId: reactForm.getValues('episodeId'),
       notes: null,
@@ -112,6 +127,7 @@ export default function CreateBaseEvent() {
       alert('Base event created successfully');
       clearAutoEvent();
       setEventSubtype('');
+      resetNewTribe();
       clearReferences();
       reactForm.reset({
         episodeId: data.episodeId,
@@ -120,6 +136,7 @@ export default function CreateBaseEvent() {
       await queryClient.invalidateQueries({ queryKey: ['baseEvents', league?.seasonId] });
       await queryClient.invalidateQueries({ queryKey: ['seasons', league?.seasonId] });
       await queryClient.invalidateQueries({ queryKey: ['autoEvents', league?.seasonId] });
+      if (data.newTribe) await queryClient.invalidateQueries({ queryKey: ['tribes', league?.seasonId] });
     } catch (e) {
       alert('Failed to create base event');
       console.error('Failed to create base event', e);
@@ -195,6 +212,7 @@ export default function CreateBaseEvent() {
                             field.onChange(value);
                             reactForm.resetField('label');
                             setEventSubtype('');
+                            resetNewTribe();
                             clearReferences();
                           }}>
                           <SelectTrigger>
@@ -268,6 +286,7 @@ export default function CreateBaseEvent() {
                           clear={eventClearer}
                           placeholder={'Select References'} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )} />
                 <FormField
@@ -287,13 +306,24 @@ export default function CreateBaseEvent() {
                     </FormItem>
                   )} />
               </span>
+              {selectedEvent === 'tribeUpdate' && (
+                <TribeFields
+                  label='New Tribe (optional)'
+                  placeholder='Tribe name, if it does not exist yet'
+                  takenHint='select it in References instead'
+                  value={newTribe}
+                  onChange={updateNewTribe}
+                  takenNames={tribeOptions.map((tribe) => tribe.label)}
+                  disabled={eventSubtype === ''} />
+              )}
               <Button
                 className='mt-2 font-bold uppercase text-xs tracking-wider'
                 disabled={
                   !selectedEvent ||
                   setLabel === '' ||
                   !selectedReferences ||
-                  selectedReferences.length === 0
+                  selectedReferences.length === 0 ||
+                  (selectedEvent === 'tribeUpdate' && newTribeTaken)
                 }
                 type='submit'>
                 Create

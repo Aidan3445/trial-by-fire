@@ -56,6 +56,7 @@ describe('useEnrichPredictions', () => {
     tribeName: 'Red Tribe',
     tribeColor: '#FF0000',
     seasonId: 1,
+    createdByEventId: null,
   };
 
   const mockCastaway: Castaway = {

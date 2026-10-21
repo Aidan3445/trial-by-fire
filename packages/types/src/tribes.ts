@@ -3,6 +3,8 @@ export type Tribe = {
   tribeName: string;
   tribeColor: string;
   seasonId: number | null;
+  /** The tribe update event that created this tribe, if one did */
+  createdByEventId: number | null;
 };
 
 export type TribeInsert = {
