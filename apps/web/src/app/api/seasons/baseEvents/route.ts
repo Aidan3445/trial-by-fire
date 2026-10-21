@@ -24,15 +24,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return await withSystemAdminAuth(async () => {
-    const { event } = await request.json() as { event: BaseEventInsert };
+  return await withSystemAdminAuth(async (userId) => {
+    const { event, autoEventId } = await request.json() as { event: BaseEventInsert; autoEventId?: number };
 
     if (!event) {
       return NextResponse.json({ error: 'Missing baseEvent in request body' }, { status: 400 });
     }
 
     try {
-      const newEventId = await createBaseEventLogic(event);
+      const newEventId = await createBaseEventLogic(event, autoEventId ? { autoEventId, userId } : undefined);
       return NextResponse.json({ newEventId }, { status: 201 });
     } catch (error) {
       console.error('Failed to create base event', error);

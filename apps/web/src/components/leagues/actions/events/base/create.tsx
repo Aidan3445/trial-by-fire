@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '~/components/common/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/common/select';
 import { MultiSelect } from '~/components/common/multiSelect';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input } from '~/components/common/input';
 import { Textarea } from '~/components/common/textarea';
 import { Button } from '~/components/common/button';
@@ -13,12 +13,13 @@ import EpisodeEvents from '~/components/shared/eventTimeline/table/view';
 import { useLeague } from '~/hooks/leagues/useLeague';
 import { BaseEventInsertZod, type EventWithReferences, type BaseEventInsert } from '~/types/events';
 import { useEpisodes } from '~/hooks/seasons/useEpisodes';
-import { BaseEventLabelPrefixes, BaseEventLabels, BaseEventNames } from '~/lib/events';
+import { BaseEventLabelPrefixes, BaseEventLabels, BaseEventNames, autoEventFormSubtype, autoEventLabel } from '~/lib/events';
 import createBaseEvent from '~/actions/createBaseEvent';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEventOptions } from '~/hooks/seasons/enrich/useEventOptions';
 import { cn } from '~/lib/utils';
 import { useSeasonsData } from '~/hooks/seasons/useSeasonsData';
+import { useAutoEventContext } from '~/context/autoEventContext';
 
 export default function CreateBaseEvent() {
   const queryClient = useQueryClient();
@@ -26,6 +27,7 @@ export default function CreateBaseEvent() {
   const { data: episodes } = useEpisodes(league?.seasonId ?? null);
   const { data: seasonsData } = useSeasonsData(true, league?.seasonId ?? undefined);
   const season = seasonsData?.[0];
+  const { activeAutoEvent, clearAutoEvent } = useAutoEventContext();
 
   const reactForm = useForm<BaseEventInsert>({
     defaultValues: {
@@ -46,9 +48,31 @@ export default function CreateBaseEvent() {
   const setLabel = reactForm.watch('label');
   const setNotes = reactForm.watch('notes');
 
-  const { combinedReferenceOptions, handleCombinedReferenceSelection } = useEventOptions(league?.seasonId ?? null, selectedEpisode ?? 1, selectedEvent);
+  const { combinedReferenceOptions, handleCombinedReferenceSelection, getDefaultStringValues } = useEventOptions(league?.seasonId ?? null, selectedEpisode ?? 1, selectedEvent);
 
   const [eventSubtype, setEventSubtype] = useState('');
+
+  // Fill the form from an auto event accepted in the auto events panel
+  useEffect(() => {
+    if (!activeAutoEvent) return;
+    reactForm.reset({
+      episodeId: activeAutoEvent.episodeId,
+      eventName: activeAutoEvent.eventName,
+      label: autoEventLabel(activeAutoEvent.eventName, activeAutoEvent.subtype) ?? undefined,
+      references: activeAutoEvent.references,
+      notes: activeAutoEvent.notes,
+    });
+    setEventSubtype(autoEventFormSubtype(activeAutoEvent.eventName, activeAutoEvent.subtype));
+  }, [activeAutoEvent, reactForm]);
+
+  const discardAutoEvent = () => {
+    clearAutoEvent();
+    setEventSubtype('');
+    reactForm.reset({
+      episodeId: reactForm.getValues('episodeId'),
+      notes: null,
+    });
+  };
 
   const labelHelper = (subtype: string) => {
     setEventSubtype(subtype);
@@ -84,8 +108,9 @@ export default function CreateBaseEvent() {
 
   const handleSubmit = reactForm.handleSubmit(async (data) => {
     try {
-      await createBaseEvent(data);
+      await createBaseEvent(data, activeAutoEvent?.autoEventId);
       alert('Base event created successfully');
+      clearAutoEvent();
       setEventSubtype('');
       clearReferences();
       reactForm.reset({
@@ -94,6 +119,7 @@ export default function CreateBaseEvent() {
       });
       await queryClient.invalidateQueries({ queryKey: ['baseEvents', league?.seasonId] });
       await queryClient.invalidateQueries({ queryKey: ['seasons', league?.seasonId] });
+      await queryClient.invalidateQueries({ queryKey: ['autoEvents', league?.seasonId] });
     } catch (e) {
       alert('Failed to create base event');
       console.error('Failed to create base event', e);
@@ -114,6 +140,19 @@ export default function CreateBaseEvent() {
                   Score Base Event
                 </h2>
               </div>
+              {activeAutoEvent && (
+                <div className='flex items-center justify-between gap-2 rounded-md border-2 border-primary/40 bg-primary/10 px-3 py-1.5 text-sm'>
+                  <span>
+                    Filled from an auto event
+                    {activeAutoEvent.asks.length > 0 && (
+                      <span className='text-muted-foreground'>
+                        {' '}(check {[...new Set(activeAutoEvent.asks.map((ask) => ask.field.replace(/^ref:.*/, 'references')))].join(', ')})
+                      </span>
+                    )}
+                  </span>
+                  <Button type='button' size='sm' variant='ghost' onClick={discardAutoEvent}>Discard</Button>
+                </div>
+              )}
               <FormField
                 name='episodeId'
                 render={({ field }) => (
@@ -150,7 +189,8 @@ export default function CreateBaseEvent() {
                       <FormControl>
                         <Select
                           disabled={!selectedEpisode}
-                          value={field.value as string}
+                          // '' rather than undefined after a reset, or Select keeps showing the old choice
+                          value={(field.value as string | undefined) ?? ''}
                           onValueChange={(value) => {
                             field.onChange(value);
                             reactForm.resetField('label');
@@ -216,6 +256,8 @@ export default function CreateBaseEvent() {
                       <FormLabel className='text-sm font-bold uppercase tracking-wider text-muted-foreground'>References</FormLabel>
                       <FormControl>
                         <MultiSelect
+                          key={activeAutoEvent ? `autoEvent-${activeAutoEvent.autoEventId}` : 'manual'}
+                          defaultValue={activeAutoEvent ? getDefaultStringValues(activeAutoEvent.references) : undefined}
                           className='h-full pt-1'
                           maxCount={7}
                           disabled={eventSubtype === ''}

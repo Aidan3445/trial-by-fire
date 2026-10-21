@@ -3,7 +3,7 @@ import { findTribeCastaways } from './utils';
 import { type Predictions, type Eliminations, type Events, type CustomEvents, type ReferenceType, type Scores, type ScoringBaseEventName, type Streaks } from '@survivor/types';
 import { type SelectionTimelines, type LeagueRules } from '@survivor/types';
 import { type TribesTimeline } from '@survivor/types';
-import { ScoringBaseEventNames } from './events';
+import { scoringEventName } from './events';
 import { type KeyEpisodes } from '@survivor/types';
 
 /**
@@ -53,7 +53,8 @@ export function compileScores(
   Object.entries(baseEvents).forEach(([episodeNumber, events]) => {
     const episodeNum = parseInt(episodeNumber);
     Object.values(events).forEach((event) => {
-      const baseEvent = event.eventName as ScoringBaseEventName;
+      // null for events that earn no points; aliases like noVoteExit score as elim
+      const baseEvent = scoringEventName(event.eventName);
       const { eventTribes, eventCastaways } = event.references.reduce((acc, ref) => {
         if (ref.type === 'Tribe') acc.eventTribes.add(ref.id);
         if (ref.type === 'Castaway') acc.eventCastaways.add(ref.id);
@@ -78,7 +79,7 @@ export function compileScores(
 
         // here we want to align the castaways for non scoring events so we
         // push this check inside, later we skip iteration entirely for castaways
-        if (!ScoringBaseEventNames.includes(baseEvent)) return;
+        if (!baseEvent) return;
         // initialize tribe score if it doesn't exist
         scores.Tribe[tribe] ??= [];
         scores.Tribe[tribe][episodeNum] ??= 0;
@@ -87,13 +88,13 @@ export function compileScores(
         scores.Tribe[tribe][episodeNum] += points;
       });
 
-      if (!ScoringBaseEventNames.includes(event.eventName as ScoringBaseEventName)) return;
+      if (!baseEvent) return;
       eventCastaways.forEach((castaway) => {
         // initialize castaway score if it doesn't exist
         scores.Castaway[castaway] ??= [];
         scores.Castaway[castaway][episodeNum] ??= 0;
         // add points to castaway score
-        const points = baseEventRules[event.eventName as ScoringBaseEventName];
+        const points = baseEventRules[baseEvent];
         scores.Castaway[castaway][episodeNum] += points;
         // score the member who has this castaway selected at this episode
         const cmIndex = Math.min(episodeNum,

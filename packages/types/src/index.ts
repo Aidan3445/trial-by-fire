@@ -1,5 +1,6 @@
 export * from './api';
 export * from './castaways';
+export * from './autoEvents';
 export * from './episodes';
 export * from './events';
 export * from './leagueMembers';

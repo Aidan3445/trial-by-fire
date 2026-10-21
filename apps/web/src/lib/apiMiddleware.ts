@@ -75,6 +75,16 @@ export function withSystemAdminAuth(handler: (_userId: string) => Promise<NextRe
   };
 }
 
+/**
+ * Caption detectors authenticate with the shared DETECTOR_SECRET
+ */
+export function withDetectorAuth(handler: () => Promise<NextResponse>) {
+  return async (req: Request) => {
+    const secret = process.env.DETECTOR_SECRET;
+    if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-
-
+    return handler();
+  };
+}
