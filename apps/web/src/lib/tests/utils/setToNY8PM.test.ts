@@ -28,12 +28,30 @@ describe('setToNY8PM', () => {
     expect(result).toBeNull();
   });
 
-  it('should use EST timezone in parsing', () => {
-    // The function should parse the date as "YYYY-MM-DD 20:00:00 EST"
-    const result = setToNY8PM('2024-01-15');
+  it('should be 8pm New York time, EST in winter and EDT in summer', () => {
+    expect(setToNY8PM('2024-01-15')!.toISOString()).toBe('2024-01-16T01:00:00.000Z');
+    expect(setToNY8PM('2025-09-24')!.toISOString()).toBe('2025-09-25T00:00:00.000Z');
+  });
 
-    // Format should process through Intl.DateTimeFormat with America/New_York timezone
-    expect(result).toBeInstanceOf(Date);
+  it('should use the right offset on daylight saving changeover days', () => {
+    expect(setToNY8PM('2025-03-09')!.toISOString()).toBe('2025-03-10T00:00:00.000Z');
+    expect(setToNY8PM('2025-11-02')!.toISOString()).toBe('2025-11-03T01:00:00.000Z');
+  });
+
+  it('should parse written dates like the wiki uses', () => {
+    const iso = setToNY8PM('2025-09-24')!.getTime();
+    expect(setToNY8PM('September 24, 2025')!.getTime()).toBe(iso);
+    expect(setToNY8PM('Sep 24, 2025')!.getTime()).toBe(iso);
+    expect(setToNY8PM('September 24, 2025[1]')!.getTime()).toBe(iso);
+  });
+
+  it('should treat unpadded months and days like padded ones', () => {
+    expect(setToNY8PM('2024-1-5')!.getTime()).toBe(setToNY8PM('2024-01-05')!.getTime());
+  });
+
+  it('should return null for days the month does not have', () => {
+    expect(setToNY8PM('2024-02-31')).toBeNull();
+    expect(setToNY8PM('2024-13-01')).toBeNull();
   });
 
   it('should be idempotent for valid dates', () => {
