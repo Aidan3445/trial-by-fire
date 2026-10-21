@@ -7,11 +7,17 @@ import { useNotificationRouting } from '~/hooks/routing/useNotificationRouting';
 import useFadeLoading from '~/hooks/ui/useFadeLoading';
 import { useLeagues } from '~/hooks/user/useLeagues';
 import { colors } from '~/lib/colors';
+import { LiveScoringProvider } from '~/context/liveScoringContext';
 
 const HomeImage = require('~/assets/LogoTorch.png');
 
-export default function TabLayout() {
+// Notification taps can open the live scoring prompt, so route them inside its provider
+function NotificationRouting() {
   useNotificationRouting();
+  return null;
+}
+
+export default function TabLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const { isLoading } = useLeagues();
@@ -22,7 +28,8 @@ export default function TabLayout() {
 
 
   return (
-    <>
+    <LiveScoringProvider>
+      <NotificationRouting />
       <Tabs
         screenOptions={{
           lazy: false,
@@ -107,6 +114,6 @@ export default function TabLayout() {
           <LoadingScreen />
         </Animated.View>
       )}
-    </>
+    </LiveScoringProvider>
   );
 }

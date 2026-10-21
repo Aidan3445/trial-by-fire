@@ -39,7 +39,7 @@ const SECTIONS: SectionConfig[] = [
 export default function LivePredictionsScreen() {
   const router = useRouter();
   const { airingEpisode, data: predictions, seasonId } = useLivePredictions();
-  const { isOptedIn, optIn, isOptingIn } = useLiveScoringSession(airingEpisode?.episodeId);
+  const { isOptedIn, optIn, isUpdating: isOptingIn } = useLiveScoringSession(airingEpisode?.episodeId);
   const { respond, isSubmitting } = useRespondLivePrediction(airingEpisode?.episodeId);
   const { settings } = useNotificationSettings();
   const { refreshing, onRefresh, scrollY, handleScroll } = useRefresh([
