@@ -172,7 +172,7 @@ export default function EpisodeTracker() {
       )}
 
       {tracker.survivalBonus > 0 && (
-        <View className='flex-row items-center gap-1 px-1'>
+        <View className='flex-row items-center justify-end gap-1 px-1'>
           <Text className='text-base text-muted-foreground'>Survival streak bonus</Text>
           <Points value={tracker.survivalBonus} />
         </View>
