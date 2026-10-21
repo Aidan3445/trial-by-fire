@@ -1,3 +1,4 @@
+import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import reactPlugin from 'eslint-plugin-react';
@@ -8,13 +9,14 @@ import stylisticJs from '@stylistic/eslint-plugin-js';
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
 import vitest from 'eslint-plugin-vitest';
 
-export default tseslint.config(
+export default defineConfig(
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   {
     languageOptions: {
       parserOptions: {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         tsconfigRootDir: import.meta.dirname,
         projectService: {
           allowDefaultProject: ['eslint.config.mjs'],
@@ -24,6 +26,8 @@ export default tseslint.config(
         NodeJS: 'readonly',
         React: 'readonly',
         JSX: 'readonly',
+        process: 'readonly',
+        module: 'readonly',
       },
     },
   },

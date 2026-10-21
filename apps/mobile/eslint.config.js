@@ -18,7 +18,8 @@ export default [
         ecmaVersion: 2023,
         sourceType: 'module',
         ecmaFeatures: { jsx: true },
-        project: './tsconfig.json'
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname
       },
       globals: {
         __dirname: 'readonly',
