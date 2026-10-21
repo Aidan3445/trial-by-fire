@@ -93,7 +93,7 @@ export default function EpisodeTracker() {
               This Episode
             </Text>
             <View className='flex-row items-center gap-1'>
-              <View className='size-2 rounded-full bg-red-500' />
+              <View className='size-2 rounded-full bg-green-600' />
               <Text className='text-sm text-muted-foreground flex-1' numberOfLines={1}>
                 Live: {tracker.episode.episodeNumber}: {tracker.episode.title}
               </Text>

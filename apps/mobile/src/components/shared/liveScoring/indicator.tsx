@@ -24,7 +24,7 @@ export default function LiveScoringIndicator({ visible = true }: { visible?: boo
             ? <Bell color={colors.primary} size={24} />
             : <BellOff color={colors.neutral} size={24} />}
           {isOptedIn && (
-            <View className='absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-red-500 border border-card' />
+            <View className='absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-green-600 border border-card' />
           )}
         </View>
       </TouchableOpacity>

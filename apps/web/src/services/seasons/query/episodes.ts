@@ -26,7 +26,8 @@ export default async function getEpisodes(
 
   return unstable_cache(
     async (seasonId: number) => fetchEpisodes(seasonId),
-    ['episodes', seasonId.toString()],
+    // Separate entries so toggling DEV_FAKE_AIRING doesn't serve the other state
+    ['episodes', seasonId.toString(), fakeAiringSetting() ?? 'real'],
     {
       revalidate: 60, // 1 minute
       tags: [`episodes-${seasonId}`, 'episodes']
@@ -58,5 +59,41 @@ async function fetchEpisodes(seasonId: number, transactionOverride?: DBTransacti
     } as Episode;
   });
 
-  return processedEpisodes;
+  return fakeAiring(processedEpisodes);
+}
+
+/**
+  * DEV_FAKE_AIRING, outside production only: 'true' for the latest aired
+  * episode, or an episode number
+  */
+function fakeAiringSetting() {
+  if (process.env.NODE_ENV === 'production') return null;
+  const setting = process.env.DEV_FAKE_AIRING?.trim();
+  return setting && setting !== 'false' ? setting : null;
+}
+
+/**
+  * Dev only: make an episode look like it started 10 minutes ago so the airing
+  * UI can be tested with its real events and predictions. Moves the air date
+  * rather than just the status, since clients work out air status from it too.
+  */
+function fakeAiring(episodes: Episode[]) {
+  const setting = fakeAiringSetting();
+  if (!setting) return episodes;
+
+  const episodeNumber = Number(setting);
+  const target = Number.isInteger(episodeNumber) && episodeNumber > 0
+    ? episodes.find((episode) => episode.episodeNumber === episodeNumber)
+    : episodes.findLast((episode) => episode.airStatus !== 'Upcoming');
+  if (!target) return episodes;
+
+  const airDate = new Date(Date.now() - 10 * 60 * 1000);
+  return episodes.map((episode) => {
+    if (episode === target) return { ...episode, airDate, airStatus: 'Airing' as const };
+    // Later episodes can't have aired yet
+    if (episode.episodeNumber > target.episodeNumber && episode.airStatus !== 'Upcoming') {
+      return { ...episode, airStatus: 'Upcoming' as const };
+    }
+    return episode;
+  });
 }

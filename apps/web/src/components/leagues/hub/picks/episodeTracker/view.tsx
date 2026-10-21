@@ -86,13 +86,13 @@ export default function EpisodeTracker() {
       <CardContent className='p-0 flex flex-col gap-3'>
         <header className='flex items-center justify-between gap-3'>
           <div className='flex items-center gap-3 min-w-0'>
-            <span className='h-4 md:h-6 w-1 bg-primary rounded-full shrink-0' />
+            <span className='h-9 md:h-9 w-1 bg-primary rounded-full shrink-0' />
             <div className='min-w-0'>
-              <h2 className='md:text-xl font-black uppercase tracking-tight leading-none'>
+              <h2 className='md:text-xl font-black uppercase tracking-tight leading-none text-left'>
                 This Episode
               </h2>
               <p className='text-sm text-muted-foreground truncate'>
-                <span className='mr-1 inline-block size-2 rounded-full bg-red-500 animate-pulse align-middle' />
+                <span className='mr-1 inline-block size-2 rounded-full bg-green-600 animate-pulse align-middle' />
                 Live: {tracker.episode.episodeNumber}: {tracker.episode.title}
               </p>
             </div>
@@ -168,13 +168,14 @@ export default function EpisodeTracker() {
               </ul>
             </Section>
           )}
+
+          {tracker.survivalBonus > 0 && (
+            <p className='flex items-end justify-end gap-1 text-sm text-muted-foreground'>
+              Survival streak bonus <Points value={tracker.survivalBonus} />
+            </p>
+          )}
         </div>
 
-        {tracker.survivalBonus > 0 && (
-          <p className='flex items-center gap-1 text-sm text-muted-foreground'>
-            Survival streak bonus <Points value={tracker.survivalBonus} />
-          </p>
-        )}
       </CardContent>
     </Card>
   );
