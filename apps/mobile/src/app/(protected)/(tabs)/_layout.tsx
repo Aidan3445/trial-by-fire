@@ -7,11 +7,17 @@ import { useNotificationRouting } from '~/hooks/routing/useNotificationRouting';
 import useFadeLoading from '~/hooks/ui/useFadeLoading';
 import { useLeagues } from '~/hooks/user/useLeagues';
 import { colors } from '~/lib/colors';
+import { LiveScoringProvider } from '~/context/liveScoringContext';
 
 const HomeImage = require('~/assets/LogoTorch.png');
 
-export default function TabLayout() {
+// Notification taps can open the live scoring prompt, so route them inside its provider
+function NotificationRouting() {
   useNotificationRouting();
+  return null;
+}
+
+export default function TabLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const { isLoading } = useLeagues();
@@ -22,7 +28,8 @@ export default function TabLayout() {
 
 
   return (
-    <>
+    <LiveScoringProvider>
+      <NotificationRouting />
       <Tabs
         screenOptions={{
           lazy: false,
@@ -66,7 +73,7 @@ export default function TabLayout() {
           options={{
             title: 'Leagues',
             tabBarIcon: ({ color }) => (
-              <LeaguesIcon color={isLeaguesPath ? colors!.primary : color} size={32} allowFontScaling={false} />
+              <LeaguesIcon color={isLeaguesPath ? colors!.primary : color as string} size={32} allowFontScaling={false} />
             ),
             tabBarLabelStyle: {
               fontSize: 12,
@@ -78,7 +85,7 @@ export default function TabLayout() {
           options={{
             title: 'Seasons',
             tabBarIcon: ({ color }) => (
-              <SeasonsIcon color={color} size={32} allowFontScaling={false} />
+              <SeasonsIcon color={color as string} size={32} allowFontScaling={false} />
             ),
           }} />
         <Tabs.Screen
@@ -86,7 +93,7 @@ export default function TabLayout() {
           options={{
             title: 'Playground',
             tabBarIcon: ({ color }) => (
-              <PlaygroundIcon color={color} size={32} allowFontScaling={false} />
+              <PlaygroundIcon color={color as string} size={32} allowFontScaling={false} />
             ),
           }} />
         <Tabs.Screen
@@ -94,7 +101,7 @@ export default function TabLayout() {
           options={{
             title: 'Profile',
             tabBarIcon: ({ color }) => (
-              <UserIcon color={color} size={32} strokeWidth={0.5} allowFontScaling={false} />
+              <UserIcon color={color as string} size={32} strokeWidth={0.5} allowFontScaling={false} />
             ),
           }} />
       </Tabs>
@@ -107,6 +114,6 @@ export default function TabLayout() {
           <LoadingScreen />
         </Animated.View>
       )}
-    </>
+    </LiveScoringProvider>
   );
 }

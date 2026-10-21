@@ -6,8 +6,9 @@ import { useFetch } from '~/hooks/helpers/useFetch';
 export function useLiveScoringSession(episodeId?: number) {
   const getData = useFetch();
   const postData = useFetch('POST');
+  const deleteData = useFetch('DELETE');
   const queryClient = useQueryClient();
-  const [isOptingIn, setIsOptingIn] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: isOptedIn = false } = useQuery<boolean>({
     queryKey: ['liveScoringSession', episodeId],
@@ -21,28 +22,34 @@ export function useLiveScoringSession(episodeId?: number) {
     enabled: !!episodeId,
   });
 
-  const optIn = () => {
+  const setOptedIn = (optedIn: boolean) => {
     if (!episodeId) return;
     void (async () => {
-      setIsOptingIn(true);
+      setIsUpdating(true);
       try {
-        const res = await postData('/api/notifications/liveScoring', {
+        const send = optedIn ? postData : deleteData;
+        const res = await send('/api/notifications/liveScoring', {
           body: { episodeId },
         });
         if (!res.ok) {
           const err = await res.json();
-          Alert.alert('Error', err.message || 'Failed to opt in');
+          Alert.alert('Error', err.message || `Failed to turn ${optedIn ? 'on' : 'off'} live scoring`);
           return;
         }
         await queryClient.invalidateQueries({ queryKey: ['liveScoringSession', episodeId] });
       } catch (error) {
-        console.error('Error opting in to live scoring:', error);
+        console.error('Error updating live scoring:', error);
         Alert.alert('Error', 'Something went wrong');
       } finally {
-        setIsOptingIn(false);
+        setIsUpdating(false);
       }
     })();
   };
 
-  return { isOptedIn, optIn, isOptingIn };
+  return {
+    isOptedIn,
+    optIn: () => setOptedIn(true),
+    optOut: () => setOptedIn(false),
+    isUpdating,
+  };
 }

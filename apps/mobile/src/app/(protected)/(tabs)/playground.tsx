@@ -12,6 +12,7 @@ import OtherScoreSettings from '~/components/leagues/customization/events/base/o
 import { BaseEventRulesZod } from '~/types/leagues';
 import Button from '~/components/common/button';
 import { colors } from '~/lib/colors';
+import { hasEvents } from '~/lib/events';
 import SafeAreaRefreshView from '~/components/common/refresh/safeAreaRefreshView';
 import PlaygroundScores from '~/components/playground/scores/view';
 
@@ -20,16 +21,19 @@ export default function PlaygroundScreen() {
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const { data: scoreData } = useSeasonsData(true);
   const { reactForm } = useBaseEventRules();
+  // The header owns the season select; the scoreboard opens it through this
+  const seasonSelectState = useState(false);
+  const openSeasonSelect = () => seasonSelectState[1](true);
 
   const selectedSeasonData = useMemo(() => {
     if (!scoreData) return null;
     const selected = scoreData.find(season => season.season.name === selectedSeason);
     if (selected) return selected;
-    // defaulting to second most recent season for now
-    // no events in most recent season usually
-    if (scoreData.length > 1) {
-      setSelectedSeason(scoreData[1]!.season.name);
-      return scoreData[1];
+    // default to the most recent season that has events
+    const fallback = scoreData.find(season => hasEvents(season.baseEvents)) ?? scoreData[0];
+    if (fallback) {
+      setSelectedSeason(fallback.season.name);
+      return fallback;
     }
     return null;
   }, [scoreData, selectedSeason]);
@@ -40,7 +44,8 @@ export default function PlaygroundScreen() {
         <PlaygroundHeader
           seasons={scoreData ?? []}
           value={selectedSeason}
-          setValue={setSelectedSeason} />
+          setValue={setSelectedSeason}
+          selectOpenState={seasonSelectState} />
       }
       refreshing={refreshing}
       onRefresh={onRefresh}
@@ -83,7 +88,8 @@ export default function PlaygroundScreen() {
         {selectedSeasonData ? (
           <PlaygroundScores
             scoreData={[selectedSeasonData]}
-            overrideBaseRules={BaseEventRulesZod.parse(reactForm.watch('baseEventRules'))} />
+            overrideBaseRules={BaseEventRulesZod.parse(reactForm.watch('baseEventRules'))}
+            onSeasonPress={openSeasonSelect} />
         ) : (
           <View className='relative w-full items-center overflow-hidden rounded-xl border-2 border-primary/20 bg-card p-4'>
             <Text className='text-primary'>Loading season...</Text>

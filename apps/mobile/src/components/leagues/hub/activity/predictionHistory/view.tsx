@@ -35,6 +35,7 @@ export default function PredictionHistory() {
     memberOptions,
     selectedMemberId,
     setSelectedMemberId,
+    hasHistory,
     hasData,
     isSingleEpisode,
     keyEpisodes,
@@ -52,6 +53,9 @@ export default function PredictionHistory() {
       ref.current.scrollTo({ index: 0, animated: false });
     }
   }, [carouselData, ref, setCarouselData]);
+
+  // Nothing to look back on until someone's prediction episode has aired
+  if (!hasHistory) return null;
 
   // Empty state
   if (!hasData) {

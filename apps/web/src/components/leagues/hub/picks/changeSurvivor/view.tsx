@@ -22,6 +22,7 @@ import { Card, CardContent } from '~/components/common/card';
 import makeSecondaryPick from '~/actions/makeSecondaryPick';
 import { MAX_SEASON_LENGTH } from '~/lib/leagues';
 import ShotInTheDark from '~/components/leagues/hub/picks/shotInTheDark/view';
+import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker/view';
 
 const formSchema = z.object({
   castawayId: z.coerce.number({ required_error: 'Please select a castaway' }),
@@ -225,6 +226,8 @@ export default function ChangeCastaway() {
   };
 
   if (league?.status === 'Inactive') return null;
+  // Picks are locked while an episode airs; show how this one is going instead
+  if (keyEpisodes?.previousEpisode?.airStatus === 'Airing') return <EpisodeTracker />;
 
   const allCastawaysTaken = availableCastaways.every(castaway => castaway.pickedBy);
   const loggedInMemberId = leagueMembers?.loggedIn?.memberId;
@@ -359,10 +362,9 @@ export default function ChangeCastaway() {
                       className='lg:w-26 w-full font-bold uppercase text-xs tracking-wider'
                       disabled={
                         !formSchema.safeParse(reactForm.watch())?.success
-                        || reactForm.formState.isSubmitting
-                        || keyEpisodes?.previousEpisode?.airStatus === 'Airing'}
+                        || reactForm.formState.isSubmitting}
                       type='submit'>
-                      {keyEpisodes?.previousEpisode?.airStatus === 'Airing' ? 'Episode Airing' : 'Submit'}
+                      Submit
                     </Button>
                   </span>
                 </div>
@@ -478,11 +480,10 @@ export default function ChangeCastaway() {
                       className='lg:w-26 w-full font-bold uppercase text-xs tracking-wider'
                       disabled={
                         !secondarySelected
-                        || secondarySelected === initialSecondaryPick
-                        || keyEpisodes?.previousEpisode?.airStatus === 'Airing'}
+                        || secondarySelected === initialSecondaryPick}
                       type='button'
                       onClick={handleSecondarySubmit}>
-                      {keyEpisodes?.previousEpisode?.airStatus === 'Airing' ? 'Episode Airing' : 'Submit'}
+                      Submit
                     </Button>
                   </span>
                 </div>

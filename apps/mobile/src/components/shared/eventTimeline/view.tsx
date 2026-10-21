@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import TimelineFilters, { type LeagueData } from '~/components/shared/eventTimeline/filters';
 import EpisodeEvents from '~/components/shared/eventTimeline/table/view';
 import { type SeasonsDataQuery } from '~/types/seasons';
@@ -8,12 +8,15 @@ interface EventTimelineProps {
   seasonData?: SeasonsDataQuery | null;
   leagueData?: LeagueData;
   hideMemberFilter?: boolean;
+  /** Called when the season name is tapped, e.g. to open the page's season select */
+  onSeasonPress?: () => void;
 }
 
 export default function EventTimeline({
   seasonData,
   leagueData,
   hideMemberFilter = false,
+  onSeasonPress,
 }: EventTimelineProps) {
   const [filterCastaway, setFilterCastaway] = useState<number[]>([]);
   const [filterTribe, setFilterTribe] = useState<number[]>([]);
@@ -56,11 +59,15 @@ export default function EventTimeline({
             Activity
           </Text>
         </View>
-        <View className='flex-row items-center gap-2 ml-2.5'>
+        <Pressable
+          className='flex-row items-center gap-2 ml-2.5 self-start active:opacity-70'
+          onPress={onSeasonPress}
+          disabled={!onSeasonPress}
+          hitSlop={8}>
           <Text className='text-xs font-bold text-primary uppercase tracking-wider'>
             {seasonData.season.name}
           </Text>
-        </View>
+        </Pressable>
       </View>
 
       <View className='relative z-10 px-4'>

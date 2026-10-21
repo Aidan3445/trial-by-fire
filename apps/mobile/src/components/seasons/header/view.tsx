@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 import { TabsList, TabsTrigger } from '~/components/common/tabs';
 import SelectSeason from '~/components/home/scoreboard/selectSeason';
 import useHeaderHeight from '~/hooks/ui/useHeaderHeight';
+import LiveScoringIndicator from '~/components/shared/liveScoring/indicator';
 import { type SearchableOption } from '~/hooks/ui/useSearchableSelect';
 import { type SeasonsDataQuery } from '~/types/seasons';
 
@@ -11,9 +12,11 @@ interface SeasonsHeaderProps {
   seasons: SeasonsDataQuery[];
   value: string;
   setValue: (_: string) => void;
+  /** Lets the page open the season select from its cards */
+  selectOpenState?: [boolean, (_open: boolean) => void];
 }
 
-export default function SeasonsHeader({ seasons, value, setValue }: SeasonsHeaderProps) {
+export default function SeasonsHeader({ seasons, value, setValue, selectOpenState }: SeasonsHeaderProps) {
   const height = useHeaderHeight(51);
 
   const seasonOptions: SearchableOption<string>[] = seasons.map(season => ({
@@ -27,6 +30,7 @@ export default function SeasonsHeader({ seasons, value, setValue }: SeasonsHeade
       style={{ height }}>
       <View className='items-center justify-center w-full'>
         <View className='relative flex-row items-center justify-center gap-0.5 w-full'>
+          <LiveScoringIndicator />
           <View className='h-6 w-1 bg-primary rounded-full' />
           <Text
             allowFontScaling={false}
@@ -38,6 +42,7 @@ export default function SeasonsHeader({ seasons, value, setValue }: SeasonsHeade
             seasons={seasonOptions}
             value={value}
             setValue={setValue}
+            openState={selectOpenState}
             className='right-4 top-1/2 translate-y-[-50%]' />
         </View>
         <TabsList className='h-10 border-t-2 border-primary/20'>

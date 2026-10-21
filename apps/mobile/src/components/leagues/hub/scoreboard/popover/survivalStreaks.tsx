@@ -175,7 +175,7 @@ export default function SurvivalStreaks({
               <ScrollView
                 nestedScrollEnabled
                 className='max-h-72 py-2'
-                contentContainerClassName='gap-3 px-1'>
+                contentContainerStyle={{ gap: 12, paddingHorizontal: 4 }}>
                 {/* Selection History */}
                 {condensedTimeline.length > 0 && (
                   <View>

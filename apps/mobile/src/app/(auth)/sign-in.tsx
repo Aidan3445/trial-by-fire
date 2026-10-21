@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
   type TextInputEndEditingEvent,
+  type TextInputInstance,
 } from 'react-native';
 import React, { useCallback, useRef } from 'react';
 import AuthCard from '~/components/auth/wrapper';
@@ -21,7 +22,7 @@ export default function Page() {
   const [emailAddress, setEmailAddress] = React.useState('');
   const [password, setPassword] = React.useState('');
 
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
   const isLoading = fetchStatus === 'fetching';
 
   const handlePasswordEndEditing = useCallback(

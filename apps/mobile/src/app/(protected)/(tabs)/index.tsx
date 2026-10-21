@@ -4,6 +4,7 @@ import React from 'react';
 import { View } from 'react-native';
 import SafeAreaRefreshView from '~/components/common/refresh/safeAreaRefreshView';
 import ActiveLeagues from '~/components/home/activeleagues/view';
+import LiveTracker from '~/components/home/liveTracker/view';
 import LogoLive from '~/components/home/header/logoLive';
 import HomeHeader from '~/components/home/header/view';
 import QuickActions from '~/components/home/quickActions/view';
@@ -24,6 +25,7 @@ export default function Page() {
       <View
         className={cn('justify-start gap-y-4 px-1.5 pt-8 pb-1.5')}>
         <LogoLive />
+        <LiveTracker />
         <ActiveLeagues />
         <QuickActions className='rounded-xl border-2 border-primary/20 bg-card opacity-80' />
         <CastawayScoreboard />

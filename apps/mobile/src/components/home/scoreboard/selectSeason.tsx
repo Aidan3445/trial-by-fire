@@ -13,12 +13,15 @@ interface SelectSeasonProps {
   value: string;
   setValue: (_: string) => void;
   someHidden?: boolean;
+  /** Open state owned by the page, so other parts of it can open this select */
+  openState?: [boolean, (_open: boolean) => void];
   className?: string;
 }
 
-export default function SelectSeason({ seasons, value, setValue, someHidden, className }: SelectSeasonProps) {
+export default function SelectSeason({ seasons, value, setValue, someHidden, openState, className }: SelectSeasonProps) {
   const router = useRouter();
-  const modalState = useState(false);
+  const ownState = useState(false);
+  const modalState = openState ?? ownState;
   const [, openModal] = modalState;
 
   const footerComponent =

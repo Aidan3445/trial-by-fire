@@ -22,7 +22,7 @@ export default function LivePredictionsHeader({ episodeId }: LivePredictionsHead
   const height = useHeaderHeight(Platform.OS === 'ios' ? 0 : undefined);
   const [showHelp, setShowHelp] = useState(false);
   const { settings } = useNotificationSettings();
-  const { isOptedIn, optIn, isOptingIn } = useLiveScoringSession(episodeId);
+  const { isOptedIn, optIn, isUpdating: isOptingIn } = useLiveScoringSession(episodeId);
   const [pushPermission, setPushPermission] = useState<Notifications.PermissionStatus | null>(null);
 
   useEffect(() => {

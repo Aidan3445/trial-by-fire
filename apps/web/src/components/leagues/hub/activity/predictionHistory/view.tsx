@@ -12,6 +12,8 @@ import { useLeague } from '~/hooks/leagues/useLeague';
 import { useLeagueMembers } from '~/hooks/leagues/useLeagueMembers';
 import { useLeagueRules } from '~/hooks/leagues/useLeagueRules';
 import { useBaseEvents } from '~/hooks/seasons/useBaseEvents';
+import { useBasePredictions } from '~/hooks/leagues/useBasePredictions';
+import { hasPredictionHistory } from '~/lib/events';
 import { useKeyEpisodes } from '~/hooks/seasons/useKeyEpisodes';
 import { type ScoringBaseEventName, type PredictionWithEvent } from '~/types/events';
 
@@ -24,6 +26,7 @@ export default function PredictionHistory() {
   const { basePredictionsMade, customPredictionsMade } = usePredictionsMade(undefined, selectedMemberId);
   const { data: customEvents } = useCustomEvents();
   const { data: baseEvents } = useBaseEvents(league?.seasonId ?? null);
+  const { data: basePredictions } = useBasePredictions();
 
   const [resetCarousel, setResetCarousel] = useState(false);
 
@@ -126,6 +129,11 @@ export default function PredictionHistory() {
       possibleBets: 0,
     }
   });
+
+  // Nothing to look back on until someone's prediction episode has aired
+  if (!hasPredictionHistory([basePredictions, customEvents?.predictions], keyEpisodes?.previousEpisode?.episodeNumber)) {
+    return null;
+  }
 
   if (stats.count.total === 0 || !Object.entries(predictionsWithEvents)[0]) return (
     <Card className='w-full p-0 bg-card rounded-lg border-2 border-primary/20 shadow-lg shadow-primary/10'>
@@ -247,8 +255,13 @@ export default function PredictionHistory() {
       {/* Accent Elements */}
       <div className='absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl' />
 
-      <CardHeader className='relative mb-4'>
-        <h1 className='text-3xl font-black uppercase tracking-wider'>Prediction History</h1>
+      <CardHeader className='relative mb-4 pt-4'>
+        <div className='flex items-center gap-3 h-8'>
+          <span className='h-4 md:h-6 w-1 bg-primary rounded-full' />
+          <h2 className='md:text-xl font-black uppercase tracking-tight leading-none text-nowrap'>
+            Prediction History
+          </h2>
+        </div>
         <div className='flex flex-wrap justify-center items-center gap-4 text-sm font-medium mt-2 relative z-10'>
           <div className='flex justify-center items-center gap-4'>
             <p className='text-muted-foreground'>Accuracy:{' '}

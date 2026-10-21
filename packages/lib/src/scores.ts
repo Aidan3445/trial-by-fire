@@ -4,7 +4,7 @@ import { type Predictions, type Eliminations, type Events, type CustomEvents, ty
 import { type SelectionTimelines, type LeagueRules } from '@survivor/types';
 import { type TribesTimeline } from '@survivor/types';
 import { scoringEventName } from './events';
-import { type KeyEpisodes } from '@survivor/types';
+import { type KeyEpisodes, type ShauhinModeSettings } from '@survivor/types';
 
 /**
   * Compile the scores for a league
@@ -113,14 +113,7 @@ export function compileScores(
   Object.entries(basePredictions)
     .forEach(([episodeNumber, predictionsMap]) => {
       const episodeNum = parseInt(episodeNumber, 10);
-      const shauhinModeActive =
-        shauhinModeRules.enabled &&
-        shauhinModeRules.enabledBets.length > 0 && (
-          (shauhinModeRules.startWeek === 'Custom' && episodeNum >= (shauhinModeRules.customStartWeek ?? Infinity))
-          || (shauhinModeRules.startWeek === 'After Premiere' && episodeNum > 1)
-          || (shauhinModeRules.startWeek === 'After Merge' && episodeNum > (keyEpisodes.mergeEpisode?.episodeNumber ?? Infinity))
-          || (shauhinModeRules.startWeek === 'Before Finale' && !!keyEpisodes.nextEpisode?.isFinale && episodeNum < keyEpisodes.nextEpisode.episodeNumber)
-        );
+      const shauhinModeActive = isShauhinModeActive(shauhinModeRules, keyEpisodes, episodeNum);
 
       Object.values(predictionsMap).flat().forEach((prediction) => {
         const rule = basePredictionRules[prediction.eventName as ScoringBaseEventName];
@@ -327,4 +320,24 @@ export function compileScores(
   }
 
   return { scores, currentStreaks, streaks };
+}
+
+/**
+  * Whether Shauhin Mode bets count for predictions made in an episode
+  * @param shauhinModeRules The league's Shauhin Mode settings
+  * @param keyEpisodes The season's key episodes
+  * @param episodeNum The episode the predictions were made in
+  */
+export function isShauhinModeActive(
+  shauhinModeRules: ShauhinModeSettings,
+  keyEpisodes: KeyEpisodes,
+  episodeNum: number
+) {
+  return shauhinModeRules.enabled &&
+    shauhinModeRules.enabledBets.length > 0 && (
+      (shauhinModeRules.startWeek === 'Custom' && episodeNum >= (shauhinModeRules.customStartWeek ?? Infinity))
+      || (shauhinModeRules.startWeek === 'After Premiere' && episodeNum > 1)
+      || (shauhinModeRules.startWeek === 'After Merge' && episodeNum > (keyEpisodes.mergeEpisode?.episodeNumber ?? Infinity))
+      || (shauhinModeRules.startWeek === 'Before Finale' && !!keyEpisodes.nextEpisode?.isFinale && episodeNum < keyEpisodes.nextEpisode.episodeNumber)
+    );
 }

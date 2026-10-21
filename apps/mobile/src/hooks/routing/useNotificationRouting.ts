@@ -9,12 +9,12 @@ import {
 } from '~/lib/routing';
 import { useLeagues } from '~/hooks/user/useLeagues';
 import { type NotificationData } from '~/types/notifications';
-import { useLiveScoringSession } from '~/hooks/user/useLiveScoringSession';
-import { useLivePredictions } from '~/hooks/livePredictions/query/useLivePredictions';
+import { useLiveScoring } from '~/context/liveScoringContext';
+import { LIVE_EVENTS_ENABLED } from '~/lib/features';
 
 /**
  * Handles notification tap routing
- * Place in the tabs layout alongside useDeepLinkHandler
+ * Place in the tabs layout alongside useDeepLinkHandler, inside LiveScoringProvider
  */
 // Module-level so it persists across remounts from navigation
 let lastHandledId: string | null = null;
@@ -33,11 +33,8 @@ export function useNotificationRouting() {
   const inProtectedGroup = segments[0] === '(protected)';
   const inTabsGroup = segments[1] === '(tabs)';
 
-  const { airingEpisode } = useLivePredictions();
-  const { isOptedIn, optIn, isOptingIn } = useLiveScoringSession(airingEpisode?.episodeId);
-
-  const isOptedInRef = useRef(isOptedIn);
-  const isOptingInRef = useRef(isOptingIn);
+  const { openPrompt } = useLiveScoring();
+  const openPromptRef = useRef(openPrompt);
 
   // Keep refs in sync
   useEffect(() => {
@@ -45,12 +42,8 @@ export function useNotificationRouting() {
   }, [pathname]);
 
   useEffect(() => {
-    isOptedInRef.current = isOptedIn;
-  }, [isOptedIn]);
-
-  useEffect(() => {
-    isOptingInRef.current = isOptingIn;
-  }, [isOptingIn]);
+    openPromptRef.current = openPrompt;
+  }, [openPrompt]);
 
   // Cold start: handle notification that launched the app
   useEffect(() => {
@@ -184,16 +177,15 @@ export function useNotificationRouting() {
         break;
 
       case 'live_scoring_optin':
-        if (data.episodeId && !isOptedInRef.current && !isOptingInRef.current) {
-          optIn();
-        }
+        // Ask rather than opt in silently; the answer can be changed from the header bell
+        if (data.episodeId) openPromptRef.current(data.episodeId);
         break;
       case 'live_event':
         await handleLiveScoringTap(data);
         break;
 
       case 'live_prediction':
-        if (data.episodeId) router.navigate('/live');
+        if (LIVE_EVENTS_ENABLED && data.episodeId) router.navigate('/live');
         break;
       default:
         console.log('Unhandled notification type:', data.type);

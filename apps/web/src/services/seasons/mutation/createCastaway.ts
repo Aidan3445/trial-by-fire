@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, eq, or } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { seasonSchema } from '~/server/db/schema/seasons';
 import { type CastawayInsert } from '~/types/castaways';
@@ -26,8 +26,8 @@ export async function createCastawayLogic(
   castaway: CastawayInsert
 ) {
 
- const tribeNameToMatch = castaway.tribe === '' ? 'Castaways' : castaway.tribe;
- 
+  const tribeNameToMatch = castaway.tribe === '' ? 'Castaways' : castaway.tribe;
+
   // Transaction to create the castaway
   return await db.transaction(async (trx) => {
     // Get the season ID

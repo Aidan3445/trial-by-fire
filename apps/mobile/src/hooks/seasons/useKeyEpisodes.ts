@@ -108,15 +108,29 @@ export function useKeyEpisodesBySeason(seasonIds: number[]) {
  * Determines refresh configuration based on episode timing
  */
 function determineEpisodeRefreshConfig(keyEpisodes: KeyEpisodes | undefined) {
-  if (!keyEpisodes?.nextEpisode?.airDate || !keyEpisodes.nextEpisode.runtime) {
-    return {
-      staleTime: 2 * 60 * 60 * 1000, // 2 hours
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      inTransitionWindow: false
-    };
-  }
+  // Outside the air window the cache is persisted and trusted for hours; in dev keep it short so
+  // server-side DEV_FAKE_AIRING changes show up after a relaunch instead of hours later
+  // eslint-disable-next-line no-undef
+  const idleStaleTime = __DEV__ ? 60 * 1000 : 2 * 60 * 60 * 1000;
+  const quiet = {
+    staleTime: idleStaleTime,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    inTransitionWindow: false
+  };
+  const transition = {
+    staleTime: 5 * 1000, // 5 seconds
+    refetchInterval: 10 * 1000, // 10 seconds
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    inTransitionWindow: true
+  };
+
+  // Once an episode starts it becomes the previous episode, so keep polling until it has aired
+  if (keyEpisodes?.previousEpisode?.airStatus === 'Airing') return transition;
+
+  if (!keyEpisodes?.nextEpisode?.airDate || !keyEpisodes.nextEpisode.runtime) return quiet;
 
   const now = new Date();
   const episodeStart = keyEpisodes.nextEpisode.airDate;
@@ -126,23 +140,5 @@ function determineEpisodeRefreshConfig(keyEpisodes: KeyEpisodes | undefined) {
   const windowStart = new Date(episodeStart.getTime() - 10 * 60 * 1000);
   const windowEnd = new Date(episodeEnd.getTime() + 10 * 60 * 1000);
 
-  const inTransitionWindow = now >= windowStart && now <= windowEnd;
-
-  if (inTransitionWindow) {
-    return {
-      staleTime: 5 * 1000, // 5 seconds
-      refetchInterval: 10 * 1000, // 10 seconds
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
-      inTransitionWindow: true
-    };
-  }
-
-  return {
-    staleTime: 2 * 60 * 60 * 1000, // 2 hours
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    inTransitionWindow: false
-  };
+  return now >= windowStart && now <= windowEnd ? transition : quiet;
 }

@@ -4,9 +4,9 @@ import type { TribesTimeline, Tribe } from '~/types/tribes';
 
 describe('getTribeTimeline', () => {
   const tribes: Tribe[] = [
-    { tribeId: 1, tribeName: 'Red Tribe', tribeColor: '#FF0000', seasonId: 1 },
-    { tribeId: 2, tribeName: 'Blue Tribe', tribeColor: '#0000FF', seasonId: 1 },
-    { tribeId: 3, tribeName: 'Green Tribe', tribeColor: '#00FF00', seasonId: 1 },
+    { tribeId: 1, tribeName: 'Red Tribe', tribeColor: '#FF0000', seasonId: 1, createdByEventId: null },
+    { tribeId: 2, tribeName: 'Blue Tribe', tribeColor: '#0000FF', seasonId: 1, createdByEventId: null },
+    { tribeId: 3, tribeName: 'Green Tribe', tribeColor: '#00FF00', seasonId: 1, createdByEventId: null },
   ];
 
   const tribesTimeline: TribesTimeline = {

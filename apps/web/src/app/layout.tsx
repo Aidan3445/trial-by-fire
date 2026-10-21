@@ -2,7 +2,7 @@ import '~/styles/globals.css';
 
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Inter } from 'next/font/google';
-import { ClerkProvider } from '@clerk/nextjs';
+import { ClerkProvider, SignedIn } from '@clerk/nextjs';
 import { type ReactNode, StrictMode, Suspense, type CSSProperties } from 'react';
 import { SidebarProvider } from '~/components/common/sidebar';
 import Nav from '~/components/nav/navSelector';
@@ -10,6 +10,7 @@ import { type Metadata } from 'next';
 import QueryClientContextProvider from '~/context/reactQueryContext';
 import FloatingActionsWidget from '~/components/shared/floatingActions/widget';
 import { AppStoreInvite } from '~/components/sys/appStoreNotice';
+import { DonationManager } from '~/components/sys/donation/donationManager';
 
 //import { RebrandNotice } from '~/components/sys/rebrand';
 //import { LateLeagueTip } from '~/components/sys/lateLeagueTip';
@@ -61,6 +62,9 @@ export default async function RootLayout({ children }: RootLayoutProps) {
                 <Suspense fallback={null}>
                   <AppStoreInvite />
                 </Suspense>
+                <SignedIn>
+                  <DonationManager />
+                </SignedIn>
               </SidebarProvider>
             </body>
           </html>

@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 import { HeaderButton } from '~/components/leagues/shared/header/button';
 import { useAnimatedVisibility } from '~/hooks/ui/useAnimatedVisibility';
 import useHeaderHeight from '~/hooks/ui/useHeaderHeight';
+import LiveScoringIndicator from '~/components/shared/liveScoring/indicator';
 
 export default function ProfileHeader() {
   const router = useRouter();
@@ -28,6 +29,8 @@ export default function ProfileHeader() {
             enabled={showBack}
             opacity={backOpacity}
             onPress={() => router.back()} />
+          {/* The back button takes this corner below the tab root */}
+          <LiveScoringIndicator visible={!showBack} />
           <View className='h-6 w-1 bg-primary rounded-full' />
           <Text
             allowFontScaling={false}

@@ -14,7 +14,8 @@ import {
   type BaseEventName,
   type EventWithReferences,
 } from '~/types/events';
-import { BaseEventNames, BaseEventLabels, BaseEventLabelPrefixes } from '~/lib/events';
+import { BaseEventNames, BaseEventLabels, BaseEventLabelPrefixes, NEW_TRIBE_COLOR, tribeNameTaken } from '~/lib/events';
+import { type TribeInsert } from '~/types/tribes';
 import AirStatus from '~/components/shared/episodes/airStatus';
 
 export function useCreateBaseEvent(seasonId: number | null) {
@@ -54,7 +55,7 @@ export function useCreateBaseEvent(seasonId: number | null) {
   );
 
   // Reference options for the selected episode
-  const { combinedReferenceOptions, handleCombinedReferenceSelection } = useEventOptions(
+  const { tribeOptions, combinedReferenceOptions, handleCombinedReferenceSelection } = useEventOptions(
     seasonId,
     selectedEpisode ?? 1,
     selectedEventName
@@ -67,6 +68,17 @@ export function useCreateBaseEvent(seasonId: number | null) {
     setClearKey((k) => k + 1);
     form.resetField('references');
   }, [form]);
+
+  // A tribe update can create the tribe it moves castaways onto (a merge tribe, or a tribe added in a swap)
+  const [newTribe, setNewTribe] = useState<TribeInsert>({ tribeName: '', tribeColor: NEW_TRIBE_COLOR });
+  const tribeNames = useMemo(() => tribeOptions.map((tribe) => tribe.label), [tribeOptions]);
+  const newTribeTaken = tribeNameTaken(newTribe.tribeName, tribeNames);
+  const updateNewTribe = useCallback((next: TribeInsert) => {
+    setNewTribe(next);
+    form.setValue('newTribe', next.tribeName.trim() ? { ...next, tribeName: next.tribeName.trim() } : null);
+  }, [form]);
+  const resetNewTribe = useCallback(() =>
+    updateNewTribe({ tribeName: '', tribeColor: NEW_TRIBE_COLOR }), [updateNewTribe]);
 
   // Label helper - auto-populates label based on subtype selection
   const handleSubtypeChange = useCallback((subtype: string) => {
@@ -85,9 +97,10 @@ export function useCreateBaseEvent(seasonId: number | null) {
     form.setValue('eventName', eventName);
     form.resetField('label');
     setEventSubtype('');
+    resetNewTribe();
     clearReferences();
   },
-    [form, clearReferences]
+    [form, clearReferences, resetNewTribe]
   );
 
   // Mock event for preview
@@ -174,6 +187,7 @@ export function useCreateBaseEvent(seasonId: number | null) {
 
       await queryClient.invalidateQueries({ queryKey: ['baseEvents', seasonId] });
       await queryClient.invalidateQueries({ queryKey: ['seasons', seasonId, true] });
+      if (data.newTribe) await queryClient.invalidateQueries({ queryKey: ['tribes', seasonId] });
 
       Alert.alert(
         'Success',
@@ -185,6 +199,7 @@ export function useCreateBaseEvent(seasonId: number | null) {
               clearReferences();
               setEventSubtype('');
               form.reset({ episodeId: data.episodeId, notes: null });
+              resetNewTribe();
             },
           },
           {
@@ -214,6 +229,7 @@ export function useCreateBaseEvent(seasonId: number | null) {
     setLabel !== '' &&
     !!selectedReferences &&
     selectedReferences.length > 0 &&
+    !(selectedEventName === 'tribeUpdate' && newTribeTaken) &&
     !isSubmitting;
 
   return {
@@ -236,6 +252,11 @@ export function useCreateBaseEvent(seasonId: number | null) {
     // Handlers
     handleEventChange,
     handleSubtypeChange,
+
+    // New tribe
+    newTribe,
+    updateNewTribe,
+    tribeNames,
 
     // Options
     episodeOptions,

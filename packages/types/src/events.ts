@@ -145,6 +145,12 @@ export type CustomEvents = {
   predictions: Predictions;
 };
 
+/** Name and color for a tribe made or renamed from a tribe update */
+const TribeFieldsZod = z.object({
+  tribeName: z.string().trim().min(1).max(16),
+  tribeColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+});
+
 /**
  * Factory for BaseEventInsertZod that accepts a minimum ID value.
  * In production, use minId=0. For testing, use minId=-100 (or similar).
@@ -158,16 +164,36 @@ export function createBaseEventInsertZod(minId = 0) {
     references: z.object({
       type: z.enum(ReferenceTypes),
       id: z.coerce.number().int().min(minId),
-    }).array().min(1)
-  }).refine((data) => {
-    // If eventName is 'tribeUpdate', we need at least one tribe and at least one castaway
-    if (data.eventName === 'tribeUpdate') {
-      const hasTribe = data.references.some((ref) => ref.type === 'Tribe');
-      const hasCastaway = data.references.some((ref) => ref.type === 'Castaway');
-      return hasTribe && hasCastaway;
-    }
-    return true;
-  }, { message: 'Tribe Update events must reference at least one tribe and one castaway' });
+    }).array().min(1),
+    // On create: a tribe that does not exist yet (a merge tribe, or a tribe added in a swap), created with the event
+    newTribe: TribeFieldsZod.nullable().optional(),
+    // On update: a new name and color for the tribe this event created
+    tribeEdit: TribeFieldsZod.nullable().optional(),
+  }).superRefine((data, ctx) => {
+    const problem = tribeUpdateProblem(data);
+    if (problem) ctx.addIssue({ code: 'custom', message: problem, path: ['references'] });
+  });
+}
+
+/**
+ * Why a base event's tribe fields are invalid, or null if they are fine. A tribe update
+ * moves castaways onto exactly one tribe: one existing tribe, or the one it creates.
+ * Shared by the form schema and the server, since the API takes events unparsed.
+ */
+export function tribeUpdateProblem(event: {
+  eventName: string;
+  references: { type: string }[];
+  newTribe?: unknown;
+  tribeEdit?: unknown;
+}) {
+  if (event.eventName !== 'tribeUpdate') {
+    return event.newTribe || event.tribeEdit ? 'Only Tribe Update events can create or edit a tribe' : null;
+  }
+  if (event.newTribe && event.tribeEdit) return 'A Tribe Update cannot create and edit a tribe at once';
+  const tribes = event.references.filter((ref) => ref.type === 'Tribe').length + (event.newTribe ? 1 : 0);
+  if (tribes !== 1) return 'Tribe Update events must have exactly one tribe';
+  if (!event.references.some((ref) => ref.type === 'Castaway')) return 'Tribe Update events must reference at least one castaway';
+  return null;
 }
 
 export const BaseEventInsertZod = createBaseEventInsertZod(0);

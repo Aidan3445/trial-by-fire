@@ -1,5 +1,5 @@
-import { type ReactNode, useState } from 'react';
-import { Keyboard, type LayoutChangeEvent, Pressable, View } from 'react-native';
+import { type ReactNode, useRef, useState } from 'react';
+import { Keyboard, Pressable, View, type ViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useKeyboardHandler } from 'react-native-keyboard-controller';
@@ -14,6 +14,7 @@ export default function AuthCard({ children }: AuthCardProps) {
   const headerHeight = useHeaderHeight();
   const [cardY, setCardY] = useState(0);
   const translateY = useSharedValue(0);
+  const cardRef = useRef<ViewInstance>(null);
 
   // Target: card top should not go above safe area top + small padding
   const minY = 85;
@@ -36,8 +37,8 @@ export default function AuthCard({ children }: AuthCardProps) {
     transform: [{ translateY: translateY.value }],
   }));
 
-  const onCardLayout = (e: LayoutChangeEvent) => {
-    e.target.measureInWindow((_x, y) => {
+  const onCardLayout = () => {
+    cardRef.current?.measureInWindow((_x, y) => {
       setCardY(y);
     });
   };
@@ -56,7 +57,7 @@ export default function AuthCard({ children }: AuthCardProps) {
         <Animated.View
           style={[{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: 24 }, animatedStyle]}>
           <View className='rounded-3xl bg-white p-8 border-2 border-primary/20 mb-2'>
-            <View onLayout={onCardLayout}>
+            <View ref={cardRef} onLayout={onCardLayout}>
               {children}
             </View>
           </View>

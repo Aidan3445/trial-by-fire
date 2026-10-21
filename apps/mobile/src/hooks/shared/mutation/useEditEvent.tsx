@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -6,6 +6,9 @@ import { z } from 'zod';
 import { useLeague } from '~/hooks/leagues/query/useLeague';
 import { useEventOptions } from '~/hooks/seasons/enrich/useEventOptions';
 import { useFetch } from '~/hooks/helpers/useFetch';
+import { useTribes } from '~/hooks/seasons/useTribes';
+import { editableEventTribe, tribeNameTaken } from '~/lib/events';
+import { type TribeInsert } from '~/types/tribes';
 import {
   BaseEventInsertZod,
   CustomEventInsertZod,
@@ -49,6 +52,18 @@ export function useEditEvent(event: EnrichedEvent, seasonIdOverride?: number) {
     event.references
   );
 
+  // A tribe update that created its tribe can rename and recolor it, while that is its only tribe
+  const { data: tribes } = useTribes(seasonId ?? null);
+  const selectedReferences = form.watch('references');
+  const createdTribe = editableEventTribe(event, selectedReferences ?? [], tribes ?? []);
+  const [tribeEdit, setTribeEdit] = useState<TribeInsert | null>(null);
+  const tribeFields = tribeEdit ?? (createdTribe && { tribeName: createdTribe.tribeName, tribeColor: createdTribe.tribeColor });
+  const otherTribeNames = useMemo(() => (tribes ?? [])
+    .filter((tribe) => tribe.tribeId !== createdTribe?.tribeId)
+    .map((tribe) => tribe.tribeName), [tribes, createdTribe?.tribeId]);
+  const tribeEditInvalid = !!createdTribe && !!tribeEdit &&
+    (tribeEdit.tribeName.trim() === '' || tribeNameTaken(tribeEdit.tribeName, otherTribeNames));
+
   // Clear key for resetting MultiSelect
   const [clearKey, setClearKey] = useState(0);
 
@@ -75,9 +90,12 @@ export function useEditEvent(event: EnrichedEvent, seasonIdOverride?: number) {
     try {
       let response;
 
+      const edit = isBaseEvent && createdTribe && tribeEdit
+        ? { ...tribeEdit, tribeName: tribeEdit.tribeName.trim() }
+        : null;
       if (isBaseEvent) {
         response = await putEvent('/api/seasons/baseEvents', {
-          body: { baseEventId: event.eventId, baseEvent: data },
+          body: { baseEventId: event.eventId, baseEvent: { ...data, tribeEdit: edit } },
         });
       } else {
         if (!event.customEventRuleId) throw new Error('Missing customEventRuleId');
@@ -94,6 +112,8 @@ export function useEditEvent(event: EnrichedEvent, seasonIdOverride?: number) {
 
       clearReferences();
       await invalidateQueries();
+      if (edit) await queryClient.invalidateQueries({ queryKey: ['tribes', seasonId] });
+      setTribeEdit(null);
       Alert.alert('Success', 'Event updated');
       return { success: true };
     } catch (e) {
@@ -152,6 +172,13 @@ export function useEditEvent(event: EnrichedEvent, seasonIdOverride?: number) {
     combinedReferenceOptions,
     handleCombinedReferenceSelection,
     getDefaultStringValues,
+
+    // Tribe this event created
+    createdTribe,
+    tribeFields,
+    setTribeEdit,
+    otherTribeNames,
+    tribeEditInvalid,
 
     // Actions
     handleUpdate,

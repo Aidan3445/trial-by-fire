@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Pressable, Text, type ViewProps, type PressableProps } from 'react-native';
+import { View, Pressable, Text, type ViewInstance, type ViewProps, type PressableProps } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { cn } from '~/lib/utils';
 
@@ -24,7 +24,7 @@ type TabsProps = ViewProps & {
   onValueChange?: (_value: string) => void;
 };
 
-const Tabs = React.forwardRef<View, TabsProps>(
+const Tabs = React.forwardRef<ViewInstance, TabsProps>(
   ({ defaultValue, value: controlledValue, onValueChange, className, children, ...props }, ref) => {
     const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue);
 
@@ -52,7 +52,7 @@ const Tabs = React.forwardRef<View, TabsProps>(
 );
 Tabs.displayName = 'Tabs';
 
-const TabsList = React.forwardRef<View, ViewProps>(({ className, ...props }, ref) => (
+const TabsList = React.forwardRef<ViewInstance, ViewProps>(({ className, ...props }, ref) => (
   <View
     ref={ref}
     className={cn(
@@ -72,14 +72,14 @@ type TabsTriggerProps = Omit<PressableProps, 'onPress'> & {
   children: React.ReactNode;
 };
 
-const TabsTrigger = React.forwardRef<View, TabsTriggerProps>(
+const TabsTrigger = React.forwardRef<ViewInstance, TabsTriggerProps>(
   ({ value, className, disabled, children, ...props }, ref) => {
     const { value: selectedValue, onValueChange } = useTabsContext();
     const isActive = selectedValue === value;
 
     const animatedStyle = useAnimatedStyle(() => ({
       transform: [{ scale: withTiming(isActive ? 1 : 0.98, { duration: 150 }) }],
-    }), [isActive]);
+    }));
 
     return (
       <AnimatedPressable
@@ -112,7 +112,7 @@ type TabsContentProps = ViewProps & {
   value: string;
 };
 
-const TabsContent = React.forwardRef<View, TabsContentProps>(
+const TabsContent = React.forwardRef<ViewInstance, TabsContentProps>(
   ({ value, className, children, ...props }, ref) => {
     const { value: selectedValue } = useTabsContext();
 

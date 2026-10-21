@@ -1,6 +1,5 @@
 import { View, Text, Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Grayscale } from 'react-native-color-matrix-image-filters';
 import * as WebBrowser from 'expo-web-browser';
 import { ExternalLink, FlameKindling } from 'lucide-react-native';
 import { useMemo } from 'react';
@@ -9,6 +8,7 @@ import { type Tribe, type TribesTimeline } from '~/types/tribes';
 import { type LeagueMember } from '~/types/leagueMembers';
 import { getTribeTimeline } from '~/lib/utils';
 import ColorRow from '~/components/shared/colorRow';
+import Grayscale from '~/components/shared/grayscale';
 import TribeHistoryCircles from '~/components/shared/castaways/tribeHistoryCircles';
 import { colors } from '~/lib/colors';
 

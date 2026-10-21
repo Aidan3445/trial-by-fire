@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {
-  Platform, Text, TextInput, TouchableOpacity, View, type TextInputEndEditingEvent,
+  Platform, Text, TextInput, TouchableOpacity, View, type TextInputEndEditingEvent, type TextInputInstance,
 } from 'react-native';
 import { useAuth, useSignUp } from '@clerk/expo';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
@@ -21,9 +21,9 @@ export default function SignUpScreen() {
   const [code, setCode] = React.useState('');
   const [formError, setFormError] = React.useState<string | null>(null);
 
-  const emailRef = React.useRef<TextInput>(null);
-  const passwordRef = React.useRef<TextInput>(null);
-  const confirmRef = React.useRef<TextInput>(null);
+  const emailRef = React.useRef<TextInputInstance>(null);
+  const passwordRef = React.useRef<TextInputInstance>(null);
+  const confirmRef = React.useRef<TextInputInstance>(null);
 
   const isLoading = fetchStatus === 'fetching';
 

@@ -8,7 +8,7 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "typeRoots": ["./node_modules/@types"],
+    "types": ["node"],
     /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,

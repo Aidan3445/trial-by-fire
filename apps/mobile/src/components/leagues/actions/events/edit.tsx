@@ -9,6 +9,7 @@ import type { EnrichedEvent, EventReference } from '~/types/events';
 import { colors } from '~/lib/colors';
 import Modal from '~/components/common/modal';
 import { useSysAdmin } from '~/hooks/user/useSysAdmin';
+import TribeFields from '~/components/leagues/actions/events/base/tribeFields';
 
 interface EditEventModalProps {
   event: EnrichedEvent;
@@ -28,6 +29,11 @@ export default function EditEvent({ event, overrideSeasonId }: EditEventModalPro
     combinedReferenceOptions,
     handleCombinedReferenceSelection,
     getDefaultStringValues,
+    createdTribe,
+    tribeFields,
+    setTribeEdit,
+    otherTribeNames,
+    tribeEditInvalid,
     handleUpdate,
     handleDelete,
     isUpdating,
@@ -39,6 +45,11 @@ export default function EditEvent({ event, overrideSeasonId }: EditEventModalPro
   const onUpdate = () => {
     void handleUpdate();
     setIsOpen(false);
+  };
+
+  const close = () => {
+    setIsOpen(false);
+    setTribeEdit(null);
   };
 
   const onDelete = () => {
@@ -69,7 +80,7 @@ export default function EditEvent({ event, overrideSeasonId }: EditEventModalPro
       {/* Edit Modal */}
       <Modal
         visible={isOpen}
-        onClose={() => setIsOpen(false)}>
+        onClose={close}>
         {/* Header */}
         <View className='flex-row items-center justify-between px-1'>
           <View className='flex-row items-center gap-2'>
@@ -78,7 +89,7 @@ export default function EditEvent({ event, overrideSeasonId }: EditEventModalPro
               Edit {event.eventName}
             </Text>
           </View>
-          <Pressable onPress={() => setIsOpen(false)} className='p-1 active:opacity-80'>
+          <Pressable onPress={close} className='p-1 active:opacity-80'>
             <X size={24} color={colors.foreground} />
           </Pressable>
         </View>
@@ -126,6 +137,14 @@ export default function EditEvent({ event, overrideSeasonId }: EditEventModalPro
           />
         </View>
 
+        {createdTribe && tribeFields && (
+          <TribeFields
+            label='Tribe created by this event'
+            value={tribeFields}
+            onChange={setTribeEdit}
+            takenNames={otherTribeNames} />
+        )}
+
         {/* Notes Input */}
         <View className='gap-1'>
           <Text className='text-sm font-bold uppercase tracking-wider text-muted-foreground px-1'>
@@ -161,7 +180,7 @@ export default function EditEvent({ event, overrideSeasonId }: EditEventModalPro
           {/* Cancel / Save */}
           <View className='flex-row gap-2'>
             <Pressable
-              onPress={() => setIsOpen(false)}
+              onPress={close}
               className='rounded-lg border-2 border-primary/20 bg-card px-3 py-2 active:opacity-80'>
               <Text className='text-base font-bold uppercase tracking-wider text-foreground'>
                 Cancel
@@ -169,10 +188,10 @@ export default function EditEvent({ event, overrideSeasonId }: EditEventModalPro
             </Pressable>
             <Pressable
               onPress={onUpdate}
-              disabled={isUpdating}
+              disabled={isUpdating || tribeEditInvalid}
               className={cn(
                 'rounded-lg bg-primary px-3 py-2 active:opacity-80 justify-center items-center',
-                isUpdating && 'opacity-50'
+                (isUpdating || tribeEditInvalid) && 'opacity-50'
               )}>
               <Text className='text-base font-bold uppercase tracking-wider text-white'>
                 {isUpdating ? 'Saving...' : 'Save'}

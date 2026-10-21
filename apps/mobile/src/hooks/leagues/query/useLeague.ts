@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
 import { type League } from '~/types/leagues';
 import { useFetch } from '~/hooks/helpers/useFetch';
-import { useIsFocused } from '@react-navigation/native';
 
 /**
  * Fetches league data based on the league hash from the URL parameters.

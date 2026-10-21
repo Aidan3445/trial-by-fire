@@ -5,9 +5,8 @@ import AccountSettings from '~/components/profile/management/view';
 import NotificationSettings from '~/components/profile/notifications';
 import { colors } from '~/lib/colors';
 import Button from '~/components/common/button';
-import * as WebBrowser from 'expo-web-browser';
+import { useDonation } from '~/context/donationContext';
 
-const BUY_ME_A_COFFEE_URL = 'https://www.buymeacoffee.com/aidanweinberg';
 const ISSUE_REPORT_URL =
   'mailto:yourfantasysurvivor@gmail.com?subject=Bug%20Report%20%2F%20Feature%20Request';
 
@@ -25,18 +24,8 @@ export default function ProfileScreen() {
     }
   };
 
-  const openSupportLink = async () => {
-    try {
-      await WebBrowser.openBrowserAsync(BUY_ME_A_COFFEE_URL, {
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.POPOVER,
-      });
-    } catch {
-      Alert.alert(
-        'Unable to open link',
-        'Please visit buymeacoffee.com/aidanweinberg to support the developer.'
-      );
-    }
-  };
+  // Opens Buy Me a Coffee, then asks how it went when they come back
+  const { startDonation: openSupportLink } = useDonation();
 
   return (
     <View className='flex-1 bg-background relative'>

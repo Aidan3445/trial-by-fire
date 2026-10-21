@@ -9,6 +9,7 @@ import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useChangeLeaderboardUsername } from '~/hooks/livePredictions/mutation/useChangeLeaderboardUsername';
 import { useAuth } from '@clerk/expo';
+import { DonationProvider } from '~/context/donationContext';
 //import SeasonOverNotice from '~/components/sys/seasonOverNotice';
 
 export const FIRST_LOGIN_KEY = 'hasEstablishedLeaderboardUsername';
@@ -66,16 +67,18 @@ export default function ProtectedLayout() {
       <QueryClientContextProvider>
         <NotificationManager />
         <FirstLoginManager />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-          <Stack.Screen
-            name='(modals)'
-            options={{
-              headerShown: false,
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-            }} />
-        </Stack>
+        <DonationProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+            <Stack.Screen
+              name='(modals)'
+              options={{
+                headerShown: false,
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }} />
+          </Stack>
+        </DonationProvider>
       </QueryClientContextProvider>
     </GestureHandlerRootView>
   );

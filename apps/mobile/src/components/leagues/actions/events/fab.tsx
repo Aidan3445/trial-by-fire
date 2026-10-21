@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { GestureDetector, useExclusiveGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -49,21 +49,25 @@ export default function EventFAB({ hash, isLeagueAdmin, isSysAdmin, isActive }: 
       { damping: 100 }
     );
   };
-  const gesture = Gesture.Pan()
-    .onStart(() => {
+  const gesture = usePanGesture({
+    onActivate: () => {
+      'worklet';
       contextX.value = translateX.value;
       contextY.value = translateY.value;
       isDragging.value = true;
-    })
-    .onUpdate((event) => {
+    },
+    onUpdate: (event) => {
+      'worklet';
       translateX.value = Math.max(minX, Math.min(maxX, contextX.value + event.translationX));
       translateY.value = Math.max(minY, Math.min(maxY, contextY.value + event.translationY));
-    })
-    .onEnd(() => {
+    },
+    onDeactivate: () => {
+      'worklet';
       isDragging.value = false;
       isPressed.value = false;
       snapToCorner();
-    });
+    },
+  });
   const navigate = useCallback(() => {
     if (isSysAdmin) {
       router.push(`/sysAdmin?hash=${hash}`);
@@ -71,17 +75,17 @@ export default function EventFAB({ hash, isLeagueAdmin, isSysAdmin, isActive }: 
       router.push(`/customEvent?hash=${hash}`);
     }
   }, [router, hash, isSysAdmin, isLeagueAdmin]);
-  const tap = Gesture
-    .Tap()
-    .runOnJS(true)
-    .onBegin(() => {
+  const tap = useTapGesture({
+    runOnJS: true,
+    onBegin: () => {
       isPressed.value = true;
-    })
-    .onEnd(navigate)
-    .onFinalize(() => {
+    },
+    onActivate: navigate,
+    onFinalize: () => {
       isPressed.value = false;
-    });
-  const composed = Gesture.Exclusive(gesture, tap);
+    },
+  });
+  const composed = useExclusiveGestures(gesture, tap);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
@@ -114,7 +118,7 @@ export default function EventFAB({ hash, isLeagueAdmin, isSysAdmin, isActive }: 
       </Animated.View>
       <GestureDetector gesture={composed}>
         <Animated.View
-          className='absolute h-14 w-14 items-center justify-center rounded-full bg-primary/90 border-2 border-accent/50 shadow-lg'
+          className='absolute h-14 w-14 items-center justify-center rounded-full bg-primary border-2 border-accent/50 shadow-lg'
           style={[{ top: 0, left: 0 }, animatedStyle]}>
           <Pencil size={28} color={colors.card} />
         </Animated.View>

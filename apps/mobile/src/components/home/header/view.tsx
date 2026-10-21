@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 import { HeaderButton } from '~/components/leagues/shared/header/button';
 import { useAnimatedVisibility } from '~/hooks/ui/useAnimatedVisibility';
 import useHeaderHeight from '~/hooks/ui/useHeaderHeight';
+import LiveScoringIndicator from '~/components/shared/liveScoring/indicator';
 
 export default function HomeHeader() {
   const height = useHeaderHeight();
@@ -19,6 +20,7 @@ export default function HomeHeader() {
       style={{ height }}>
       <View className='items-center justify-center w-full'>
         <View className='relative flex-row items-center justify-center gap-0.5 w-full'>
+          <LiveScoringIndicator />
           <View className='h-6 w-1 bg-primary rounded-full' />
           <Text
             allowFontScaling={false}

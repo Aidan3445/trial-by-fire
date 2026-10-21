@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useEnrichPredictions } from '~/hooks/seasons/enrich/useEnrichPredictions';
 import type { EnrichedEvent, Prediction } from '~/types/events';
@@ -8,47 +8,8 @@ import type { Tribe } from '~/types/tribes';
 import type { Castaway, EnrichedCastaway } from '~/types/castaways';
 import type { LeagueMember } from '~/types/leagueMembers';
 import type { Eliminations } from '~/types/events';
-
-// Mock all the hooks
-vi.mock('~/hooks/leagues/useRules', () => ({
-  useLeagueRules: vi.fn(),
-}));
-
-vi.mock('~/hooks/seasons/useTribesTimeline', () => ({
-  useTribesTimeline: vi.fn(),
-}));
-
-vi.mock('~/hooks/seasons/useTribes', () => ({
-  useTribes: vi.fn(),
-}));
-
-vi.mock('~/hooks/seasons/useCastaways', () => ({
-  useCastaways: vi.fn(),
-}));
-
-vi.mock('~/hooks/leagues/useLeagueMembers', () => ({
-  useLeagueMembers: vi.fn(),
-}));
-
-vi.mock('~/hooks/seasons/useEliminations', () => ({
-  useEliminations: vi.fn(),
-}));
-
-import { useLeagueRules } from '~/hooks/leagues/useLeagueRules';
-import { useTribesTimeline } from '~/hooks/seasons/useTribesTimeline';
-import { useTribes } from '~/hooks/seasons/useTribes';
-import { useCastaways } from '~/hooks/seasons/useCastaways';
-import { useLeagueMembers } from '~/hooks/leagues/useLeagueMembers';
-import { useEliminations } from '~/hooks/seasons/useEliminations';
 import { type SeasonsDataQuery } from '~/types/seasons';
 import { type LeagueRules } from '~/types/leagues';
-
-const mockUseLeagueRules = useLeagueRules as ReturnType<typeof vi.fn>;
-const mockUseTribesTimeline = useTribesTimeline as ReturnType<typeof vi.fn>;
-const mockUseTribes = useTribes as ReturnType<typeof vi.fn>;
-const mockUseCastaways = useCastaways as ReturnType<typeof vi.fn>;
-const mockUseLeagueMembers = useLeagueMembers as ReturnType<typeof vi.fn>;
-const mockUseEliminations = useEliminations as ReturnType<typeof vi.fn>;
 
 describe('useEnrichPredictions', () => {
   const mockTribe: Tribe = {
@@ -56,6 +17,7 @@ describe('useEnrichPredictions', () => {
     tribeName: 'Red Tribe',
     tribeColor: '#FF0000',
     seasonId: 1,
+    createdByEventId: null,
   };
 
   const mockCastaway: Castaway = {
@@ -100,17 +62,6 @@ describe('useEnrichPredictions', () => {
     shauhinMode: null
   } as unknown as LeagueRules;
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Default mocks for all hooks
-    mockUseLeagueRules.mockReturnValue({ data: null });
-    mockUseTribesTimeline.mockReturnValue({ data: null });
-    mockUseTribes.mockReturnValue({ data: null });
-    mockUseCastaways.mockReturnValue({ data: null });
-    mockUseLeagueMembers.mockReturnValue({ data: null });
-    mockUseEliminations.mockReturnValue({ data: null });
-  });
 
   it('should return empty array when dependencies are not loaded', () => {
     const seasonData = {

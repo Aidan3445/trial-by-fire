@@ -43,6 +43,8 @@ export default function MakePredictions() {
     [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal, pendingBetTotal]);
 
   if (predictionRuleCount === 0 || !keyEpisodes?.nextEpisode) return null;
+  // Locked while an episode airs; the episode tracker shows those predictions
+  if (keyEpisodes.previousEpisode?.airStatus === 'Airing') return null;
 
   return (
     <Card className='p-0 pt-5 border-2 border-primary/20 w-full relative overflow-clip rounded-lg'>
@@ -66,10 +68,7 @@ export default function MakePredictions() {
         <div className='flex items-center gap-3 h-8'>
           <span className='h-4 md:h-6 w-1 bg-primary rounded-full' />
           <h2 className='md:text-xl font-black uppercase tracking-tight leading-none text-nowrap'>
-            {keyEpisodes.previousEpisode?.airStatus === 'Airing'
-              ? 'Predictions are locked until the episode ends'
-              : (`This Week's Prediction${predictionRuleCount > 1 ? 's' : ''}`)
-            }
+            {`This Week's Prediction${predictionRuleCount > 1 ? 's' : ''}`}
           </h2>
         </div>
         <span className='flex flex-wrap justify-center items-center gap-x-4 text-muted-foreground text-sm pb-1' >
@@ -80,9 +79,8 @@ export default function MakePredictions() {
         </span>
       </CardHeader>
       <CardContent className='p-0'>
-        {keyEpisodes.nextEpisode.airStatus === 'Upcoming' &&
-          keyEpisodes.previousEpisode?.airStatus !== 'Airing' && (
-            <PredictionCards
+        {keyEpisodes.nextEpisode.airStatus === 'Upcoming' && (
+        <PredictionCards
               predictionRuleCount={predictionRuleCount}
               rules={rules}
               predictionsMade={predictionsMade}

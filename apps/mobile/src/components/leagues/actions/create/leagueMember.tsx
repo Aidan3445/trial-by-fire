@@ -1,4 +1,4 @@
-import { type Control, Controller } from 'react-hook-form';
+import { type Control, Controller, type FieldValues } from 'react-hook-form';
 import { TextInput, View, Text, Pressable } from 'react-native';
 import { DISPLAY_NAME_MAX_LENGTH } from '~/lib/leagues';
 import { twentyColors, colors } from '~/lib/colors';
@@ -6,8 +6,9 @@ import { Check, UserX2, User, Palette } from 'lucide-react-native';
 import { getContrastingColor, hexToRgba, rgbaToHex } from '@uiw/color-convert';
 import { cn } from '~/lib/utils';
 
-interface LeagueMemberProps {
-  control: Control<any>;
+interface LeagueMemberProps<T extends FieldValues> {
+  // Generic so any typed form can pass its control; widened to FieldValues where used
+  control: Control<T>;
   usedColors?: string[];
   currentColor?: string;
   formPrefix?: string;
@@ -16,7 +17,7 @@ interface LeagueMemberProps {
   onSubmitEditing?: () => void;
 }
 
-export default function LeagueMember({
+export default function LeagueMember<T extends FieldValues>({
   control,
   usedColors,
   currentColor,
@@ -24,7 +25,7 @@ export default function LeagueMember({
   noHeader,
   className,
   onSubmitEditing,
-}: LeagueMemberProps) {
+}: LeagueMemberProps<T>) {
   if (control == null) {
     console.error('LeagueMember component requires a control prop from react-hook-form');
     return null;
@@ -49,7 +50,7 @@ export default function LeagueMember({
 
       {/* Display Name Input */}
       <Controller
-        control={control}
+        control={control as unknown as Control<FieldValues>}
         name={formPrefix ? `${formPrefix}.displayName` : 'displayName'}
         render={({ field: { onChange, onBlur, value } }) => (
           <View className='w-full'>
@@ -84,7 +85,7 @@ export default function LeagueMember({
 
       {/* Color Picker */}
       <Controller
-        control={control}
+        control={control as unknown as Control<FieldValues>}
         name={formPrefix ? `${formPrefix}.color` : 'color'}
         render={({ field: { onChange, onBlur, value } }) => (
           <View className='w-full'>

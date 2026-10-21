@@ -29,7 +29,8 @@ export function useCustomEvents(overrideHash?: string) {
       }
       return response.json();
     },
-    enabled: !!hash,
-    ...refreshConfig
+    ...refreshConfig,
+    // The refresh config's focus check is on top of, not instead of, needing a hash
+    enabled: !!hash && (refreshConfig.enabled ?? true),
   });
 }

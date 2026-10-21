@@ -1,4 +1,4 @@
-import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate } from '@survivor/types';
+import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate, type Predictions, type Events, type Tribe, type EnrichedEvent, type EventReference } from '@survivor/types';
 
 export const EventSources = ['Base', 'Custom'] as const;
 export const EventTypes = ['Direct', 'Prediction'] as const;
@@ -164,6 +164,37 @@ export const BasePredictionReferenceTypes: Record<ScoringBaseEventName, Referenc
 
 
 
+/**
+  * A short signature of a season's base events that changes whenever an event is
+  * added, removed, or edited in a way that can change prediction results
+  * @param events The season's base events
+  */
+export function baseEventsVersion(events: Events | undefined) {
+  if (!events) return '';
+  return Object.entries(events)
+    .flatMap(([episodeNumber, episodeEvents]) => Object.values(episodeEvents).map((event) =>
+      `${episodeNumber}:${event.eventId}:${event.eventName}:` +
+      event.references.map((ref) => `${ref.type[0]}${ref.id}`).sort().join(',')))
+    .sort()
+    .join('|');
+}
+
+/**
+  * Whether anyone in the league made a prediction in an episode that has aired
+  * @param predictionSets Base and custom predictions, keyed by the episode they were made in
+  * @param previousEpisodeNumber The last episode to air
+  */
+export function hasPredictionHistory(
+  predictionSets: (Predictions | undefined)[],
+  previousEpisodeNumber: number | undefined
+) {
+  if (!previousEpisodeNumber) return false;
+  return predictionSets.some((predictions) =>
+    Object.entries(predictions ?? {}).some(([episodeNumber, byEvent]) =>
+      Number(episodeNumber) <= previousEpisodeNumber &&
+      Object.values(byEvent).some((preds) => preds.length > 0)));
+}
+
 export const LivePredictionStatuses = ['Open', 'Closed', 'Resolved'] as const;
 
 export const LivePredictionOptionTypes = [...ReferenceTypes, 'Custom'] as const;
@@ -200,3 +231,33 @@ export const LIVE_PREDICTION_TEMPLATES: LivePredictionTemplate[] = [
     optionType: 'Castaway',
   },
 ];
+
+/**
+ * The tribe a tribe update event created, when it is still the event's only tribe,
+ * so the event's edit form can rename and recolor it. Null otherwise.
+ * @param event the event being edited
+ * @param references the references selected in the edit form
+ * @param tribes the season's tribes
+ */
+export function editableEventTribe<T extends Pick<Tribe, 'tribeId' | 'createdByEventId'>>(
+  event: Pick<EnrichedEvent, 'eventSource' | 'eventName' | 'eventId'>,
+  references: EventReference[],
+  tribes: T[]
+) {
+  if (event.eventSource !== 'Base' || event.eventName !== 'tribeUpdate' || !event.eventId) return null;
+  const selected = references.filter((ref) => ref.type === 'Tribe');
+  if (selected.length !== 1) return null;
+  return tribes.find((tribe) =>
+    tribe.tribeId === selected[0]!.id && tribe.createdByEventId === event.eventId) ?? null;
+}
+
+/** Default color for a tribe created from a tribe update */
+export const NEW_TRIBE_COLOR = '#888888';
+
+/** Whether a tribe name is already used, ignoring case and surrounding spaces */
+export const tribeNameTaken = (name: string, takenNames: string[]) =>
+  takenNames.some((taken) => taken.toLowerCase() === name.trim().toLowerCase());
+
+/** Whether a season's events have at least one event in any episode */
+export const hasEvents = (events: Events) =>
+  Object.values(events).some((episode) => Object.keys(episode).length > 0);

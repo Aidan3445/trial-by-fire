@@ -16,6 +16,7 @@ describe('getSelectionTimeline', () => {
     seasonId: 1,
     role: 'Member',
     status: 'Active',
+    startWeek: null,
   };
 
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo } from 'react';
 import { Dimensions, type LayoutChangeEvent } from 'react-native';
-import { type PanGestureType } from 'react-native-gesture-handler/lib/typescript/handlers/gestures/panGesture';
+import { type LegacyPanGesture, type PanGesture } from 'react-native-gesture-handler';
 import { useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { type ICarouselInstance } from 'react-native-reanimated-carousel';
@@ -61,7 +61,10 @@ export function useCarousel<T>(initialData: T[] = []) {
     width: PAGE_WIDTH - 15,
     loop: carouselData.length > 2,
     enabled: carouselData.length > 1,
-    onConfigurePanGesture: (gesture: PanGestureType) => gesture.activeOffsetX([-10, 10]),
+    // Carousel 4 types this with RNGH 3's PanGesture, but still passes the legacy Gesture.Pan() builder
+    onConfigurePanGesture: (gesture: PanGesture) => {
+      (gesture as unknown as LegacyPanGesture).activeOffsetX([-10, 10]);
+    },
   }), [carouselData, progress]);
 
   const progressProps = useMemo(() => ({

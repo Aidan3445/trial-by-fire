@@ -63,6 +63,17 @@ export function useKeyEpisodes(seasonId: number | null) {
  * Determines refresh configuration based on episode timing
  */
 function determineEpisodeRefreshConfig(keyEpisodes: KeyEpisodes | undefined) {
+  // Once an episode starts it becomes the previous episode, so keep polling until it has aired
+  if (keyEpisodes?.previousEpisode?.airStatus === 'Airing') {
+    return {
+      staleTime: 5 * 1000,        // 5 seconds
+      refetchInterval: 10 * 1000, // 10 seconds
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      inTransitionWindow: true
+    };
+  }
+
   if (!keyEpisodes?.nextEpisode?.airDate || !keyEpisodes.nextEpisode.runtime) {
     return {
       staleTime: 2 * 60 * 60 * 1000, // 2 hours

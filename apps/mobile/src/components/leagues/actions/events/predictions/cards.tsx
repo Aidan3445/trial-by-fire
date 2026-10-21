@@ -85,10 +85,13 @@ export default function PredictionCards({
       ? 'Castaway'
       : 'Direct Castaway';
 
+    // Tribes with someone still in the game; an empty tribe can't be predicted
+    const activeTribes = new Set<string>();
     castaways.forEach((castaway) => {
       if (castaway.eliminatedEpisode
         && !castaway.redemption?.some((r) => r.secondEliminationEpisode === null)) return;
       const tribe = castaway.tribe;
+      if (tribe) activeTribes.add(tribe.name);
       options[castawayKey][castaway.fullName] = {
         id: castaway.castawayId,
         color: tribe?.color ?? '#AAAAAA',
@@ -109,12 +112,15 @@ export default function PredictionCards({
     }
 
     if (referenceTypes.length === 0 || referenceTypes.includes('Tribe')) {
-      tribes.forEach((tribe) => {
-        options.Tribe[tribe.tribeName] = {
-          id: tribe.tribeId,
-          color: tribe.tribeColor,
-        };
-      });
+      // Before any tribe is assigned, offer them all
+      tribes
+        .filter((tribe) => activeTribes.size === 0 || activeTribes.has(tribe.tribeName))
+        .forEach((tribe) => {
+          options.Tribe[tribe.tribeName] = {
+            id: tribe.tribeId,
+            color: tribe.tribeColor,
+          };
+        });
     }
 
     return options;
