@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { View, Text } from 'react-native';
 import ColorRow from '~/components/shared/colorRow';
+import AirStatus from '~/components/shared/episodes/airStatus';
 import { PointsIcon } from '~/components/icons/generated';
 import { useEpisodeTracker } from '~/hooks/leagues/enrich/useEpisodeTracker';
 import { colors, getPointsColor } from '~/lib/colors';
@@ -93,9 +94,12 @@ export default function EpisodeTracker() {
               This Episode
             </Text>
             <View className='flex-row items-center gap-1'>
-              <View className='size-2 rounded-full bg-green-600' />
+              <AirStatus
+                airDate={tracker.episode.airDate}
+                airStatus={tracker.episode.airStatus}
+                showDate={false} />
               <Text className='text-sm text-muted-foreground flex-1' numberOfLines={1}>
-                Live: {tracker.episode.episodeNumber}: {tracker.episode.title}
+                {tracker.episode.episodeNumber}: {tracker.episode.title}
               </Text>
             </View>
           </View>

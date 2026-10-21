@@ -7,6 +7,7 @@ import { PointsIcon } from '~/components/icons/generated';
 import { useEpisodeTracker } from '~/hooks/leagues/enrich/useEpisodeTracker';
 import { cn } from '~/lib/utils';
 import { type PredictionStatus, type TrackedEvent } from '~/lib/scores';
+import AirStatus from '~/components/leagues/hub/shared/airStatus/view';
 
 const signed = (points: number) => (points > 0 ? `+${points}` : `${points}`);
 
@@ -91,10 +92,12 @@ export default function EpisodeTracker() {
               <h2 className='md:text-xl font-black uppercase tracking-tight leading-none text-left'>
                 This Episode
               </h2>
-              <p className='text-sm text-muted-foreground truncate'>
-                <span className='mr-1 inline-block size-2 rounded-full bg-green-600 animate-pulse align-middle' />
-                Live: {tracker.episode.episodeNumber}: {tracker.episode.title}
-              </p>
+              <div className='flex items-center gap-1 min-w-0'>
+                <AirStatus airDate={tracker.episode.airDate} airStatus={tracker.episode.airStatus} showDate={false} />
+                <p className='text-sm text-muted-foreground truncate'>
+                  {tracker.episode.episodeNumber}: {tracker.episode.title}
+                </p>
+              </div>
             </div>
           </div>
           <Points value={tracker.total} className='text-2xl' />

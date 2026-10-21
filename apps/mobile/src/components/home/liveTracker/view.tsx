@@ -112,7 +112,6 @@ export default function LiveTracker() {
         <View className='flex-row items-center gap-2'>
           <View className='h-8 w-1 rounded-full bg-primary' />
           <Text className='text-2xl font-black uppercase tracking-tight text-foreground'>Live Now</Text>
-          <View className='size-2.5 rounded-full bg-green-600' />
         </View>
         <Text className='text-sm text-muted-foreground'>Your points this episode in each league</Text>
       </View>

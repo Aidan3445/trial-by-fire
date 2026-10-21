@@ -99,7 +99,6 @@ export function LiveTracker() {
         <div className='flex items-center gap-3'>
           <div className='h-6 md:h-8 w-1 bg-primary rounded-full' />
           <h2 className='text-xl md:text-3xl font-black tracking-tight uppercase'>Live Now</h2>
-          <span className='size-2.5 rounded-full bg-green-600 animate-pulse' />
         </div>
         <p className='text-sm text-muted-foreground'>Your points this episode in each league</p>
       </CardHeader>
