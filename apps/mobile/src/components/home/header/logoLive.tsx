@@ -10,6 +10,7 @@ import { useLiveScoringSession } from '~/hooks/user/useLiveScoringSession';
 import { PointsIcon } from '~/components/icons/generated';
 import Button from '~/components/common/button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LIVE_EVENTS_ENABLED } from '~/lib/features';
 
 const LogoImage = require('~/assets/LogoFull.png');
 
@@ -20,6 +21,20 @@ interface LogoLiveProps {
 const OPENED_KEY = 'live_opened_ep';
 
 export default function LogoLive({ className }: LogoLiveProps) {
+  // Without live events, just the logo; skips polling for live predictions too
+  if (!LIVE_EVENTS_ENABLED) {
+    return (
+      <View className={cn('flex-row items-center justify-evenly', className)}>
+        <View className='items-center'>
+          <Image source={LogoImage} className='h-32 w-72' resizeMode='stretch' />
+        </View>
+      </View>
+    );
+  }
+  return <LogoWithLiveCard className={className} />;
+}
+
+function LogoWithLiveCard({ className }: LogoLiveProps) {
   const router = useRouter();
   const { airingEpisode, data: predictions, seasonId } = useLivePredictions();
   const { data: stats } = useLivePredictionStats(seasonId);

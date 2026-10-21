@@ -20,6 +20,7 @@ import { shotInTheDarkSlide } from '~/components/tutorial/slides/shotInTheDark';
 import { switchPickSlide } from '~/components/tutorial/slides/switchPick';
 import { readySlide } from '~/components/tutorial/slides/ready';
 import { livePredictionsSlide } from '~/components/tutorial/slides/livePredictions';
+import { LIVE_EVENTS_ENABLED } from '~/lib/features';
 
 const SLIDES: SlideConfig[] = [
   welcomeSlide,
@@ -30,7 +31,7 @@ const SLIDES: SlideConfig[] = [
   secondarySlide,
   shotInTheDarkSlide,
   switchPickSlide,
-  livePredictionsSlide,
+  ...(LIVE_EVENTS_ENABLED ? [livePredictionsSlide] : []),
   readySlide,
 ];
 

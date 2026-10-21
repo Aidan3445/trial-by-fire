@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SysAdminHeader from '~/components/auth/sys/header';
 import Button from '~/components/common/button';
 import { useSysAdmin } from '~/hooks/user/useSysAdmin';
+import { LIVE_EVENTS_ENABLED } from '~/lib/features';
 
 export default function SysAdminScreen() {
   const { data: userId, isLoading, isError } = useSysAdmin();
@@ -43,11 +44,13 @@ export default function SysAdminScreen() {
             onPress={() => router.push('/baseEvent')}>
             <Text className='text-white text-xl'>Create Base Event</Text>
           </Button>
-          <Button
-            className='w-full bg-primary p-4 rounded-lg items-center justify-center'
-            onPress={() => router.push('/newLivePrediction')}>
-            <Text className='text-white text-xl'>Create Live Prediction</Text>
-          </Button>
+          {LIVE_EVENTS_ENABLED && (
+            <Button
+              className='w-full bg-primary p-4 rounded-lg items-center justify-center'
+              onPress={() => router.push('/newLivePrediction')}>
+              <Text className='text-white text-xl'>Create Live Prediction</Text>
+            </Button>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
