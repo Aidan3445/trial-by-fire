@@ -56,7 +56,7 @@ async function fetchEpisodes(seasonId: number, transactionOverride?: DBTransacti
       airStatus,
       isMerge: episode.isMerge,
       isFinale: episode.isFinale,
-    } as Episode;
+    };
   });
 
   return fakeAiring(processedEpisodes);

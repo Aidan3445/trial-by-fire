@@ -79,7 +79,7 @@ const TabsTrigger = React.forwardRef<ViewInstance, TabsTriggerProps>(
 
     const animatedStyle = useAnimatedStyle(() => ({
       transform: [{ scale: withTiming(isActive ? 1 : 0.98, { duration: 150 }) }],
-    }), [isActive]);
+    }));
 
     return (
       <AnimatedPressable

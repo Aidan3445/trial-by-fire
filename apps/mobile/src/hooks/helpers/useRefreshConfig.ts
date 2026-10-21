@@ -1,4 +1,4 @@
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused } from 'expo-router';
 import { useMemo } from 'react';
 import { useLeague } from '~/hooks/leagues/query/useLeague';
 
