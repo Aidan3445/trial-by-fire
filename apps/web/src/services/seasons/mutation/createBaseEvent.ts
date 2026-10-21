@@ -48,11 +48,11 @@ export default async function createBaseEventLogic(
       .values(eventRefs);
 
     if ([...EliminationEventNames, 'tribeUpdate'].includes(baseEvent.eventName)) {
-      revalidateTag('tribe-members', 'max');
-      revalidateTag('eliminations', 'max');
+      revalidateTag('tribe-members', { expire: 0 });
+      revalidateTag('eliminations', { expire: 0 });
     }
 
-    revalidateTag('base-events', 'max');
+    revalidateTag('base-events', { expire: 0 });
 
     const autoEventEpisodeId = fromAutoEvent
       ? await acceptAutoEvent(trx, fromAutoEvent.autoEventId, baseEvent, newEventId, fromAutoEvent.userId)
