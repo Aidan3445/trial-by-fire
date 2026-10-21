@@ -7,7 +7,7 @@ import { PointsIcon } from '~/components/icons/generated';
 import { useEpisodeTracker } from '~/hooks/leagues/enrich/useEpisodeTracker';
 import { useLeagues } from '~/hooks/user/useLeagues';
 import { cn } from '~/lib/utils';
-import { type League } from '~/types/leagues';
+import { type Castaway, type League } from '~/types/leagues';
 
 const signed = (points: number) => (points > 0 ? `+${points}` : `${points}`);
 
@@ -40,7 +40,7 @@ function LiveLeagueRow({ league, onLive }: { league: League; onLive: (_hash: str
   if (!tracker) return null;
 
   const shortName = (castawayId: number) =>
-    castaways?.find((castaway) => castaway.castawayId === castawayId)?.shortName ?? 'Survivor';
+    castaways?.find((castaway: Castaway) => castaway.castawayId === castawayId)?.shortName ?? 'Survivor';
   const settled = tracker.predictions.filter((prediction) => prediction.status !== 'pending');
   const hits = settled.filter((prediction) => prediction.status === 'hit').length;
   const pending = tracker.predictions.length - settled.length;
@@ -89,7 +89,7 @@ export function LiveTracker() {
     });
   }, []);
 
-  const activeLeagues = leagues?.filter(({ league }) => league.status === 'Active') ?? [];
+  const activeLeagues = leagues?.filter(({ league }: { league: League }) => league.status === 'Active') ?? [];
   if (activeLeagues.length === 0) return null;
 
   // Rows decide for themselves whether their league is airing; the card shows once one is
@@ -104,7 +104,7 @@ export function LiveTracker() {
         <p className='text-sm text-muted-foreground'>Your points this episode in each league</p>
       </CardHeader>
       <CardContent className='flex flex-col gap-2'>
-        {activeLeagues.map(({ league }) => (
+        {activeLeagues.map(({ league }: { league: League }) => (
           <LiveLeagueRow key={league.hash} league={league} onLive={onLive} />
         ))}
       </CardContent>
