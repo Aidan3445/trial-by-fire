@@ -6,6 +6,8 @@ import { HelpCircle, LoaderCircle, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { type MouseEvent, useRef, useState, useEffect } from 'react';
 import TutorialModal from '~/components/shared/tutorial/modal';
+import { BUY_ME_A_COFFEE_LINK, markDonationPending } from '~/components/sys/donation/startDonation';
+import { useFunding } from '~/hooks/user/useFunding';
 
 const APP_STORE_URL = 'https://apps.apple.com/app/id6759011635';
 const BUY_ME_A_COFFEE_URL =
@@ -15,6 +17,10 @@ export default function SideNavFooter() {
   const userButtonRef = useRef<HTMLDivElement>(null);
   const logInButtonRef = useRef<HTMLDivElement>(null);
   const [cacheBuster, setCacheBuster] = useState('');
+  const { data: funding } = useFunding();
+  const fundedPercent = funding && funding.total.goal > 0
+    ? Math.min(100, (funding.total.coverage / funding.total.goal) * 100)
+    : null;
 
   const handleMenuButtonClick = (ref: React.RefObject<HTMLDivElement | null>) => (e: MouseEvent) => {
     e.preventDefault();
@@ -43,13 +49,27 @@ export default function SideNavFooter() {
         className='hover:bg-transparent! active:bg-transparent!'
         asChild
         size='lg'>
-        <Link href='https://www.buymeacoffee.com/aidanweinberg' target='_blank' rel='noreferrer'>
-          <img
-            className='hover:scale-105 active:scale-[1.075] transition-all'
-            src={`${BUY_ME_A_COFFEE_URL}${cacheBuster}`}
-            alt='Buy me a coffee'
-            width={200}
-            height={50} />
+        <Link href={BUY_ME_A_COFFEE_LINK} target='_blank' rel='noreferrer' onClick={markDonationPending}>
+          {/* Scales as one so the progress bar stays on the button's bottom border */}
+          <span className='relative block w-fit hover:scale-105 active:scale-[1.075] transition-all'>
+            <img
+              src={`${BUY_ME_A_COFFEE_URL}${cacheBuster}`}
+              alt='Buy me a coffee'
+              width={200}
+              height={50} />
+            {fundedPercent !== null && (
+              <span
+                className='absolute inset-x-2 bottom-px h-[3px] overflow-hidden rounded-full bg-[#684528]/25'
+                role='progressbar'
+                aria-label='Funding raised'
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(fundedPercent)}
+                title={`$${funding!.total.coverage} of $${funding!.total.goal} raised`}>
+                <span className='block h-full rounded-full bg-[#684528]' style={{ width: `${fundedPercent}%` }} />
+              </span>
+            )}
+          </span>
         </Link>
       </SidebarMenuButton>
       <SidebarMenuButton
