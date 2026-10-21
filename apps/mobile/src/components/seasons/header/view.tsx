@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 import { TabsList, TabsTrigger } from '~/components/common/tabs';
 import SelectSeason from '~/components/home/scoreboard/selectSeason';
 import useHeaderHeight from '~/hooks/ui/useHeaderHeight';
+import LiveScoringIndicator from '~/components/shared/liveScoring/indicator';
 import { type SearchableOption } from '~/hooks/ui/useSearchableSelect';
 import { type SeasonsDataQuery } from '~/types/seasons';
 
@@ -27,6 +28,7 @@ export default function SeasonsHeader({ seasons, value, setValue }: SeasonsHeade
       style={{ height }}>
       <View className='items-center justify-center w-full'>
         <View className='relative flex-row items-center justify-center gap-0.5 w-full'>
+          <LiveScoringIndicator />
           <View className='h-6 w-1 bg-primary rounded-full' />
           <Text
             allowFontScaling={false}

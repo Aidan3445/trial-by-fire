@@ -72,9 +72,9 @@ export default function MakePredictions() {
 
   if (predictionRuleCount === 0 || !keyEpisodes?.nextEpisode) return null;
 
-  const isLocked = keyEpisodes.previousEpisode?.airStatus === 'Airing';
-  const canMakePredictions =
-    keyEpisodes.nextEpisode.airStatus === 'Upcoming' && !isLocked;
+  // Locked while an episode airs; the episode tracker shows those predictions
+  if (keyEpisodes.previousEpisode?.airStatus === 'Airing') return null;
+  const canMakePredictions = keyEpisodes.nextEpisode.airStatus === 'Upcoming';
 
   return (
     <View className='rounded-xl border-2 border-primary/20 bg-card overflow-hidden w-full'>
@@ -113,9 +113,7 @@ export default function MakePredictions() {
         <View className='flex-row items-center gap-2'>
           <View className='h-6 w-1 rounded-full bg-primary' />
           <Text className='text-xl font-black uppercase tracking-tight text-foreground'>
-            {isLocked
-              ? 'Predictions Locked'
-              : `This Week's Prediction${predictionRuleCount > 1 ? 's' : ''}`}
+            {`This Week's Prediction${predictionRuleCount > 1 ? 's' : ''}`}
           </Text>
         </View>
 

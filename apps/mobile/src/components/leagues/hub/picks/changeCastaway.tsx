@@ -9,6 +9,7 @@ import { useChangeCastaway } from '~/hooks/leagues/mutation/useChangeCastaway';
 import Modal from '~/components/common/modal';
 import { getContrastingColor } from '@uiw/color-convert';
 import Button from '~/components/common/button';
+import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker';
 
 export default function ChangeCastaway() {
   const {
@@ -36,6 +37,8 @@ export default function ChangeCastaway() {
   } = useChangeCastaway();
 
   if (uiState === 'inactive') return null;
+  // Picks are locked while an episode airs; show how this one is going instead
+  if (isEpisodeAiring) return <EpisodeTracker />;
 
   const isActiveAfterRedemption = (castaway: typeof availableCastaways[number]) =>
     castaway.redemption?.some((r) => r.secondEliminationEpisode === null) ?? false;
@@ -143,7 +146,7 @@ export default function ChangeCastaway() {
                   !canSubmitMain && 'opacity-50'
                 )}>
                 <Text className='text-center text-base font-bold uppercase tracking-wider text-white'>
-                  {isEpisodeAiring ? 'Episode Airing' : isSubmitting ? 'Submitting...' : 'Submit'}
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
                 </Text>
               </Button>
             </View>
@@ -178,7 +181,7 @@ export default function ChangeCastaway() {
                   !canSubmitSecondary && 'opacity-50'
                 )}>
                 <Text className='text-center text-base font-bold uppercase tracking-wider text-white'>
-                  {isEpisodeAiring ? 'Episode Airing' : isSubmittingSecondary ? 'Submitting...' : 'Submit'}
+                  {isSubmittingSecondary ? 'Submitting...' : 'Submit'}
                 </Text>
               </Button>
             </View>

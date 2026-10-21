@@ -1,13 +1,17 @@
 'use client';
 
 import { View } from 'react-native';
+import { usePathname } from 'expo-router';
 import { ArrowLeft, HelpCircle, Settings, Users } from 'lucide-react-native';
 import MarqueeText from '~/components/common/marquee';
 import useLeaguesHeader from '~/hooks/ui/useLeaguesHeader';
 import { HeaderButton } from '~/components/leagues/shared/header/button';
+import LiveScoringIndicator from '~/components/shared/liveScoring/indicator';
 
 export default function UnifiedLeagueHeader() {
   const { height, title, buttons } = useLeaguesHeader();
+  // Only on the leagues list, never inside a league
+  const isLeaguesRoot = usePathname() === '/leagues';
 
   return (
     <View
@@ -27,6 +31,7 @@ export default function UnifiedLeagueHeader() {
         </View>
 
         <HeaderButton {...buttons.back} icon={ArrowLeft} position='left' />
+        <LiveScoringIndicator visible={isLeaguesRoot} />
         <HeaderButton {...buttons.settings} icon={Settings} position='right' />
         <HeaderButton {...buttons.users} icon={Users} position='right' />
         <HeaderButton {...buttons.tutorial} icon={HelpCircle} position='right' />
