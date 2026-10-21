@@ -8,6 +8,7 @@
   "scripts": {
     "web": "cd apps/web && npm run dev",
     "mobile": "cd apps/mobile && npm run dev",
+    "prebuild": "cd apps/mobile && npm run build:ios",
     "xcode": "xed aps/apps/mobile/ios",
     "db:studio": "cd apps/web && npm run db:studio",
     "db:push": "cd apps/web && npm run db:push",
