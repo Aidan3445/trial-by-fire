@@ -12,6 +12,8 @@ import { useLeague } from '~/hooks/leagues/useLeague';
 import { useLeagueMembers } from '~/hooks/leagues/useLeagueMembers';
 import { useLeagueRules } from '~/hooks/leagues/useLeagueRules';
 import { useBaseEvents } from '~/hooks/seasons/useBaseEvents';
+import { useBasePredictions } from '~/hooks/leagues/useBasePredictions';
+import { hasPredictionHistory } from '~/lib/events';
 import { useKeyEpisodes } from '~/hooks/seasons/useKeyEpisodes';
 import { type ScoringBaseEventName, type PredictionWithEvent } from '~/types/events';
 
@@ -24,6 +26,7 @@ export default function PredictionHistory() {
   const { basePredictionsMade, customPredictionsMade } = usePredictionsMade(undefined, selectedMemberId);
   const { data: customEvents } = useCustomEvents();
   const { data: baseEvents } = useBaseEvents(league?.seasonId ?? null);
+  const { data: basePredictions } = useBasePredictions();
 
   const [resetCarousel, setResetCarousel] = useState(false);
 
@@ -126,6 +129,11 @@ export default function PredictionHistory() {
       possibleBets: 0,
     }
   });
+
+  // Nothing to look back on until someone's prediction episode has aired
+  if (!hasPredictionHistory([basePredictions, customEvents?.predictions], keyEpisodes?.previousEpisode?.episodeNumber)) {
+    return null;
+  }
 
   if (stats.count.total === 0 || !Object.entries(predictionsWithEvents)[0]) return (
     <Card className='w-full p-0 bg-card rounded-lg border-2 border-primary/20 shadow-lg shadow-primary/10'>

@@ -1,4 +1,4 @@
-import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate } from '@survivor/types';
+import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate, type Predictions } from '@survivor/types';
 
 export const EventSources = ['Base', 'Custom'] as const;
 export const EventTypes = ['Direct', 'Prediction'] as const;
@@ -163,6 +163,22 @@ export const BasePredictionReferenceTypes: Record<ScoringBaseEventName, Referenc
 
 
 
+
+/**
+  * Whether anyone in the league made a prediction in an episode that has aired
+  * @param predictionSets Base and custom predictions, keyed by the episode they were made in
+  * @param previousEpisodeNumber The last episode to air
+  */
+export function hasPredictionHistory(
+  predictionSets: (Predictions | undefined)[],
+  previousEpisodeNumber: number | undefined
+) {
+  if (!previousEpisodeNumber) return false;
+  return predictionSets.some((predictions) =>
+    Object.entries(predictions ?? {}).some(([episodeNumber, byEvent]) =>
+      Number(episodeNumber) <= previousEpisodeNumber &&
+      Object.values(byEvent).some((preds) => preds.length > 0)));
+}
 
 export const LivePredictionStatuses = ['Open', 'Closed', 'Resolved'] as const;
 

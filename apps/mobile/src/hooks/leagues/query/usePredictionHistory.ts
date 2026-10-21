@@ -6,6 +6,8 @@ import { useKeyEpisodes } from '~/hooks/seasons/useKeyEpisodes';
 import { usePredictionsMade } from '~/hooks/leagues/enrich/usePredictionsMade';
 import { useCustomEvents } from '~/hooks/leagues/query/useCustomEvents';
 import { useBaseEvents } from '~/hooks/seasons/useBaseEvents';
+import { useBasePredictions } from '~/hooks/leagues/query/useBasePredictions';
+import { hasPredictionHistory } from '~/lib/events';
 import { type ScoringBaseEventName, type PredictionWithEvent } from '~/types/events';
 
 export function usePredictionHistory() {
@@ -15,6 +17,7 @@ export function usePredictionHistory() {
   const { data: leagueMembers } = useLeagueMembers();
   const { data: customEvents } = useCustomEvents();
   const { data: baseEvents } = useBaseEvents(league?.seasonId ?? null);
+  const { data: basePredictions } = useBasePredictions();
 
   const [selectedMemberId, setSelectedMemberId] = useState<number | undefined>(
     leagueMembers?.loggedIn?.memberId
@@ -169,6 +172,10 @@ export function usePredictionHistory() {
     setSelectedMemberId,
 
     // State checks
+    // Anyone in the league predicted in an episode that has aired
+    hasHistory: hasPredictionHistory(
+      [basePredictions, customEvents?.predictions],
+      keyEpisodes?.previousEpisode?.episodeNumber),
     hasData: stats.count.total > 0,
     isSingleEpisode: stats.count.episodes.size === 1,
   };
