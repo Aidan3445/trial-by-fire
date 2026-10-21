@@ -16,6 +16,7 @@ describe('getLeagueSettings', () => {
     seasonId: 2,
     role: 'Member',
     status: 'Active',
+    startWeek: null,
   };
 
   beforeEach(() => {

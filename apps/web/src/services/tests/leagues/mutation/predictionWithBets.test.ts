@@ -35,6 +35,16 @@ vi.mock('~/lib/scores', () => ({
   compileScores: vi.fn(),
 }));
 
+vi.mock('~/services/leagues/query/predictionTimings', () => ({
+  default: vi.fn().mockResolvedValue(['Weekly']),
+}));
+
+vi.mock('~/services/seasons/query/getKeyEpisodes', () => ({
+  default: vi.fn().mockResolvedValue({
+    nextEpisode: { episodeNumber: 3, episodeId: 3 },
+  }),
+}));
+
 import { getSeasonData } from '~/services/seasons/query/seasonsData';
 import getSelectionTimeline from '~/services/leagues/query/selectionTimeline';
 import getCustomEventsAndPredictions from '~/services/leagues/query/customEvents';
@@ -62,6 +72,7 @@ describe('getMemberBetBalance', () => {
     seasonId: 1,
     role: 'Member',
     status: 'Active',
+    startWeek: null,
   };
 
   const mockSeasonData = {
@@ -138,16 +149,6 @@ describe('getMemberBetBalance', () => {
     // But getMemberBetBalance is not exported. Let me test through makePredictionLogic
     // Actually, we'll test the balance check by trying to make a prediction with a bet
 
-    vi.mock('~/services/leagues/query/predictionTimings', () => ({
-      default: vi.fn().mockResolvedValue(['Weekly']),
-    }));
-
-    vi.mock('~/services/seasons/query/getKeyEpisodes', () => ({
-      default: vi.fn().mockResolvedValue({
-        nextEpisode: { episodeNumber: 3, episodeId: 3 },
-      }),
-    }));
-
     mockDbQuery.mockResolvedValue([
       { createdAt: new Date(), updatedAt: new Date() }
     ]);
@@ -195,16 +196,6 @@ describe('getMemberBetBalance', () => {
     // Total bets: 10 + 15 + 5 = 30
     // Balance: 50 - 30 = 20
 
-    vi.mock('~/services/leagues/query/predictionTimings', () => ({
-      default: vi.fn().mockResolvedValue(['Weekly']),
-    }));
-
-    vi.mock('~/services/seasons/query/getKeyEpisodes', () => ({
-      default: vi.fn().mockResolvedValue({
-        nextEpisode: { episodeNumber: 3, episodeId: 3 },
-      }),
-    }));
-
     mockDbQuery.mockResolvedValue([
       { createdAt: new Date(), updatedAt: new Date() }
     ]);
@@ -247,16 +238,6 @@ describe('getMemberBetBalance', () => {
     // Balance: 30 - 20 = 10
     // Trying to bet 15 should fail
 
-    vi.mock('~/services/leagues/query/predictionTimings', () => ({
-      default: vi.fn().mockResolvedValue(['Weekly']),
-    }));
-
-    vi.mock('~/services/seasons/query/getKeyEpisodes', () => ({
-      default: vi.fn().mockResolvedValue({
-        nextEpisode: { episodeNumber: 3, episodeId: 3 },
-      }),
-    }));
-
     await expect(
       makePredictionLogic(mockAuth, {
         eventSource: 'Base',
@@ -288,16 +269,6 @@ describe('getMemberBetBalance', () => {
         3: {},
       },
     });
-
-    vi.mock('~/services/leagues/query/predictionTimings', () => ({
-      default: vi.fn().mockResolvedValue(['Weekly']),
-    }));
-
-    vi.mock('~/services/seasons/query/getKeyEpisodes', () => ({
-      default: vi.fn().mockResolvedValue({
-        nextEpisode: { episodeNumber: 3, episodeId: 3 },
-      }),
-    }));
 
     mockDbQuery.mockResolvedValue([
       { createdAt: new Date(), updatedAt: new Date() }
@@ -352,16 +323,6 @@ describe('getMemberBetBalance', () => {
 
     // Balance should be 50 - 10 = 40 (not 50 - 10 - 999)
 
-    vi.mock('~/services/leagues/query/predictionTimings', () => ({
-      default: vi.fn().mockResolvedValue(['Weekly']),
-    }));
-
-    vi.mock('~/services/seasons/query/getKeyEpisodes', () => ({
-      default: vi.fn().mockResolvedValue({
-        nextEpisode: { episodeNumber: 3, episodeId: 3 },
-      }),
-    }));
-
     mockDbQuery.mockResolvedValue([
       { createdAt: new Date(), updatedAt: new Date() }
     ]);
@@ -405,16 +366,6 @@ describe('getMemberBetBalance', () => {
 
     // Balance should be 50 - 10 = 40 (only counting non-null, non-zero bets)
 
-    vi.mock('~/services/leagues/query/predictionTimings', () => ({
-      default: vi.fn().mockResolvedValue(['Weekly']),
-    }));
-
-    vi.mock('~/services/seasons/query/getKeyEpisodes', () => ({
-      default: vi.fn().mockResolvedValue({
-        nextEpisode: { episodeNumber: 3, episodeId: 3 },
-      }),
-    }));
-
     mockDbQuery.mockResolvedValue([
       { createdAt: new Date(), updatedAt: new Date() }
     ]);
@@ -454,16 +405,6 @@ describe('getMemberBetBalance', () => {
     });
 
     // Balance should be 0 (no score history)
-
-    vi.mock('~/services/leagues/query/predictionTimings', () => ({
-      default: vi.fn().mockResolvedValue(['Weekly']),
-    }));
-
-    vi.mock('~/services/seasons/query/getKeyEpisodes', () => ({
-      default: vi.fn().mockResolvedValue({
-        nextEpisode: { episodeNumber: 3, episodeId: 3 },
-      }),
-    }));
 
     await expect(
       makePredictionLogic(mockAuth, {
