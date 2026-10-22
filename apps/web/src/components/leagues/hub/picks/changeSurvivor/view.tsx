@@ -229,7 +229,9 @@ export default function ChangeCastaway() {
   // Picks are locked while an episode airs; show how this one is going instead
   if (keyEpisodes?.previousEpisode?.airStatus === 'Airing') return <EpisodeTracker />;
 
-  const allCastawaysTaken = availableCastaways.every(castaway => castaway.pickedBy);
+  // Castaways are listed for the next episode, so with none scheduled the list is empty, not taken
+  const noUpcomingEpisode = !!keyEpisodes && !keyEpisodes.nextEpisode;
+  const allCastawaysTaken = availableCastaways.length > 0 && availableCastaways.every(castaway => castaway.pickedBy);
   const loggedInMemberId = leagueMembers?.loggedIn?.memberId;
 
   const priorityTimeLeft = keyEpisodes?.previousEpisode
@@ -250,7 +252,14 @@ export default function ChangeCastaway() {
             <CardContent className='p-0 flex flex-col gap-4'>
 
               {/* Primary pick section */}
-              {allCastawaysTaken ? (
+              {noUpcomingEpisode ? (
+                <div className='w-full text-center flex flex-col place-items-center'>
+                  <h1 className='text-xl font-bold uppercase tracking-wider text-muted-foreground'>No Upcoming Episode</h1>
+                  <h3 className='text-sm text-muted-foreground'>
+                    Picks open once the next episode is scheduled.
+                  </h3>
+                </div>
+              ) : allCastawaysTaken ? (
                 <div className='w-full text-center flex flex-col place-items-center'>
                   <h1 className='text-xl font-bold uppercase tracking-wider text-muted-foreground'>No Castaways Available</h1>
                   <h3 className='text-sm text-muted-foreground'>
