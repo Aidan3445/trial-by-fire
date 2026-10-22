@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useLeagueData } from '~/hooks/leagues/enrich/useLeagueData';
 import { trackEpisode } from '~/lib/scores';
+import { getTribeTimeline } from '~/lib/utils';
 
 /**
   * How the logged in member is doing in the episode that's airing: their pick,
@@ -55,5 +56,16 @@ export function useEpisodeTracker(overrideHash?: string) {
     eliminations, tribesTimeline, selectionTimeline, leagueRules, leagueSettings?.survivalCap, streaks,
   ]);
 
-  return { tracker, castaways, tribes };
+  // Season castaways carry their starting tribe; show the one they're on this episode
+  const currentCastaways = useMemo(() => {
+    const episodeNumber = keyEpisodes?.previousEpisode?.episodeNumber;
+    if (!castaways || !tribesTimeline || !tribes || !episodeNumber) return castaways;
+    return castaways.map((castaway) => {
+      const tribe = getTribeTimeline(castaway.castawayId, tribesTimeline, tribes)
+        .findLast((entry) => entry.episode <= episodeNumber)?.tribe;
+      return tribe ? { ...castaway, tribe: { name: tribe.tribeName, color: tribe.tribeColor } } : castaway;
+    });
+  }, [castaways, tribesTimeline, tribes, keyEpisodes?.previousEpisode?.episodeNumber]);
+
+  return { tracker, castaways: currentCastaways, tribes };
 }
