@@ -230,8 +230,11 @@ export default function ChangeCastaway() {
   if (keyEpisodes?.previousEpisode?.airStatus === 'Airing') return <EpisodeTracker />;
 
   // Castaways are listed for the next episode, so with none scheduled the list is empty, not taken
-  const noUpcomingEpisode = !!keyEpisodes && !keyEpisodes.nextEpisode;
-  const allCastawaysTaken = availableCastaways.length > 0 && availableCastaways.every(castaway => castaway.pickedBy);
+  // After the finale there is no next episode to wait for
+  const seasonOver = !!keyEpisodes?.previousEpisode?.isFinale;
+  const noUpcomingEpisode = !!keyEpisodes && !keyEpisodes.nextEpisode && !seasonOver;
+  const allCastawaysTaken = (availableCastaways.length > 0 || seasonOver)
+    && availableCastaways.every(castaway => castaway.pickedBy);
   const loggedInMemberId = leagueMembers?.loggedIn?.memberId;
 
   const priorityTimeLeft = keyEpisodes?.previousEpisode
