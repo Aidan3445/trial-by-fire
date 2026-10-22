@@ -259,7 +259,9 @@ export function useChangeCastaway() {
   const uiState = useMemo(() => {
     if (league?.status === 'Inactive') return 'inactive';
 
-    if (availableCastaways.every((c) => c.pickedBy)) return 'no-castaways';
+    // Castaways are listed for the next episode, so with none scheduled the list is empty, not taken
+    if (keyEpisodes && !keyEpisodes.nextEpisode) return 'no-episode';
+    if (availableCastaways.length > 0 && availableCastaways.every((c) => c.pickedBy)) return 'no-castaways';
 
     if (
       keyEpisodes?.previousEpisode &&
