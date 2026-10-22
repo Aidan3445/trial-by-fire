@@ -41,7 +41,7 @@ export function DonationProvider({ children }: { children: ReactNode }) {
 
   const unmet = useMemo(() => funding?.goals.filter((goal) => !goal.fulfilled) ?? [], [funding]);
 
-  // Once per login, until they report a donation this season
+  // Once per login, until they report a donation this season, only if they have an active league
   useEffect(() => {
     if (!isSignedIn || !sessionId || !funding || !status) return;
     const hasActiveLeague = leagues?.some(({ league }) => league.status === 'Active');
@@ -57,9 +57,8 @@ export function DonationProvider({ children }: { children: ReactNode }) {
     setView(null);
     void (async () => {
       try {
-        // Let the alert sheet finish closing; iOS won't present the browser over it
         // eslint-disable-next-line no-undef
-        await new Promise((resolve) => setTimeout(resolve, 350));
+        await new Promise((resolve) => setTimeout(() => resolve(true), 350));
         // Resolves when the browser sheet closes
         await WebBrowser.openBrowserAsync(BUY_ME_A_COFFEE_URL, {
           presentationStyle: WebBrowser.WebBrowserPresentationStyle.POPOVER,

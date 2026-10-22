@@ -1,11 +1,10 @@
 import { Linking, ScrollView, View, Text, Alert } from 'react-native';
-import { Bug, Heart, ExternalLink } from 'lucide-react-native';
+import { Bug, ExternalLink } from 'lucide-react-native';
 import SignOutButton from '~/components/auth/signOutButton';
 import AccountSettings from '~/components/profile/management/view';
 import NotificationSettings from '~/components/profile/notifications';
 import { colors } from '~/lib/colors';
 import Button from '~/components/common/button';
-import { useDonation } from '~/context/donationContext';
 
 const ISSUE_REPORT_URL =
   'mailto:yourfantasysurvivor@gmail.com?subject=Bug%20Report%20%2F%20Feature%20Request';
@@ -25,7 +24,7 @@ export default function ProfileScreen() {
   };
 
   // Opens Buy Me a Coffee, then asks how it went when they come back
-  const { startDonation: openSupportLink } = useDonation();
+  //const { startDonation: openSupportLink } = useDonation();
 
   return (
     <View className='flex-1 bg-background relative'>
@@ -50,6 +49,7 @@ export default function ProfileScreen() {
           </Button>
 
           {/* Support the Developer */}
+          {/*
           <Button
             className='rounded-xl bg-card p-4 gap-3 border-2 border-primary/20'
             onPress={openSupportLink}>
@@ -71,6 +71,7 @@ export default function ProfileScreen() {
               <ExternalLink size={18} color={colors.primary} />
             </View>
           </Button>
+          */}
 
           <SignOutButton />
         </View>
