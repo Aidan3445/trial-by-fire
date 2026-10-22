@@ -82,7 +82,16 @@ export default function ChangeCastaway() {
       <View className='rounded-xl border-2 border-primary/20 bg-card p-2 gap-4'>
 
         {/* Primary pick section */}
-        {uiState === 'no-castaways' ? (
+        {uiState === 'no-episode' ? (
+          <View className='items-center gap-2 p-2'>
+            <Text className='text-xl font-bold uppercase tracking-wider text-muted-foreground'>
+              No Upcoming Episode
+            </Text>
+            <Text className='text-base text-muted-foreground text-center'>
+              Picks open once the next episode is scheduled.
+            </Text>
+          </View>
+        ) : uiState === 'no-castaways' ? (
           <View className='items-center gap-2 p-2'>
             <Text className='text-xl font-bold uppercase tracking-wider text-muted-foreground'>
               No Castaways Available
