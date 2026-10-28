@@ -11,7 +11,7 @@ export default function Chart() {
   const { chartData, series, maxEpisode } = useMemo(() => {
     const series: ChartSeries[] = sortedMemberScores.map(({ member }) => ({
       key: member.displayName,
-      label: member.displayName.split(' ')[0] ?? member.displayName,
+      label: member.displayName,
       color: member.color,
       highlight: member.loggedIn,
     }));

@@ -85,10 +85,10 @@ export default function PlaygroundScores({
 
     const chartSeries: ChartSeries[] = sortedCastaways.map(([castawayId], i) => {
       const castaway = castawayMap.get(castawayId);
-      const name = castaway?.fullName ?? `Castaway ${castawayId}`;
+      const name = castaway?.shortName ?? `Castaway ${castawayId}`;
       return {
         key: name,
-        label: name.split(' ')[0] ?? name,
+        label: name,
         color: CASTAWAY_COLORS[i % CASTAWAY_COLORS.length]!,
         eliminatedEpisode: castaway?.eliminatedEpisode,
       };
