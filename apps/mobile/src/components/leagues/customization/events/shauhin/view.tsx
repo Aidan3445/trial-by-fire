@@ -85,7 +85,7 @@ export default function ShauhinMode() {
           video
         </Text>{' '}
         that{' '}
-        <View className={cn(Platform.OS === 'ios' ? 'translate-y-4' : 'translate-y-2')}>
+        <View className={cn(Platform.OS === 'ios' ? 'translate-y-1' : 'translate-y-2')}>
           <ColorRow color='#d05dbd' className='py-0'>
             <Text className='font-medium text-base text-primary'>Shauhin Davari</Text>
           </ColorRow>
