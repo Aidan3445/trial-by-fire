@@ -31,7 +31,7 @@
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = TrialbyFire/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748432D0307B40044C1D9 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = TrialbyFire/SceneDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* TrialbyFire-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "TrialbyFire-Bridging-Header.h"; path = "TrialbyFire/TrialbyFire-Bridging-Header.h"; sourceTree = "<group>"; };
-		FE2C3C2A6D11E24E6AEAFBD1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = TrialbyFire/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		FE2C3C2A6D11E24E6AEAFBD1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = TrialbyFire/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,7 +114,6 @@
 				76A6FEAA06C913309CEF4DCC /* Pods-TrialbyFire.debug.xcconfig */,
 				59AD8826055296A2D9C4ACE7 /* Pods-TrialbyFire.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
