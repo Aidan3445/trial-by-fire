@@ -181,7 +181,7 @@ export default function CreateLivePredictionForm({ seasonData }: CreateLivePredi
               <View className='flex-1'>
                 {optionType === 'Custom' ? (
                   <TextInput
-                    className='flex-1 flex-row items-center justify-between rounded-lg border-2 border-primary/20 bg-primary/5 px-3 py-2 not-disabled:active:bg-primary/10'
+                    className='flex-row items-center justify-between rounded-lg border-2 border-primary/20 bg-primary/5 px-3 py-2 not-disabled:active:bg-primary/10'
                     value={opt.label}
                     onChangeText={(text) => updateCustomOption(i, text)}
                     maxLength={128}
