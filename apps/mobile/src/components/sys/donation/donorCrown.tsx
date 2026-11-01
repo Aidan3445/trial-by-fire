@@ -17,7 +17,7 @@ export const CROWN_FILL = '#F0B100';
 export default function DonorCrown({ self }: { self?: boolean }) {
   const [isVisible, setIsVisible] = useState(false);
   const [anchor, setAnchor] = useState<Rect>();
-  const [hideOnClose, setHideOnClose] = useState(false);
+  const [afterClose, setAfterClose] = useState<'hide' | 'donate' | null>(null);
   const triggerRef = useRef<ComponentRef<typeof TouchableOpacity>>(null);
   const { startDonation } = useDonation();
   const { mutate: setHidden } = useHideBadge();
@@ -41,10 +41,11 @@ export default function DonorCrown({ self }: { self?: boolean }) {
         from={anchor}
         onRequestClose={() => setIsVisible(false)}
         onCloseComplete={() => {
-          // Hide once the popover is gone so it doesn't vanish mid-animation with the crown
-          if (!hideOnClose) return;
-          setHideOnClose(false);
-          setHidden(true);
+          // Hide once the popover is gone so it doesn't vanish mid-animation with the crown,
+          // and open the browser once it's gone since iOS won't present over a closing modal
+          if (afterClose === 'hide') setHidden(true);
+          if (afterClose === 'donate') startDonation();
+          setAfterClose(null);
         }}
         popoverStyle={{
           backgroundColor: colors.card,
@@ -65,7 +66,7 @@ export default function DonorCrown({ self }: { self?: boolean }) {
             <HideCrownToggle
               className='w-full border-t border-primary/20 pt-2'
               onHide={() => {
-                setHideOnClose(true);
+                setAfterClose('hide');
                 setIsVisible(false);
               }} />
           </View>
@@ -78,8 +79,8 @@ export default function DonorCrown({ self }: { self?: boolean }) {
             <Text className='text-sm text-muted-foreground'>They tipped to help keep Trial by Fire ad free.</Text>
             <Button
               onPress={() => {
+                setAfterClose('donate');
                 setIsVisible(false);
-                startDonation();
               }}
               className='w-full rounded-lg bg-primary px-4 py-2'>
               <Text className='text-center text-sm font-semibold text-primary-foreground'>Buy me a coffee</Text>
