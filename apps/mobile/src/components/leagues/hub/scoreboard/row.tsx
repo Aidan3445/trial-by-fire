@@ -102,8 +102,8 @@ export default function MemberRow({
           allowFontScaling={false}
           text={member.displayName}
           className={cn(
-            'text-base font-bold transition-all text-black cursor-pointer',
-            member.loggedIn && 'text-primary'
+            'text-base font-bold cursor-pointer',
+            member.loggedIn ? 'text-primary' : 'text-black'
           )}
           marqueeThreshold={0}
           containerClassName='flex-row'>
@@ -114,8 +114,9 @@ export default function MemberRow({
           <Text
             allowFontScaling={false}
             className={cn(
-              'text-base font-medium transition-all text-black text-nowrap',
-              isFullyEliminated && 'line-through opacity-40'
+              'text-base font-medium text-black text-nowrap',
+              // Set both ways: NativeWind can leave a removed class's style behind
+              isFullyEliminated ? 'line-through opacity-40' : 'no-underline opacity-100'
             )}>
             {castaway?.shortName || 'None'}
           </Text>
@@ -127,8 +128,8 @@ export default function MemberRow({
             <Text
               allowFontScaling={false}
               className={cn(
-                'text-base font-medium transition-all text-black text-nowrap',
-                isSecondaryPickEliminated && 'line-through opacity-40'
+                'text-base font-medium text-black text-nowrap',
+                isSecondaryPickEliminated ? 'line-through opacity-40' : 'no-underline opacity-100'
               )}>
               {secondaryPick?.shortName || 'None'}
             </Text>
