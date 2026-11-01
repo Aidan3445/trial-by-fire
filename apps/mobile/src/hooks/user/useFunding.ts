@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/expo';
 import { useFetch } from '~/hooks/helpers/useFetch';
-import { type DonationReport, type DonationStatus, type Funding } from '~/types/funding';
+import { type DonationStatus, type Funding } from '~/types/funding';
 
 // Funding is edited by hand in the database, so never trust a cached copy
 const NEVER_STALE = { staleTime: 0, gcTime: 0, refetchOnMount: 'always' } as const;
@@ -26,7 +26,7 @@ export function useFunding() {
 }
 
 /**
- * Whether the signed in user has reported donating, this season or before.
+ * Whether the signed in user has donated, opted out this season, or has donations to thank.
  * @returnObj `DonationStatus`
  */
 export function useDonationStatus() {
@@ -45,23 +45,29 @@ export function useDonationStatus() {
 }
 
 /**
- * Report a donation; adds it to a goal and returns the updated funding.
+ * Mark the user's donations as thanked, so the thank you shows once
  */
-export function useReportDonation() {
+export function useThankDonations() {
+  const postData = useFetch('POST');
+  return useMutation({
+    mutationFn: async () => {
+      const res = await postData('/api/funding/thanked');
+      if (!res.ok) throw new Error('Failed to mark donations thanked');
+    },
+  });
+}
+
+/**
+ * Stop asking the user to donate until a later season
+ */
+export function useOptOut() {
   const postData = useFetch('POST');
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (report: DonationReport) => {
-      const res = await postData('/api/funding/donations', { body: report });
-      if (!res.ok) {
-        const { error } = await res.json() as { error?: string };
-        throw new Error(error ?? 'Failed to save your donation');
-      }
-      return res.json() as Promise<Funding>;
+    mutationFn: async () => {
+      const res = await postData('/api/funding/optOut');
+      if (!res.ok) throw new Error('Failed to save');
     },
-    onSuccess: async (funding) => {
-      queryClient.setQueryData(['funding'], funding);
-      await queryClient.invalidateQueries({ queryKey: ['donationStatus'] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['donationStatus'] }),
   });
 }

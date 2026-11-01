@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '~/lib/apiMiddleware';
+import { sessionEmail } from '~/lib/auth';
 import getDonationStatus from '~/services/funding/query/donationStatus';
 
 export const dynamic = 'force-dynamic';
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   return withAuth(async (userId) => {
     try {
-      const status = await getDonationStatus(userId);
+      const status = await getDonationStatus(userId, await sessionEmail());
       return NextResponse.json(status, { status: 200, headers: { 'Cache-Control': 'no-store' } });
     } catch (e) {
       console.error('Failed to get donation status', e);

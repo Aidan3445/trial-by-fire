@@ -1,6 +1,6 @@
 /**
  * Funding goals for running costs (e.g. Clerk's paid tier for longer login
- * sessions), and what users report donating toward them.
+ * sessions), and what users donate toward them.
  */
 
 export type FundingGoal = {
@@ -22,9 +22,8 @@ export type DonationStatus = {
   seasonId: number | null;
   donatedThisSeason: boolean;
   donatedBefore: boolean;
-};
-
-export type DonationReport = {
-  amount: number;
-  fundingId?: number;
+  // Do not ask for donations
+  optedOut: boolean;
+  // Total of their Buy Me a Coffee donations we haven't thanked them for yet 
+  unthanked: number | null;
 };
