@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/expo';
 import { useFetch } from '~/hooks/helpers/useFetch';
 import { type DonationStatus, type Funding } from '~/types/funding';
+import { type LeagueMember } from '~/types/leagueMembers';
+
+type LeagueMembersData = { loggedIn?: LeagueMember; members: LeagueMember[] };
 
 // Funding is edited by hand in the database, so never trust a cached copy
 const NEVER_STALE = { staleTime: 0, gcTime: 0, refetchOnMount: 'always' } as const;
@@ -85,11 +88,30 @@ export function useHideBadge() {
       const res = await postData('/api/funding/badge', { body: { hidden } });
       if (!res.ok) throw new Error('Failed to update your crown');
     },
-    onSuccess: async () => {
+    // Flip the toggle right away; the refetch after settles it
+    onMutate: async (hidden) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['donationStatus'] }),
-        queryClient.invalidateQueries({ queryKey: ['leagueMembers'] }),
+        queryClient.cancelQueries({ queryKey: ['donationStatus'] }),
+        queryClient.cancelQueries({ queryKey: ['leagueMembers'] }),
       ]);
+      const previous = queryClient.getQueryData<DonationStatus>(['donationStatus']);
+      const previousMembers = queryClient.getQueriesData<LeagueMembersData>({ queryKey: ['leagueMembers'] });
+      queryClient.setQueryData<DonationStatus>(['donationStatus'], (status) => status && { ...status, hideBadge: hidden });
+      // Their own crown in every league; pending member lists have no logged in member
+      queryClient.setQueriesData<LeagueMembersData>({ queryKey: ['leagueMembers'] }, (data) => {
+        if (!data?.loggedIn) return data;
+        const update = (member: LeagueMember) => (member.loggedIn ? { ...member, donor: !hidden } : member);
+        return { loggedIn: update(data.loggedIn), members: data.members.map(update) };
+      });
+      return { previous, previousMembers };
     },
+    onError: (_error, _hidden, context) => {
+      if (context?.previous) queryClient.setQueryData(['donationStatus'], context.previous);
+      context?.previousMembers.forEach(([key, data]) => queryClient.setQueryData(key, data));
+    },
+    onSettled: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['donationStatus'] }),
+      queryClient.invalidateQueries({ queryKey: ['leagueMembers'] }),
+    ]),
   });
 }
