@@ -14,8 +14,9 @@ export default function LeaveLeague({ member }: LeaveLeagueProps) {
   if (!member?.loggedIn) return null;
   return (
     <>
+      {/* No flex-1: in the card's column it resolves to 0 or full height between layout passes, jolting the page */}
       <Button
-        className='flex-1 rounded-lg bg-destructive p-3 active:opacity-80'
+        className='rounded-lg bg-destructive p-3 active:opacity-80'
         onPress={() => setIsOpen(true)}>
         <Text className='text-center font-semibold text-destructive-foreground'>Leave League</Text>
       </Button>
