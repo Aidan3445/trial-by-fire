@@ -3,6 +3,7 @@
 import { useLeagueData } from '~/hooks/leagues/enrich/useLeagueData';
 import { cn } from '~/lib/utils';
 import Tier from '~/components/leagues/hub/scoreboard/podium/tier';
+import { useSeasonEndDonation } from '~/hooks/user/useSeasonEndDonation';
 
 interface PodiumProps {
   overrideHash?: string;
@@ -10,7 +11,8 @@ interface PodiumProps {
 }
 
 export default function Podium({ overrideHash, className }: PodiumProps) {
-  const { sortedMemberScores } = useLeagueData(overrideHash);
+  const { sortedMemberScores, season, league } = useLeagueData(overrideHash);
+  useSeasonEndDonation(season, league?.status);
 
   // Handle ties:
   // 1st and 2nd place tie -> both gold, no silver, next is bronze
