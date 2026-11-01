@@ -9,14 +9,14 @@ import { cn } from '~/lib/utils';
   */
 export default function HideCrownToggle({ className }: { className?: string }) {
   const { data: status } = useDonationStatus();
-  const { mutate: setHidden, isPending } = useHideBadge();
+  const { mutate: setHidden } = useHideBadge();
 
   return (
     <label className={cn('flex items-center justify-between gap-3 text-sm text-primary cursor-pointer', className)}>
       Hide my crown
       <Switch
         checked={status?.hideBadge ?? false}
-        disabled={!status || isPending}
+        disabled={!status}
         onCheckedChange={(hidden) => setHidden(hidden)} />
     </label>
   );
