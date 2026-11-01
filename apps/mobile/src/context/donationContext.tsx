@@ -60,15 +60,14 @@ export function DonationProvider({ children }: { children: ReactNode }) {
     })();
   }, [isSignedIn, sessionId, funding, status, leagues]);
 
-  // A tip from their email came in: thank them once, over anything else
+  // A tip from them came in: thank them over anything else, until dismissed
   useEffect(() => {
     if (unthanked === null) return;
     setThankedAmount(unthanked);
     setView('thanks');
     setWatching(false);
-    markThanked();
     void refetchFunding();
-  }, [unthanked, markThanked, refetchFunding]);
+  }, [unthanked, refetchFunding]);
 
   // Back from Buy Me a Coffee: the webhook may take a moment
   useEffect(() => {
@@ -107,7 +106,11 @@ export function DonationProvider({ children }: { children: ReactNode }) {
   const askSeasonEnd = useCallback(() => setView((current) => current ?? 'seasonEnd'), []);
 
   const value = useMemo(() => ({ startDonation, askSeasonEnd }), [startDonation, askSeasonEnd]);
-  const close = () => setView(null);
+  const close = () => {
+    // Shown until dismissed, then never again for these donations
+    if (view === 'thanks') markThanked();
+    setView(null);
+  };
 
   const topGoal = unmet[0];
   const [askTitle, askBody] = view === 'seasonEnd'

@@ -6,12 +6,9 @@ import thankDonations from '~/services/funding/mutation/thankDonations';
 export const dynamic = 'force-dynamic';
 
 export async function POST() {
-  return withAuth(async () => {
-    const email = await sessionEmail();
-    if (!email) return NextResponse.json({ error: 'No email on your account' }, { status: 400 });
-
+  return withAuth(async (userId) => {
     try {
-      await thankDonations(email);
+      await thankDonations(userId, await sessionEmail());
       return NextResponse.json({ thanked: true }, { status: 200 });
     } catch (e) {
       console.error('Failed to mark donations thanked', e);

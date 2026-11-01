@@ -60,15 +60,14 @@ export function DonationManager() {
     setView('ask');
   }, [isSignedIn, sessionId, funding, status, leagues]);
 
-  // A donation from their email came in: thank them once, over anything else
+  // A donation from them came in: thank them over anything else, until dismissed
   useEffect(() => {
     if (unthanked === null) return;
     setThankedAmount(unthanked);
     setView('thanks');
     setWatching(false);
-    markThanked();
     void refetchFunding();
-  }, [unthanked, markThanked, refetchFunding]);
+  }, [unthanked, refetchFunding]);
 
   // Back from Buy Me a Coffee: the webhook may take a moment
   useEffect(() => {
@@ -101,7 +100,11 @@ export function DonationManager() {
   }, []);
 
   if (!view || !funding) return null;
-  const close = () => setView(null);
+  const close = () => {
+    // Shown until dismissed, then never again for these donations
+    if (view === 'thanks') markThanked();
+    setView(null);
+  };
   const topGoal = unmet[0];
   const allCovered = (
     <p className='text-muted-foreground text-sm'>
