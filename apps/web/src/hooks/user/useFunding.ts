@@ -40,14 +40,16 @@ export function useDonationStatus() {
 }
 
 /**
-  * Mark the user's donations as thanked, so the thank you shows once
+  * Mark the user's donations as thanked once they dismiss the thank you
   */
 export function useThankDonations() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       const res = await fetch('/api/funding/thanked', { method: 'POST' });
       if (!res.ok) throw new Error('Failed to mark donations thanked');
     },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['donationStatus'] }),
   });
 }
 
@@ -62,5 +64,28 @@ export function useOptOut() {
       if (!res.ok) throw new Error('Failed to save');
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['donationStatus'] }),
+  });
+}
+
+/**
+  * Hide or show the user's donor crown for everyone
+  */
+export function useHideBadge() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (hidden: boolean) => {
+      const res = await fetch('/api/funding/badge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hidden }),
+      });
+      if (!res.ok) throw new Error('Failed to update your crown');
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['donationStatus'] }),
+        queryClient.invalidateQueries({ queryKey: ['leagueMembers'] }),
+      ]);
+    },
   });
 }

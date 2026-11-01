@@ -26,4 +26,6 @@ export type DonationStatus = {
   optedOut: boolean;
   // Total of their Buy Me a Coffee donations we haven't thanked them for yet 
   unthanked: number | null;
+  // Hid their donor crown from everyone
+  hideBadge: boolean;
 };

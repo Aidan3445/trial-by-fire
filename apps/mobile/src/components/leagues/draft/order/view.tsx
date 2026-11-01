@@ -59,7 +59,9 @@ export default function DraftOrder({
                 'flex-row items-center rounded-lg px-3 py-2',
                 isOnTheClock && 'border-2 border-primary/30'
               )}
-              color={item.color}>
+              color={item.color}
+              donor={item.donor}
+              loggedIn={item.loggedIn}>
               {/* Position Number */}
               <View
                 className='h-8 w-8 items-center justify-center rounded-md'

@@ -42,11 +42,12 @@ export const fundingDonationSchema = createTable(
   ]
 );
 
-// Users who said don't ask again, until a later season is active for them 
-export const fundingOptOutSchema = createTable(
-  'funding_opt_out',
+// Per-user donation preferences
+export const fundingUserSchema = createTable(
+  'funding_user',
   {
     userId: varchar('user_id', { length: 64 }).notNull().primaryKey(),
-    seasonId: integer('season_id').notNull().references(() => seasonSchema.seasonId, { onDelete: 'cascade' }),
+    optOutSeasonId: integer('opt_out_season_id').references(() => seasonSchema.seasonId, { onDelete: 'set null' }),
+    hideBadge: boolean('hide_badge').notNull().default(false),
   }
 );

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { db } from '~/server/db';
-import { fundingOptOutSchema } from '~/server/db/schema/funding';
+import { fundingUserSchema } from '~/server/db/schema/funding';
 import { getActiveSeasonId } from '~/services/funding/query/donationStatus';
 
 /**
@@ -13,8 +13,8 @@ export default async function optOutThisSeason(userId: string) {
   const seasonId = await getActiveSeasonId(userId);
   if (seasonId === null) return false;
   await db
-    .insert(fundingOptOutSchema)
-    .values({ userId, seasonId })
-    .onConflictDoUpdate({ target: fundingOptOutSchema.userId, set: { seasonId } });
+    .insert(fundingUserSchema)
+    .values({ userId, optOutSeasonId: seasonId })
+    .onConflictDoUpdate({ target: fundingUserSchema.userId, set: { optOutSeasonId: seasonId } });
   return true;
 }

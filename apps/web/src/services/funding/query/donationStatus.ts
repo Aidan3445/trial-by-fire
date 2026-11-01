@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { and, desc, eq, isNotNull, or, sum } from 'drizzle-orm';
+import { and, desc, eq, or, sum } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { fundingDonationSchema, fundingOptOutSchema } from '~/server/db/schema/funding';
+import { fundingDonationSchema, fundingUserSchema } from '~/server/db/schema/funding';
 import { leagueMemberSchema } from '~/server/db/schema/leagueMembers';
 import { leagueSchema } from '~/server/db/schema/leagues';
 import { seasonSchema } from '~/server/db/schema/seasons';
@@ -56,27 +56,24 @@ export function donationsBy(userId: string, email: string | null) {
   * @returnObj `DonationStatus`
   */
 export default async function getDonationStatus(userId: string, email: string | null): Promise<DonationStatus> {
-  const [seasonId, donations, unthanked, optOut] = await Promise.all([
+  const [seasonId, donations, unthanked, preferences] = await Promise.all([
     getActiveSeasonId(userId),
     db
       .select({ seasonId: fundingDonationSchema.seasonId })
       .from(fundingDonationSchema)
       .where(and(donationsBy(userId, email), eq(fundingDonationSchema.refunded, false))),
-    email
-      ? db
-        .select({ total: sum(fundingDonationSchema.amount) })
-        .from(fundingDonationSchema)
-        .where(and(
-          eq(fundingDonationSchema.email, email),
-          isNotNull(fundingDonationSchema.bmacId),
-          eq(fundingDonationSchema.refunded, false),
-          eq(fundingDonationSchema.thanked, false)))
-        .then((rows) => rows[0]?.total ?? null)
-      : null,
     db
-      .select({ seasonId: fundingOptOutSchema.seasonId })
-      .from(fundingOptOutSchema)
-      .where(eq(fundingOptOutSchema.userId, userId))
+      .select({ total: sum(fundingDonationSchema.amount) })
+      .from(fundingDonationSchema)
+      .where(and(
+        donationsBy(userId, email),
+        eq(fundingDonationSchema.refunded, false),
+        eq(fundingDonationSchema.thanked, false)))
+      .then((rows) => rows[0]?.total ?? null),
+    db
+      .select({ optOutSeasonId: fundingUserSchema.optOutSeasonId, hideBadge: fundingUserSchema.hideBadge })
+      .from(fundingUserSchema)
+      .where(eq(fundingUserSchema.userId, userId))
       .then((rows) => rows[0]),
   ]);
 
@@ -84,7 +81,8 @@ export default async function getDonationStatus(userId: string, email: string | 
     seasonId,
     donatedThisSeason: seasonId !== null && donations.some((donation) => donation.seasonId === seasonId),
     donatedBefore: donations.some((donation) => donation.seasonId !== seasonId),
-    optedOut: seasonId !== null && optOut?.seasonId === seasonId,
+    optedOut: seasonId !== null && preferences?.optOutSeasonId === seasonId,
+    hideBadge: preferences?.hideBadge ?? false,
     unthanked: unthanked === null ? null : Number(unthanked),
   };
 }

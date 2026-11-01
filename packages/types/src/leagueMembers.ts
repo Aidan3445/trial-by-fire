@@ -14,6 +14,8 @@ export type LeagueMember = {
   role: LeagueMemberRole;
   draftOrder: number;
   loggedIn: boolean;
+  // Has donated and hasn't hidden their crown
+  donor?: boolean;
 };
 
 export type StreakMember = {

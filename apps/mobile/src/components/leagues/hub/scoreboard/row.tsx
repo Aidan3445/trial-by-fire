@@ -97,7 +97,7 @@ export default function MemberRow({
           </View>
         )}
       </View>
-      <ColorRow color={color} className='flex-1 items-center'>
+      <ColorRow color={color} donor={member.donor} loggedIn={member.loggedIn} className='flex-1 items-center'>
         <MarqueeText
           allowFontScaling={false}
           text={member.displayName}
