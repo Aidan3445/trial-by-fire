@@ -66,7 +66,8 @@ export default function DraftTracker({ hash }: DraftTrackerProps) {
               className={onTheClock?.memberId === pick.memberId ?
                 'border-2 border-primary/10' : 'border-2 border-transparent'}
               color={pick.color}
-              loggedIn={leagueMembers.loggedIn?.displayName === pick.displayName}>
+              loggedIn={leagueMembers.loggedIn?.displayName === pick.displayName}
+              donor={pick.donor}>
               <span className='flex items-center gap-3 w-full text-inherit'>
                 {/* Order Badge */}
                 <span

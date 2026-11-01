@@ -2,12 +2,13 @@
 import '~/styles/globals.css';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs';
 import { SidebarMenuButton, SidebarMenu } from '~/components/common/sidebar';
-import { HelpCircle, LoaderCircle, LogIn } from 'lucide-react';
+import { Crown, HelpCircle, LoaderCircle, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { type MouseEvent, useRef, useState, useEffect } from 'react';
 import TutorialModal from '~/components/shared/tutorial/modal';
 import { BUY_ME_A_COFFEE_LINK, markDonationPending } from '~/components/sys/donation/startDonation';
-import { useFunding } from '~/hooks/user/useFunding';
+import SupporterPage from '~/components/sys/donation/supporterPage';
+import { useDonationStatus, useFunding } from '~/hooks/user/useFunding';
 
 const APP_STORE_URL = 'https://apps.apple.com/app/id6759011635';
 const BUY_ME_A_COFFEE_URL =
@@ -18,11 +19,15 @@ export default function SideNavFooter() {
   const logInButtonRef = useRef<HTMLDivElement>(null);
   const [cacheBuster, setCacheBuster] = useState('');
   const { data: funding } = useFunding();
+  const { data: donationStatus } = useDonationStatus();
+  const isDonor = !!donationStatus && (donationStatus.donatedBefore || donationStatus.donatedThisSeason);
   const fundedPercent = funding && funding.total.goal > 0
     ? Math.min(100, (funding.total.coverage / funding.total.goal) * 100)
     : null;
 
   const handleMenuButtonClick = (ref: React.RefObject<HTMLDivElement | null>) => (e: MouseEvent) => {
+    // Clicks in Clerk's modal (like the Supporter page) bubble here through the React portal
+    if (!e.currentTarget.contains(e.target as Node)) return;
     e.preventDefault();
     const userButtonTrigger = ref.current?.querySelector('button');
     if (userButtonTrigger && !userButtonTrigger.contains(e.target as Node)) {
@@ -57,16 +62,16 @@ export default function SideNavFooter() {
               alt='Buy me a coffee'
               width={200}
               height={50} />
-            {fundedPercent !== null && (
+            {fundedPercent !== null && fundedPercent !== 100 && (
               <span
-                className='absolute inset-x-2 bottom-px h-[3px] overflow-hidden rounded-full bg-[#684528]/25'
+                className='absolute inset-x-1 bottom-px h-0.75 overflow-hidden rounded-full bg-b1/25'
                 role='progressbar'
                 aria-label='Funding raised'
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.round(fundedPercent)}
                 title={`$${funding!.total.coverage} of $${funding!.total.goal} raised`}>
-                <span className='block h-full rounded-full bg-[#684528]' style={{ width: `${fundedPercent}%` }} />
+                <span className='block h-full rounded-full bg-b1' style={{ width: `${fundedPercent}%` }} />
               </span>
             )}
           </span>
@@ -99,7 +104,13 @@ export default function SideNavFooter() {
               <div>
                 <LoaderCircle className='animate-spin stroke-primary' size={24} />
               </div>
-            } />
+            }>
+              {isDonor && (
+                <UserButton.UserProfilePage label='Supporter' url='supporter' labelIcon={<Crown size={16} fill='currentColor' />}>
+                  <SupporterPage />
+                </UserButton.UserProfilePage>
+              )}
+            </UserButton>
           </div>
         </SidebarMenuButton>
       </SignedIn>

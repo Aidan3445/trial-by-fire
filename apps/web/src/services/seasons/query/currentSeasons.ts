@@ -22,7 +22,7 @@ export default async function getCurrentSeasons() {
   )();
 }
 
-async function fetchCurrentSeasons() {
+async function fetchCurrentSeasons(): Promise<Season[]> {
   const now = new Date().toISOString();
   // We consider seasons starting within the next 3 months as current
   const threeMonthsFromNow = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
@@ -41,5 +41,5 @@ async function fetchCurrentSeasons() {
       ...row,
       premiereDate: new Date(`${row.premiereDate} Z`),
       finaleDate: row.finaleDate ? new Date(`${row.finaleDate} Z`) : null
-    } as Season)));
+    })));
 }

@@ -29,8 +29,10 @@ export default function AccountSettings({ locked }: AccountSettingsProps) {
           </Text>
         </View>
         {locked &&
-          <Link href='/profile/account'>
-            <Settings size={24} color={colors.primary} />
+          <Link href='/profile/account' asChild>
+            <Pressable className='active:opacity-80'>
+              <Settings size={24} color={colors.primary} />
+            </Pressable>
           </Link>
         }
       </View>

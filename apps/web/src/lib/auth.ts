@@ -22,6 +22,15 @@ export async function auth() {
 }
 
 /**
+  * The signed in user's primary email from the session token, without a Clerk API call
+  * @returns the lowercased email, or null if signed out or missing from the token
+  */
+export async function sessionEmail() {
+  const { sessionClaims } = await clerkAuth();
+  return sessionClaims?.email?.toLowerCase() ?? null;
+}
+
+/**
   * Authenticate for system admin pages
   * @returns the user id if the user is a system admin
   * OR an empty object if the user is not authenticated

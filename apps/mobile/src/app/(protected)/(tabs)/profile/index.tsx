@@ -3,6 +3,7 @@ import { Bug, ExternalLink } from 'lucide-react-native';
 import SignOutButton from '~/components/auth/signOutButton';
 import AccountSettings from '~/components/profile/management/view';
 import NotificationSettings from '~/components/profile/notifications';
+import SupporterSettings from '~/components/profile/supporter';
 import { colors } from '~/lib/colors';
 import Button from '~/components/common/button';
 
@@ -36,6 +37,7 @@ export default function ProfileScreen() {
         <View className='page justify-start gap-y-4 px-1.5 pt-8 pb-1.5'>
           <AccountSettings locked />
           <NotificationSettings />
+          <SupporterSettings />
 
           {/* Report Issue / Request Feature */}
           <Button

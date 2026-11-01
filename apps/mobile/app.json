@@ -5,7 +5,7 @@
     "orientation": "portrait",
     "name": "Trial by Fire",
     "slug": "mobile-fantasy-survivor",
-    "version": "2.0.4",
+    "version": "2.0.6",
     "owner": "aidan3445",
     "icon": "./src/assets/AppIcon.png",
     "web": {
@@ -48,8 +48,14 @@
           "ios": {
             "deploymentTarget": "18.0",
             "extraPods": [
-              { "name": "GoogleUtilities", "modular_headers": true },
-              { "name": "RecaptchaInterop", "modular_headers": true }
+              {
+                "name": "GoogleUtilities",
+                "modular_headers": true
+              },
+              {
+                "name": "RecaptchaInterop",
+                "modular_headers": true
+              }
             ]
           }
         }

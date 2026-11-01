@@ -5,6 +5,8 @@ export { };
 declare global {
   interface CustomJwtSessionClaims {
     userId?: string;
+    // Primary email, from the session token template
+    email?: string;
   }
 }
 

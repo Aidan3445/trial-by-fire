@@ -90,6 +90,7 @@ export default function MemberRow({
           <ColorRow
             className='text-base md:text-lg font-bold transition-all'
             loggedIn={member.loggedIn}
+            donor={member.donor}
             color={color}>
             {member.displayName}
             {shotInTheDarkStatus?.status === 'pending' && (

@@ -16,7 +16,7 @@ export function markDonationPending() {
   }
 }
 
-/** Whether the user left to donate and is back, clearing it so they're asked once */
+// Whether the user left to donate and is back, clearing it so they're asked once 
 export function takeDonationPending() {
   try {
     const leftAt = Number(sessionStorage.getItem(PENDING_KEY));
@@ -31,4 +31,11 @@ export function takeDonationPending() {
 export function startDonation() {
   markDonationPending();
   window.open(BUY_ME_A_COFFEE_LINK, '_blank', 'noopener,noreferrer');
+}
+
+export const SEASON_END_EVENT = 'donation-season-end';
+
+// Show the end of season ask, thanking them for playing 
+export function askSeasonEndDonation() {
+  window.dispatchEvent(new Event(SEASON_END_EVENT));
 }

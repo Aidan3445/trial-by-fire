@@ -2,11 +2,16 @@
 
 import { type ReactNode } from 'react';
 import { View } from 'react-native';
+import DonorCrown from '~/components/sys/donation/donorCrown';
 import { cn } from '~/lib/utils';
 
 interface ColorRowProps {
   color: string;
   opaque?: boolean;
+  // Shows the donor crown in the corner
+  donor?: boolean;
+  // Whether this row is the signed in user's
+  loggedIn?: boolean;
   className?: string;
   children: ReactNode;
 }
@@ -15,7 +20,7 @@ export const ColorRowClassNames = {
   base: 'w-full flex flex-row p-0.5 pr-0 gap-4 text-nowrap items-center rounded-md border-t border-b border-r border-transparent',
 };
 
-export default function ColorRow({ color, opaque, className, children }: ColorRowProps) {
+export default function ColorRow({ color, opaque, donor, loggedIn, className, children }: ColorRowProps) {
   return (
     <View
       className={cn(
@@ -28,6 +33,7 @@ export default function ColorRow({ color, opaque, className, children }: ColorRo
         borderLeftWidth: 4,
       }}>
       {children}
+      {donor && <DonorCrown self={loggedIn} />}
     </View>
   );
 }

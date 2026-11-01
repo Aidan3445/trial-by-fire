@@ -57,7 +57,8 @@ export function DraftCountdown({ overrideHash, className }: DraftCountdownProps)
   };
 
   return (
-    <View className={cn('w-full flex-1 p-2 pt-1', className)}>
+    // grow, not flex-1: fills the home card, but keeps its height in the predraft page's column
+    <View className={cn('w-full grow p-2 pt-1', className)}>
       {/* Header */}
       <View>
         <View className='flex-row items-center justify-between mb-1'>
@@ -74,7 +75,7 @@ export function DraftCountdown({ overrideHash, className }: DraftCountdownProps)
       </View>
 
       {/* Countdown / Action */}
-      <View className='justify-center flex-1'>
+      <View className='justify-center grow'>
         <View className='bg-accent border border-primary/40 rounded-md overflow-hidden'>
           <View className='px-3 pb-1 flex-row items-center gap-2'>
             {trackedDraftDate ? (trackedDraftDate.getTime() > Date.now() && (
