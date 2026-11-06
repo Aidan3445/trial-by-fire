@@ -8,6 +8,7 @@ import { useLeagueData } from '~/hooks/leagues/enrich/useLeagueData';
 import { cn } from '~/lib/utils';
 import { Card, CardContent, CardHeader } from '~/components/common/card';
 import { PointsIcon } from '~/components/icons/generated';
+import { useSecondaryPick } from '~/hooks/leagues/enrich/useSecondaryPick';
 
 export default function MakePredictions() {
   const { scores, leagueMembers } = useLeagueData();
@@ -19,6 +20,7 @@ export default function MakePredictions() {
     basePredictionsMade,
     rules
   } = useLeagueActionDetails();
+  const { active: secondaryActive } = useSecondaryPick();
 
   const castaways = useMemo(() =>
     Object.values(actionDetails ?? {})
@@ -42,12 +44,12 @@ export default function MakePredictions() {
     (scores?.Member[leagueMembers?.loggedIn?.memberId ?? -1]?.slice().pop() ?? 0) - submittedBetTotal - pendingBetTotal,
     [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal, pendingBetTotal]);
 
-  if (predictionRuleCount === 0 || !keyEpisodes?.nextEpisode) return null;
+  if ((predictionRuleCount === 0 && !secondaryActive) || !keyEpisodes?.nextEpisode) return null;
   // Locked while an episode airs; the episode tracker shows those predictions
   if (keyEpisodes.previousEpisode?.airStatus === 'Airing') return null;
 
   return (
-    <Card className='p-0 pt-5 border-2 border-primary/20 w-full relative overflow-clip rounded-lg'>
+    <Card id='weekly-picks' className='p-0 pt-5 border-2 border-primary/20 w-full relative overflow-clip rounded-lg scroll-mt-4'>
       <CardHeader className='px-4!'>
         {rules?.shauhinMode?.enabled && rules.shauhinMode.enabledBets.length > 0 &&
           <div className='absolute top-1 right-2 text-sm italic text-muted-foreground text-right'>
@@ -68,7 +70,9 @@ export default function MakePredictions() {
         <div className='flex items-center gap-3 h-8'>
           <span className='h-4 md:h-6 w-1 bg-primary rounded-full' />
           <h2 className='md:text-xl font-black uppercase tracking-tight leading-none text-nowrap'>
-            {`This Week's Prediction${predictionRuleCount > 1 ? 's' : ''}`}
+            {secondaryActive
+              ? 'This Week\'s Picks'
+              : `This Week's Prediction${predictionRuleCount > 1 ? 's' : ''}`}
           </h2>
         </div>
         <span className='flex flex-wrap justify-center items-center gap-x-4 text-muted-foreground text-sm pb-1' >
@@ -88,7 +92,8 @@ export default function MakePredictions() {
               tribes={tribes}
               wallet={balance}
               totalBet={formBetTotal}
-              setBetTotal={setFormBetTotal} />
+              setBetTotal={setFormBetTotal}
+              includeSecondary />
           )}
       </CardContent>
     </Card>

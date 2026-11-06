@@ -266,12 +266,17 @@ interface CoverCarouselProps {
     footer?: React.ReactNode
   }[],
   reset?: boolean,
-  setReset?: (_reset: boolean) => void
+  setReset?: (_reset: boolean) => void,
+  onApi?: (_api: CarouselApi) => void
 }
 
-function CoverCarousel({ items, reset, setReset }: CoverCarouselProps) {
+function CoverCarousel({ items, reset, setReset, onApi }: CoverCarouselProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
+
+  React.useEffect(() => {
+    if (api) onApi?.(api);
+  }, [api, onApi]);
 
   React.useEffect(() => {
     if (!api) {
@@ -321,7 +326,7 @@ function CoverCarousel({ items, reset, setReset }: CoverCarouselProps) {
 
                   'scale-[12.5%] translate-y-6 -z-30 duration-100': absOffset === 3,
                   'translate-x-[185%]': offset <= -3,
-                  '-translate-x-[185%]': offset >= 3,
+                  'translate-x-[-185%]': offset >= 3,
 
                   'scale-0 duration-50': absOffset > 3,
                 }
