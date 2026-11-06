@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, Pressable } from 'react-native';
+import { Check } from 'lucide-react-native';
 import Carousel, { Pagination } from 'react-native-reanimated-carousel';
 import { colors } from '~/lib/colors';
 import { useCarousel } from '~/hooks/ui/useCarousel';
@@ -14,6 +15,13 @@ import { type MakePredictionsProps } from '~/components/leagues/actions/events/p
 import MarqueeText from '~/components/common/marquee';
 import DescriptionCell from '~/components/leagues/actions/events/predictions/description';
 import { PointsIcon } from '~/components/icons/generated';
+import { cn } from '~/lib/utils';
+import { useSecondaryPick } from '~/hooks/leagues/mutation/useSecondaryPick';
+import SecondaryPickForm from '~/components/leagues/hub/picks/secondaryPick/form';
+
+type Slide =
+  | { kind: 'prediction'; key: string; prediction: MakePrediction }
+  | { kind: 'secondary'; key: string };
 
 export default function PredictionCards({
   rules,
@@ -23,6 +31,7 @@ export default function PredictionCards({
   wallet,
   totalBet,
   setBetTotal,
+  includeSecondary,
 }: MakePredictionsProps) {
   const shauhinActive = useShauhinActive();
   const { data: league } = useLeague();
@@ -137,16 +146,87 @@ export default function PredictionCards({
     setBetTotal(total);
   }, [formBetValues, setBetTotal]);
 
-  const { ref, props, progressProps, scrollNext, setCarouselData } = useCarousel(allPredictions);
+  const secondary = useSecondaryPick();
+  const showSecondary = !!includeSecondary && secondary.active;
+
+  const slides = useMemo<Slide[]>(() => [
+    ...allPredictions.map((prediction) => ({
+      kind: 'prediction' as const,
+      key: prediction.eventName,
+      prediction,
+    })),
+    ...(showSecondary ? [{ kind: 'secondary' as const, key: 'secondary' }] : []),
+  ], [allPredictions, showSecondary]);
+
+  const steps = useMemo(() => slides.map((slide) => slide.kind === 'secondary'
+    ? { label: 'Secondary', done: secondary.hasPick }
+    : { label: slide.prediction.label ?? slide.prediction.eventName, done: !!slide.prediction.predictionMade }),
+    [slides, secondary.hasPick]);
+
+  const { ref, props, progressProps, progress, scrollNext, setCarouselData } = useCarousel(slides);
 
   useEffect(() => {
-    setCarouselData(allPredictions);
-  }, [allPredictions, scrollNext, setCarouselData]);
+    setCarouselData(slides);
+  }, [slides, setCarouselData]);
 
-  if (allPredictions.length === 0) return null;
+  const scrollToIndex = useCallback((index: number, animated = true) => {
+    ref.current?.scrollTo({ index, animated });
+  }, [ref]);
+
+  // Open on the first unfinished pick, once everything has loaded
+  const jumpedToFirstOpen = useRef(false);
+  useEffect(() => {
+    if (!includeSecondary || jumpedToFirstOpen.current || !ref.current || slides.length < 2) return;
+    if (showSecondary && !secondary.loaded) return;
+    jumpedToFirstOpen.current = true;
+    const firstOpen = steps.findIndex((step) => !step.done);
+    if (firstOpen > 0) scrollToIndex(firstOpen, false);
+  }, [includeSecondary, ref, slides.length, showSecondary, secondary.loaded, steps, scrollToIndex]);
+
+  if (slides.length === 0) return null;
+
+  // Same two rows as a prediction header (title + points, then timing) so slides line up
+  const secondaryHeader = (
+    <View className='bg-primary/10 py-2 px-3'>
+      <View className='flex-row items-center justify-center gap-2'>
+        <Text allowFontScaling={false} className='text-lg font-bold uppercase tracking-wider text-foreground'>
+          Secondary Pick
+        </Text>
+        {secondary.settings && (
+          <View className='rounded-md bg-primary/15 px-1.5'>
+            <Text allowFontScaling={false} className='text-sm font-bold text-primary'>
+              ×{secondary.settings.multiplier}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View className='h-6 flex-row items-center justify-center'>
+        <View className='rounded-sm bg-amber-400 px-1.5'>
+          <Text allowFontScaling={false} className='text-xs font-bold uppercase tracking-wider text-black'>
+            Weekly
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  // Only the secondary pick this week
+  if (slides.length === 1 && showSecondary) {
+    return (
+      <View className='mx-2 mb-2 rounded-lg border-2 border-primary/20 bg-accent/50 overflow-hidden'>
+        {secondaryHeader}
+        <View className='bg-secondary py-1 px-2'>
+          <Text className='text-base font-medium text-foreground text-left leading-none'>
+            {secondary.description}
+          </Text>
+        </View>
+        <SecondaryPickForm className='bg-card/50' />
+      </View>
+    );
+  }
 
   // Single prediction - simpler layout without carousel
-  if (allPredictions.length === 1) {
+  if (slides.length === 1) {
     const prediction = allPredictions[0]!;
 
     return (
@@ -188,29 +268,76 @@ export default function PredictionCards({
     );
   }
 
-  // Multiple predictions - carousel layout
+  // Multiple slides - carousel layout
+  const current = Math.round(progress);
   return (
     <View className='gap-2'>
+      {includeSecondary && (
+        // The current pick is spelled out; the rest shrink to dots, or checks once made
+        <View className='flex-row items-center justify-center gap-1.5 px-3'>
+          {steps.map((step, index) => {
+            const isCurrent = index === current;
+            return (
+              <Pressable
+                key={slides[index]!.key}
+                onPress={() => scrollToIndex(index)}
+                accessibilityRole='tab'
+                accessibilityLabel={`${step.label}${step.done ? ' (done)' : ''}`}
+                accessibilityState={{ selected: isCurrent }}
+                hitSlop={6}
+                className={cn(
+                  'items-center justify-center rounded-full',
+                  isCurrent
+                    ? cn('h-6 max-w-[60%] flex-row gap-1 px-3 text-secondary', step.done ? 'bg-green-600' : 'bg-primary')
+                    : 'size-5')}>
+                {isCurrent ? (
+                  <>
+                    {step.done && <Check size={13} strokeWidth={3} color='white' />}
+                    <Text
+                      allowFontScaling={false}
+                      numberOfLines={1}
+                      className='shrink text-xs font-bold uppercase tracking-wide text-white'>
+                      {step.label}
+                    </Text>
+                  </>
+                ) : step.done ? (
+                  <View className='size-4 items-center justify-center rounded-full bg-green-600'>
+                    <Check size={10} strokeWidth={4} color='white' />
+                  </View>
+                ) : (
+                  <View className='size-2 rounded-full bg-primary/40' />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
       <Carousel
         ref={ref}
         {...props}
         height={rules?.shauhinMode?.enabled && allPredictions.some((p) => p.shauhinEnabled)
           ? 240
           : 200}
-        data={allPredictions}
-        renderItem={({ item: prediction }) => (
-          <View className='flex-1 mx-2 rounded-lg border-2 border-primary/20 bg-accent/50 overflow-hidden'>
+        data={slides}
+        renderItem={({ item }) => item.kind === 'secondary' ? (
+          <View className='mx-2 rounded-lg border-2 border-primary/20 bg-accent/50 overflow-hidden'>
+            {secondaryHeader}
+            <DescriptionCell label='Secondary Pick' description={secondary.description} />
+            <SecondaryPickForm className='bg-card/50 justify-end' />
+          </View>
+        ) : (
+          <View className='mx-2 rounded-lg border-2 border-primary/20 bg-accent/50 overflow-hidden'>
             <View className='bg-primary/10 py-2 px-3'>
               <View className='flex-row items-center justify-center gap-2'>
                 <Text
                   allowFontScaling={false}
                   className='text-lg font-bold uppercase tracking-wider text-foreground'>
-                  {prediction.label}
+                  {item.prediction.label}
                 </Text>
                 <View className='flex-row items-center'>
                   <Text
                     allowFontScaling={false}
-                    className='text-base font-bold text-foreground'>{prediction.points}</Text>
+                    className='text-base font-bold text-foreground'>{item.prediction.points}</Text>
                   <PointsIcon size={13} color={colors.primary} />
                 </View>
               </View>
@@ -219,19 +346,19 @@ export default function PredictionCards({
                   allowFontScaling={false}
                   className='text-base text-muted-foreground'
                   containerClassName='flex-row'
-                  text={prediction.timing.join(' - ')}
+                  text={item.prediction.timing.join(' - ')}
                   noMarqueeContainerClassName='w-min' />
                 <PredictionTimingHelp />
               </View>
             </View>
 
-            <DescriptionCell label={prediction.label} description={prediction.description} />
+            <DescriptionCell label={item.prediction.label} description={item.prediction.description} />
 
             <SubmissionCard
-              prediction={prediction}
+              prediction={item.prediction}
               options={getOptions(
-                prediction.referenceTypes,
-                prediction.eventSource === 'Base' ? prediction.eventName : undefined)}
+                item.prediction.referenceTypes,
+                item.prediction.eventSource === 'Base' ? item.prediction.eventName : undefined)}
               wallet={wallet}
               updateBetTotal={updateFormBetValue}
               totalBet={totalBet}

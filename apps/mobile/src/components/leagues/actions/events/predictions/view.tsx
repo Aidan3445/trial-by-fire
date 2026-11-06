@@ -10,6 +10,7 @@ import AirStatus from '~/components/shared/episodes/airStatus';
 import { type EnrichedCastaway } from '~/types/castaways';
 import { type Prediction } from '~/types/events';
 import { PointsIcon } from '~/components/icons/generated';
+import { useSecondaryPick } from '~/hooks/leagues/mutation/useSecondaryPick';
 
 export interface MakePredictionsProps {
   predictionRuleCount?: number;
@@ -20,6 +21,8 @@ export interface MakePredictionsProps {
   wallet?: number;
   totalBet?: number;
   setBetTotal?: (_total: number) => void;
+  /** Add the weekly secondary pick as the last slide, with a progress rail */
+  includeSecondary?: boolean;
 }
 
 export default function MakePredictions() {
@@ -32,6 +35,7 @@ export default function MakePredictions() {
     basePredictionsMade,
     rules,
   } = useLeagueActionDetails();
+  const { active: secondaryActive } = useSecondaryPick();
 
   const castaways = useMemo(() =>
     Object.values(actionDetails ?? {}).flatMap(({ castaways }) =>
@@ -70,7 +74,7 @@ export default function MakePredictions() {
     [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal, pendingBetTotal]
   );
 
-  if (predictionRuleCount === 0 || !keyEpisodes?.nextEpisode) return null;
+  if ((predictionRuleCount === 0 && !secondaryActive) || !keyEpisodes?.nextEpisode) return null;
 
   // Locked while an episode airs; the episode tracker shows those predictions
   if (keyEpisodes.previousEpisode?.airStatus === 'Airing') return null;
@@ -113,7 +117,9 @@ export default function MakePredictions() {
         <View className='flex-row items-center gap-2'>
           <View className='h-6 w-1 rounded-full bg-primary' />
           <Text className='text-xl font-black uppercase tracking-tight text-foreground'>
-            {`This Week's Prediction${predictionRuleCount > 1 ? 's' : ''}`}
+            {secondaryActive
+              ? 'This Week\'s Picks'
+              : `This Week's Prediction${predictionRuleCount > 1 ? 's' : ''}`}
           </Text>
         </View>
 
@@ -138,7 +144,8 @@ export default function MakePredictions() {
           tribes={tribes}
           wallet={balance}
           totalBet={formBetTotal}
-          setBetTotal={setFormBetTotal} />
+          setBetTotal={setFormBetTotal}
+          includeSecondary />
       )}
     </View>
   );

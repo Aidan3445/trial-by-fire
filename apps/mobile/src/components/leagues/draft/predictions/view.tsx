@@ -1,12 +1,11 @@
-import { View, Text, Pressable } from 'react-native';
-import { cn } from '~/lib/utils';
+import { View, Text } from 'react-native';
 import { type LeagueRules } from '~/types/leagues';
 import { type Prediction } from '~/types/events';
 import { type EnrichedCastaway } from '~/types/castaways';
 import { type Tribe } from '~/types/tribes';
-import { useChangeCastaway } from '~/hooks/leagues/mutation/useChangeCastaway';
+import { useSecondaryPick } from '~/hooks/leagues/mutation/useSecondaryPick';
 import PredictionCards from '~/components/leagues/actions/events/predictions/cards';
-import SearchableSelect from '~/components/common/searchableSelect';
+import SecondaryPickForm from '~/components/leagues/hub/picks/secondaryPick/form';
 
 export interface WhileYouWaitProps {
   rules?: LeagueRules;
@@ -23,18 +22,9 @@ export default function WhileYouWait({
   castaways,
   tribes,
 }: WhileYouWaitProps) {
-  const {
-    secondaryPickSettings,
-    secondaryCastawayOptions,
-    secondarySelected,
-    canSubmitSecondary,
-    isSubmittingSecondary,
-    isEpisodeAiring,
-    handleSelectionChange,
-    handleSecondarySubmit,
-  } = useChangeCastaway();
+  const { active: secondaryActive, options: secondaryOptions } = useSecondaryPick();
 
-  const showSecondaryPick = secondaryPickSettings?.enabled && secondaryCastawayOptions.length > 0;
+  const showSecondaryPick = secondaryActive && secondaryOptions.length > 0;
   const showPredictions = rules && predictionRuleCount > 0;
 
   if (!showSecondaryPick && !showPredictions) return null;
@@ -62,22 +52,7 @@ export default function WhileYouWait({
       {showSecondaryPick && (
         <View className='gap-2 rounded-lg border-2 border-primary/20 bg-primary/5 p-2 mx-2 mb-2'>
           <Text className='text-base font-semibold text-foreground'>Secondary Pick</Text>
-          <SearchableSelect
-            options={secondaryCastawayOptions}
-            selectedValue={secondarySelected ? parseInt(secondarySelected) : undefined}
-            onSelect={(value) => handleSelectionChange('secondary', String(value))}
-            placeholder='Select secondary pick' />
-          <Pressable
-            onPress={() => void handleSecondarySubmit()}
-            disabled={!canSubmitSecondary}
-            className={cn(
-              'rounded-lg bg-primary p-3 active:opacity-80',
-              !canSubmitSecondary && 'opacity-50'
-            )}>
-            <Text className='text-center text-base font-bold uppercase tracking-wider text-primary-foreground'>
-              {isEpisodeAiring ? 'Episode Airing' : isSubmittingSecondary ? 'Submitting...' : 'Submit'}
-            </Text>
-          </Pressable>
+          <SecondaryPickForm className='p-0' />
         </View>
       )}
 
