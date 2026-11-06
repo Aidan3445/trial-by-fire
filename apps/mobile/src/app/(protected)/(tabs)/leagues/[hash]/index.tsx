@@ -14,6 +14,7 @@ import MakePredictions from '~/components/leagues/actions/events/predictions/vie
 import LeagueTimeline from '~/components/leagues/hub/activity/timeline/view';
 import SafeAreaRefreshView from '~/components/common/refresh/safeAreaRefreshView';
 import { Fragment } from 'react';
+import SecondaryPickReminder from '~/components/leagues/hub/picks/secondaryPick/reminder';
 
 export default function LeagueHubScreen() {
   const { hash } = useLocalSearchParams<{ hash: string }>();
@@ -34,6 +35,7 @@ export default function LeagueHubScreen() {
             'page justify-start gap-y-4 px-1.5 pt-8 pb-1.5',
             refreshing && Platform.OS === 'ios' && 'pt-12'
           )}>
+          <SecondaryPickReminder />
           <Scores isActive={league?.status === 'Active'} />
           <MakePredictions />
           <ChangeCastaway />

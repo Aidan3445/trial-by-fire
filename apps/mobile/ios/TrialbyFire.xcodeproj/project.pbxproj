@@ -22,7 +22,7 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = TrialbyFire/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = TrialbyFire/Info.plist; sourceTree = "<group>"; };
 		192C30568FBC828CE91BD04C /* Pods-TrialbyFire.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrialbyFire.debug.xcconfig"; path = "Target Support Files/Pods-TrialbyFire/Pods-TrialbyFire.debug.xcconfig"; sourceTree = "<group>"; };
-		1BF96E25F73670B87BD24F4B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = TrialbyFire/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1BF96E25F73670B87BD24F4B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = TrialbyFire/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		29BDF2AC5806477F414F9F8A /* Pods-TrialbyFire.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TrialbyFire.release.xcconfig"; path = "Target Support Files/Pods-TrialbyFire/Pods-TrialbyFire.release.xcconfig"; sourceTree = "<group>"; };
 		A5700072C53046983F283647 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-TrialbyFire/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = TrialbyFire/SplashScreen.storyboard; sourceTree = "<group>"; };
@@ -92,7 +92,6 @@
 				192C30568FBC828CE91BD04C /* Pods-TrialbyFire.debug.xcconfig */,
 				29BDF2AC5806477F414F9F8A /* Pods-TrialbyFire.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -454,6 +453,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.aidan3445.mobilefantasysurvivor;
 				PRODUCT_NAME = TrialbyFire;
 				SWIFT_OBJC_BRIDGING_HEADER = "TrialbyFire/TrialbyFire-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";

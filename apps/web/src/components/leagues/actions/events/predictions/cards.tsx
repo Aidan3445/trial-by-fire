@@ -277,7 +277,7 @@ export default function PredictionCards({
 
   if (showSecondary) {
     predictionItems.push({
-      header: <div className='pb-1'>{secondaryHeader}</div>,
+      header: <div>{secondaryHeader}</div>,
       content: secondaryDescription,
       footer: <SecondaryPickForm className='bg-b2' />,
     });

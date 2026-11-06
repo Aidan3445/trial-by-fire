@@ -31,7 +31,7 @@ export default function SecondaryPickForm({ onSubmitted, className }: SecondaryP
   };
 
   return (
-    <span className={cn('grid lg:grid-cols-6 grid-cols-1 gap-2 items-center py-2 px-2', className)}>
+    <span className={cn('grid lg:grid-cols-6 grid-cols-1 gap-2 items-center py-2 px-2 pr-4', className)}>
       <Select value={selected} onValueChange={setSelected}>
         <SelectTrigger className={cn(
           'py-0 [&>span]:line-clamp-none lg:col-span-4',

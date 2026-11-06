@@ -131,11 +131,6 @@ export default function EpisodeTracker() {
               }>
               {castawayRow(tracker.secondary.castawayId)}
               <EventRows events={tracker.secondary.events} empty='No points yet this episode' />
-              {tracker.secondary.events.length > 0 && (
-                <p className='text-xs text-muted-foreground'>
-                  {signed(tracker.secondary.basePoints)} × {tracker.secondary.multiplier} = {signed(tracker.secondary.points)}
-                </p>
-              )}
             </Section>
           )}
 
