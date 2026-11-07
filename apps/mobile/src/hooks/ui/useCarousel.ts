@@ -9,11 +9,16 @@ import { colors } from '~/lib/colors';
 const PAGE_WIDTH = Dimensions.get('window').width;
 const PAGE_HEIGHT = Dimensions.get('window').height;
 
-export function useCarousel<T>(initialData: T[] = []) {
+/**
+ * @param liveProgress Mirror the fractional scroll progress into React state every frame.
+ * Turn it off for carousels with heavy slides and read `index` instead, which only changes on a new slide.
+ */
+export function useCarousel<T>(initialData: T[] = [], { liveProgress = true }: { liveProgress?: boolean } = {}) {
   const [carouselData, setCarouselDataState] = useState<T[]>(initialData);
   const ref = useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
   const [progressState, setProgressState] = useState(0);
+  const [index, setIndex] = useState(0);
 
   const [containerWidth, setContainerWidth] = useState(PAGE_WIDTH);
   const [containerHeight, setContainerHeight] = useState(PAGE_HEIGHT);
@@ -29,22 +34,23 @@ export function useCarousel<T>(initialData: T[] = []) {
   useAnimatedReaction(() => progress.value,
     (value) => {
       // Update the progress state on the JS thread
-      scheduleOnRN(setProgressState, value);
+      if (liveProgress) scheduleOnRN(setProgressState, value);
+    });
+
+  // Nearest slide; flips halfway through a swipe and only crosses to JS when it changes
+  useAnimatedReaction(() => Math.round(progress.value),
+    (value, previous) => {
+      if (value !== previous) scheduleOnRN(setIndex, value);
     });
 
   const setCarouselData = useCallback((newData: T[]) => {
     setCarouselDataState(newData);
   }, [setCarouselDataState]);
 
-  const onPressPagination = useCallback((index: number) => {
-    const currentIndex = Math.round(progressState);
-
-    ref.current?.scrollTo({
-      count: index - currentIndex,
-      animated: true,
-    });
+  const onPressPagination = useCallback((target: number) => {
+    ref.current?.scrollTo({ index: target, animated: true });
   },
-    [progressState]
+    []
   );
 
   const scrollNext = useCallback(() => {
@@ -78,6 +84,7 @@ export function useCarousel<T>(initialData: T[] = []) {
     setCarouselData,
     ref,
     progress: progressState,
+    index,
     onPressPagination,
     PAGE_WIDTH,
     PAGE_HEIGHT,

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Check } from 'lucide-react-native';
+import { View, Text } from 'react-native';
 import Carousel, { Pagination } from 'react-native-reanimated-carousel';
 import { colors } from '~/lib/colors';
 import { useCarousel } from '~/hooks/ui/useCarousel';
@@ -15,9 +14,9 @@ import { type MakePredictionsProps } from '~/components/leagues/actions/events/p
 import MarqueeText from '~/components/common/marquee';
 import DescriptionCell from '~/components/leagues/actions/events/predictions/description';
 import { PointsIcon } from '~/components/icons/generated';
-import { cn } from '~/lib/utils';
 import { useSecondaryPick } from '~/hooks/leagues/mutation/useSecondaryPick';
 import SecondaryPickForm from '~/components/leagues/hub/picks/secondaryPick/form';
+import PicksRail from '~/components/leagues/actions/events/predictions/picksRail';
 
 type Slide =
   | { kind: 'prediction'; key: string; prediction: MakePrediction }
@@ -163,7 +162,8 @@ export default function PredictionCards({
     : { label: slide.prediction.label ?? slide.prediction.eventName, done: !!slide.prediction.predictionMade }),
     [slides, secondary.hasPick]);
 
-  const { ref, props, progressProps, progress, scrollNext, setCarouselData } = useCarousel(slides);
+  // Slides hold forms, so skip per-frame progress re-renders; the rail only needs the slide index
+  const { ref, props, progressProps, index: current, scrollNext, setCarouselData } = useCarousel(slides, { liveProgress: false });
 
   useEffect(() => {
     setCarouselData(slides);
@@ -269,48 +269,13 @@ export default function PredictionCards({
   }
 
   // Multiple slides - carousel layout
-  const current = Math.round(progress);
   return (
     <View className='gap-2'>
       {includeSecondary && (
-        // The current pick is spelled out; the rest shrink to dots, or checks once made
-        <View className='flex-row items-center justify-center gap-1.5 px-3'>
-          {steps.map((step, index) => {
-            const isCurrent = index === current;
-            return (
-              <Pressable
-                key={slides[index]!.key}
-                onPress={() => scrollToIndex(index)}
-                accessibilityRole='tab'
-                accessibilityLabel={`${step.label}${step.done ? ' (done)' : ''}`}
-                accessibilityState={{ selected: isCurrent }}
-                hitSlop={6}
-                className={cn(
-                  'items-center justify-center rounded-full',
-                  isCurrent
-                    ? cn('h-6 max-w-[60%] flex-row gap-1 px-3 text-secondary', step.done ? 'bg-green-600' : 'bg-primary')
-                    : 'size-5')}>
-                {isCurrent ? (
-                  <>
-                    {step.done && <Check size={13} strokeWidth={3} color='white' />}
-                    <Text
-                      allowFontScaling={false}
-                      numberOfLines={1}
-                      className='shrink text-xs font-bold uppercase tracking-wide text-white'>
-                      {step.label}
-                    </Text>
-                  </>
-                ) : step.done ? (
-                  <View className='size-4 items-center justify-center rounded-full bg-green-600'>
-                    <Check size={10} strokeWidth={4} color='white' />
-                  </View>
-                ) : (
-                  <View className='size-2 rounded-full bg-primary/40' />
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
+        <PicksRail
+          steps={steps.map((step, index) => ({ ...step, key: slides[index]!.key }))}
+          current={current}
+          onSelect={scrollToIndex} />
       )}
       <Carousel
         ref={ref}
