@@ -13,21 +13,14 @@ import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker';
 
 export default function ChangeCastaway() {
   const {
-    keyEpisodes,
-    secondaryPickSettings,
     availableCastaways,
     pickPriority,
-    secondaryCastawayOptions,
     form,
     selected,
-    secondarySelected,
     handleSelectionChange,
     handleSubmit,
-    handleSecondarySubmit,
     isSubmitting,
-    isSubmittingSecondary,
     canSubmitMain,
-    canSubmitSecondary,
     isEpisodeAiring,
     dialogOpen,
     closedDialog,
@@ -75,7 +68,6 @@ export default function ChangeCastaway() {
   });
 
   const onSubmitMain = () => void handleSubmit();
-  const onSubmitSecondary = () => void handleSecondarySubmit();
 
   return (
     <>
@@ -144,7 +136,7 @@ export default function ChangeCastaway() {
                   <SearchableSelect
                     options={mainPickOptions}
                     selectedValue={selected ? parseInt(selected) : undefined}
-                    onSelect={(value) => handleSelectionChange('survivor', String(value))}
+                    onSelect={(value) => handleSelectionChange(String(value))}
                     placeholder='Select new survivor' />
                 )} />
               <Button
@@ -156,41 +148,6 @@ export default function ChangeCastaway() {
                 )}>
                 <Text className='text-center text-base font-bold uppercase tracking-wider text-white'>
                   {isSubmitting ? 'Submitting...' : 'Submit'}
-                </Text>
-              </Button>
-            </View>
-          </View>
-        )}
-
-        {/* Secondary Pick Section */}
-        {secondaryPickSettings?.enabled && keyEpisodes?.nextEpisode && (
-          <View className='gap-2'>
-            <View className='flex-row items-center gap-2 px-1'>
-              <View className='h-12 w-1 rounded-full bg-primary' />
-              <View>
-                <Text className='text-xl font-black uppercase tracking-tight text-foreground'>
-                  Secondary Pick
-                </Text>
-                <Text className='text-sm font-semibold text-muted-foreground'>
-                  (Choose weekly for extra points)
-                </Text>
-              </View>
-            </View>
-            <View className='gap-2'>
-              <SearchableSelect
-                options={secondaryCastawayOptions}
-                selectedValue={secondarySelected ? parseInt(secondarySelected) : undefined}
-                onSelect={(value) => handleSelectionChange('secondary', String(value))}
-                placeholder='Select secondary pick' />
-              <Button
-                onPress={onSubmitSecondary}
-                disabled={!canSubmitSecondary}
-                className={cn(
-                  'rounded-lg bg-primary p-3 active:opacity-80',
-                  !canSubmitSecondary && 'opacity-50'
-                )}>
-                <Text className='text-center text-base font-bold uppercase tracking-wider text-white'>
-                  {isSubmittingSecondary ? 'Submitting...' : 'Submit'}
                 </Text>
               </Button>
             </View>

@@ -124,9 +124,9 @@ export function useCreateBaseEvent(seasonId: number | null) {
     episodes?.map((episode) => ({
       value: episode.episodeId,
       label: `EP ${episode.episodeNumber}: ${episode.title}`,
-      renderLabel: () => (
+      renderLabel: (context?: { inTrigger: boolean }) => (
         <View className='flex-1'>
-          <Text className='text-foreground'>
+          <Text className='text-foreground' numberOfLines={context?.inTrigger ? 1 : undefined}>
             <Text className='font-bold'>EP {episode.episodeNumber}: </Text>
             {episode.title}
             {'  '}

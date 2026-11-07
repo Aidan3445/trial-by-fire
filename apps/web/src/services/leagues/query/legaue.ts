@@ -15,7 +15,7 @@ import { type League } from '~/types/leagues';
    * @returnObj `League | undefined`
    */
 export default async function getLeague(auth: VerifiedLeagueMemberAuth) {
-  return db
+  const league: League | undefined = await db
     .select({
       leagueId: leagueSchema.leagueId,
       hash: leagueSchema.hash,
@@ -28,5 +28,12 @@ export default async function getLeague(auth: VerifiedLeagueMemberAuth) {
     .from(leagueSchema)
     .innerJoin(seasonSchema, eq(leagueSchema.seasonId, seasonSchema.seasonId))
     .where(eq(leagueSchema.leagueId, auth.leagueId))
-    .then((leagues) => leagues[0] as League | undefined);
+    .then((leagues) => leagues[0]);
+
+  // Dev harness: NODE_ENV is inlined at build time, so this branch and its import are stripped from prod
+  if (process.env.NODE_ENV === 'development' && league) {
+    const { devHarness } = await import('~/server/devHarness');
+    return devHarness.league(league);
+  }
+  return league;
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import MarqueeText from '~/components/common/marquee';
 import { View, Text, Pressable } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import Animated, {
@@ -86,7 +87,7 @@ export default function EpisodeMarker({
 
           {/* Episode Title */}
           {episodeTitle && (
-            <Text className='text-sm font-medium text-muted-foreground'>{episodeTitle}</Text>
+            <MarqueeText text={episodeTitle} className='text-sm font-medium text-muted-foreground' />
           )}
         </View>
 

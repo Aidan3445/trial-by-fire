@@ -19,26 +19,21 @@ import chooseCastaway from '~/actions/chooseCastaway';
 import { type LeagueMember } from '~/types/leagueMembers';
 import { useEliminations } from '~/hooks/seasons/useEliminations';
 import { Card, CardContent } from '~/components/common/card';
-import makeSecondaryPick from '~/actions/makeSecondaryPick';
-import { MAX_SEASON_LENGTH } from '~/lib/leagues';
 import ShotInTheDark from '~/components/leagues/hub/picks/shotInTheDark/view';
 import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker/view';
 
 const formSchema = z.object({
   castawayId: z.coerce.number({ required_error: 'Please select a castaway' }),
-  secondaryCastawayId: z.coerce.number().optional(),
 });
 
 export default function ChangeCastaway() {
   const queryClient = useQueryClient();
   const {
     league,
-    rules,
     actionDetails,
     keyEpisodes,
     leagueMembers,
     membersWithPicks,
-    selectionTimeline
   } = useLeagueActionDetails();
   const { data: eliminations } = useEliminations(league?.seasonId ?? null);
 
@@ -46,8 +41,6 @@ export default function ChangeCastaway() {
     resolver: zodResolver(formSchema),
   });
   const [selected, setSelected] = useState('');
-  const [secondarySelected, setSecondarySelected] = useState<string | undefined>(undefined);
-  const [initialSecondaryPick, setInitialSecondaryPick] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (leagueMembers?.loggedIn) {
@@ -60,7 +53,6 @@ export default function ChangeCastaway() {
     }
   }, [leagueMembers, membersWithPicks, reactForm]);
 
-  const secondaryPickSettings = rules?.secondaryPick;
 
   const availableCastaways = useMemo(() => Object.values(actionDetails ?? {})
     .map(({ castaways }) => castaways
@@ -86,19 +78,6 @@ export default function ChangeCastaway() {
     }
   });
 
-  const handleSecondarySubmit = async () => {
-    if (!league || !keyEpisodes?.nextEpisode || !secondarySelected) return;
-
-    try {
-      await makeSecondaryPick(league.hash, parseInt(secondarySelected));
-      await queryClient.invalidateQueries({ queryKey: ['selectionTimeline', league.hash] });
-      setInitialSecondaryPick(secondarySelected);
-      alert('Secondary pick chosen successfully');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to choose secondary pick';
-      alert(errorMessage);
-    }
-  };
 
   const { pickPriority, elim } = useMemo(() => {
     return membersWithPicks.reduce(({ pickPriority, elim }, memberWPick) => {
@@ -127,77 +106,11 @@ export default function ChangeCastaway() {
       Date.now() - JSON.parse(localStorage.getItem('closedDialog')!) < 1000 * 60 * 10 : false);
   }, [elim, leagueMembers]);
 
-  const castawayLockoutStatus = useMemo(() => {
-    if (!secondaryPickSettings?.enabled || !leagueMembers?.loggedIn || !selectionTimeline?.secondaryPicks || !keyEpisodes?.previousEpisode) {
-      return new Map<number, { isLockedOut: boolean; episodePicked?: number; episodesRemaining?: number }>();
-    }
 
-    const memberId = leagueMembers.loggedIn.memberId;
-    const lockoutPeriod = secondaryPickSettings.lockoutPeriod;
-    const previousEpisode = keyEpisodes.previousEpisode.episodeNumber;
-    const secondaryPicks = selectionTimeline.secondaryPicks[memberId] ?? [];
 
-    const lockoutMap = new Map<number, { isLockedOut: boolean; episodePicked?: number; episodesRemaining?: number }>();
-
-    secondaryPicks.forEach((castawayId, episodeIndex) => {
-      if (castawayId !== null && castawayId !== undefined) {
-        const episodeNumber = episodeIndex;
-        const episodesSinceLastPick = previousEpisode - episodeNumber;
-
-        if ((lockoutPeriod === 0 || episodesSinceLastPick < lockoutPeriod) && episodeNumber <= previousEpisode) {
-          if (!lockoutMap.has(castawayId) || (lockoutMap.get(castawayId)?.episodePicked ?? 0) < episodeNumber) {
-            lockoutMap.set(castawayId, {
-              isLockedOut: true,
-              episodePicked: episodeNumber,
-              episodesRemaining: lockoutPeriod === MAX_SEASON_LENGTH
-                ? undefined
-                : Math.max(0, lockoutPeriod - episodesSinceLastPick)
-            });
-          }
-        }
-      }
-    });
-
-    return lockoutMap;
-  }, [secondaryPickSettings, leagueMembers, selectionTimeline, keyEpisodes]);
-
-  // Secondary init — search all picks regardless of out status
-  useEffect(() => {
-    if (!secondaryPickSettings?.enabled || !leagueMembers?.loggedIn || !membersWithPicks.length) return;
-
-    const memberId = leagueMembers.loggedIn.memberId;
-    const memberPick = membersWithPicks.find(mwp => mwp.member.memberId === memberId);
-
-    if (memberPick?.secondary) {
-      const secondaryId = `${memberPick.secondary.castawayId}`;
-      setSecondarySelected(secondaryId);
-      setInitialSecondaryPick(secondaryId);
-      reactForm.setValue('secondaryCastawayId', memberPick.secondary.castawayId);
-    } else if (memberPick) {
-      // Only reset if we found the member but they have no secondary pick.
-      // Avoids clearing state during transient data gaps (e.g. refetch on tab switch).
-      setSecondarySelected(undefined);
-      setInitialSecondaryPick(undefined);
-      reactForm.setValue('secondaryCastawayId', undefined);
-    }
-  }, [secondaryPickSettings, membersWithPicks, leagueMembers, reactForm]);
-
-  const handleSelectionChange = (field: 'survivor' | 'secondary', value: string) => {
-    if (field === 'survivor') {
-      setSelected(value);
-      reactForm.setValue('castawayId', parseInt(value));
-      if (value === secondarySelected) {
-        setSecondarySelected(undefined);
-        reactForm.setValue('secondaryCastawayId', undefined);
-      }
-    } else {
-      setSecondarySelected(value);
-      reactForm.setValue('secondaryCastawayId', parseInt(value));
-      if (value === selected) {
-        setSelected('');
-        reactForm.resetField('castawayId');
-      }
-    }
+  const handleSelectionChange = (value: string) => {
+    setSelected(value);
+    reactForm.setValue('castawayId', parseInt(value));
   };
 
   const currentSurvivorPick = useMemo(() => {
@@ -206,18 +119,10 @@ export default function ChangeCastaway() {
     return membersWithPicks.find(mwp => mwp.member.memberId === memberId && !mwp.out) ?? null;
   }, [membersWithPicks, leagueMembers]);
 
-  const currentSecondaryPick = useMemo(() => {
-    if (!leagueMembers?.loggedIn) return null;
-    const memberId = leagueMembers.loggedIn.memberId;
-    return membersWithPicks.find(mwp => mwp.member.memberId === memberId)?.secondary ?? null;
-  }, [membersWithPicks, leagueMembers]);
 
   // Fall back to data-derived picks when useEffect hasn't synced state yet
   const selectedCastaway = availableCastaways.find(c => `${c.castawayId}` === selected)
     ?? availableCastaways.find(c => c.castawayId === currentSurvivorPick?.castawayId)
-    ?? null;
-  const selectedSecondaryCastaway = availableCastaways.find(c => `${c.castawayId}` === secondarySelected)
-    ?? availableCastaways.find(c => c.castawayId === currentSecondaryPick?.castawayId)
     ?? null;
 
   const markModalClosed = () => {
@@ -307,7 +212,7 @@ export default function ChangeCastaway() {
                           <FormControl>
                             <Select
                               value={selected}
-                              onValueChange={handleSelectionChange.bind(null, 'survivor')}>
+                              onValueChange={handleSelectionChange}>
                               <SelectTrigger className='py-0 [&>span]:line-clamp-none'>
                                 {selectedCastaway ? (
                                   <span className='flex items-center justify-start gap-1 text-nowrap'>
@@ -376,125 +281,6 @@ export default function ChangeCastaway() {
                         !formSchema.safeParse(reactForm.watch())?.success
                         || reactForm.formState.isSubmitting}
                       type='submit'>
-                      Submit
-                    </Button>
-                  </span>
-                </div>
-              )}
-
-              {/* Secondary Pick Section */}
-              {secondaryPickSettings?.enabled && keyEpisodes?.nextEpisode && (
-                <div>
-                  <div className='flex items-center gap-3 h-8'>
-                    <span className='h-4 md:h-6 w-1 bg-primary rounded-full' />
-                    <h2 className='md:text-xl font-black uppercase tracking-tight leading-none text-nowrap'>
-                      Secondary Pick
-                    </h2>
-                    <p className='text-sm text-muted-foreground'>
-                      (Choose weekly)
-                    </p>
-                  </div>
-                  <span className='w-full flex flex-col lg:flex-row justify-center gap-x-4 gap-y-1 items-center mt-auto'>
-                    <FormField
-                      name='secondaryCastawayId'
-                      render={() => (
-                        <FormItem className='w-full'>
-                          <FormControl>
-                            <Select
-                              value={secondarySelected ?? ''}
-                              onValueChange={handleSelectionChange.bind(null, 'secondary')}>
-                              <SelectTrigger className='py-0 [&>span]:line-clamp-none'>
-                                {selectedSecondaryCastaway ? (
-                                  <span className='flex items-center justify-start gap-1 text-nowrap'>
-                                    {selectedSecondaryCastaway.tribe &&
-                                      <ColorRow
-                                        className='w-20 justify-center leading-tight mr-1'
-                                        color={selectedSecondaryCastaway.tribe.color}>
-                                        {selectedSecondaryCastaway.tribe.name}
-                                      </ColorRow>
-                                    }
-                                    {selectedSecondaryCastaway.fullName}
-                                  </span>
-                                ) : (
-                                  <SelectValue placeholder='Select secondary pick' />
-                                )}
-                              </SelectTrigger>
-                              <SelectContent className='z-50'>
-                                <SelectGroup>
-                                  {availableCastaways
-                                    .filter((castaway) => !castaway.eliminatedEpisode
-                                      || castaway.redemption?.some((r) =>
-                                        r.secondEliminationEpisode === null))
-                                    .map((castaway) => {
-                                      const lockoutInfo = castawayLockoutStatus.get(castaway.castawayId);
-                                      const isLockedOut = lockoutInfo?.isLockedOut ?? false;
-
-                                      const isOwnSurvivor = !secondaryPickSettings.canPickOwnSurvivor &&
-                                        castaway.pickedBy?.memberId === leagueMembers?.loggedIn?.memberId;
-
-                                      if (isOwnSurvivor
-                                        || (castaway.eliminatedEpisode
-                                          && !castaway.redemption?.some((r) => r.secondEliminationEpisode === null))
-                                        || isLockedOut) {
-                                        let disabledText = castaway.fullName;
-                                        if (isOwnSurvivor) {
-                                          disabledText += ' (Your Survivor)';
-                                        } else if (isLockedOut && lockoutInfo) {
-                                          const episodePicked = lockoutInfo.episodePicked;
-                                          const episodesRemaining = lockoutInfo.episodesRemaining;
-
-                                          if (episodesRemaining !== undefined && episodesRemaining > 0) {
-                                            disabledText += ` (unavailable for ${episodesRemaining} more ${episodesRemaining === 1 ? 'episode' : 'episodes'})`;
-                                          } else {
-                                            disabledText += ` (Picked Ep ${episodePicked})`;
-                                          }
-                                        }
-
-                                        return (
-                                          <SelectLabel
-                                            key={castaway.castawayId}
-                                            className='cursor-not-allowed opacity-50'>
-                                            <span className='flex items-center gap-1 w-full text-nowrap'>
-                                              {castaway.tribe &&
-                                                <ColorRow
-                                                  className='w-20 justify-center leading-tight font-medium! tracking-normal! normal-case! text-sm'
-                                                  color={castaway.tribe.color}>
-                                                  {castaway.tribe.name}
-                                                </ColorRow>
-                                              }
-                                              {disabledText}
-                                            </span>
-                                          </SelectLabel>
-                                        );
-                                      }
-
-                                      return (
-                                        <SelectItem key={castaway.fullName} value={`${castaway.castawayId}`}>
-                                          <span className='flex items-center gap-1 w-full text-nowrap'>
-                                            {castaway.tribe &&
-                                              <ColorRow
-                                                className='w-20 justify-center leading-tight'
-                                                color={castaway.tribe.color}>
-                                                {castaway.tribe.name}
-                                              </ColorRow>}
-                                            {castaway.fullName}
-                                          </span>
-                                        </SelectItem>
-                                      );
-                                    })}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                        </FormItem>
-                      )} />
-                    <Button
-                      className='lg:w-26 w-full font-bold uppercase text-xs tracking-wider'
-                      disabled={
-                        !secondarySelected
-                        || secondarySelected === initialSecondaryPick}
-                      type='button'
-                      onClick={handleSecondarySubmit}>
                       Submit
                     </Button>
                   </span>

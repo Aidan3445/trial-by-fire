@@ -1,4 +1,5 @@
 import { Fragment, useMemo } from 'react';
+import MarqueeText from '~/components/common/marquee';
 import { View, Text } from 'react-native';
 import EpisodeEventsTableBody from '~/components/shared/eventTimeline/table/body';
 import { cn, findTribeCastaways } from '~/lib/utils';
@@ -305,9 +306,10 @@ export default function EpisodeEvents({
           <Fragment key={`timeline-${episode.episodeNumber}`}>
             {episodeNumber === -1 && (
               <View className='border-t-2 border-primary/20 bg-primary/10 px-4 py-3'>
-                <Text className='text-center text-sm font-black uppercase tracking-wider text-foreground'>
-                  Episode {episode.episodeNumber}: {episode.title}
-                </Text>
+                <MarqueeText
+                  center
+                  text={`Episode ${episode.episodeNumber}: ${episode.title}`}
+                  className='text-sm font-black uppercase tracking-wider text-foreground' />
               </View>
             )}
 

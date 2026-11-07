@@ -5,7 +5,8 @@ export interface SearchableOption<T extends string | number> {
   value: T | null;
   label: string;
   disabled?: boolean;
-  renderLabel?: () => ReactNode;
+  /** Shown in the option list and, with inTrigger set, in the closed select (keep that to one line) */
+  renderLabel?: (_context?: { inTrigger: boolean }) => ReactNode;
 }
 
 export function useSearchableSelect<T extends string | number>(

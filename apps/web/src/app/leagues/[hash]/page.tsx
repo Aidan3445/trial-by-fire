@@ -5,7 +5,6 @@ import { AutoEventProvider } from '~/context/autoEventContext';
 import AutoEvents from '~/components/leagues/actions/events/autoEvents/view';
 import { leagueMemberAuth, systemAdminAuth } from '~/lib/auth';
 import { type LeaguePageProps } from '~/app/leagues/[hash]/layout';
-import ChangeCastaway from '~/components/leagues/hub/picks/changeSurvivor/view';
 import CreateBaseEvent from '~/components/leagues/actions/events/base/create';
 import CustomEvents from '~/components/leagues/customization/events/custom/view';
 import LeagueSettings from '~/components/leagues/customization/settings/league/view';
@@ -24,6 +23,7 @@ import { getSeasonData } from '~/services/seasons/query/seasonsData';
 import LeagueTimeline from '~/components/leagues/hub/activity/leagueTimeline/view';
 import Scores from '~/components/leagues/hub/shared/scores/view';
 import Spacer from '~/components/shared/floatingActions/spacer';
+import SecondaryPickReminder from '~/components/leagues/hub/picks/secondaryPick/reminder';
 
 export default async function LeaguePage({ params }: LeaguePageProps) {
   const { hash } = await params;
@@ -64,8 +64,8 @@ export default async function LeaguePage({ params }: LeaguePageProps) {
         <ScrollArea className='px-4 md:h-[calc(100svh-10.5rem)] h-[calc(100svh-9rem-var(--navbar-height))]'>
           <div className='pb-4 overflow-hidden'>
             <TabsContent className='space-y-4 data-[state=inactive]:hidden' value='scores' forceMount>
+              <SecondaryPickReminder />
               <Scores isActive={isActive} />
-              <ChangeCastaway />
               <Predictions />
               {seasonData && <LeagueTimeline initialSeasonData={seasonData} />}
             </TabsContent>

@@ -39,7 +39,7 @@ export default function DescriptionCell({ label, description }: DescriptionCellP
       <Pressable
         onPress={() => truncated && setModalVisible(true)}
         disabled={!truncated}
-        className='bg-secondary py-1 px-2 flex-row items-center gap-1 flex-1'>
+        className='bg-secondary py-1 px-2 flex-row items-center gap-1'>
         <Text
           allowFontScaling={false}
           numberOfLines={2}

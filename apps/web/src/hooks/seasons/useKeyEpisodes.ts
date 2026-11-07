@@ -1,6 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { type KeyEpisodes } from '~/types/episodes';
-import { loadOverrideConfig } from '~/lib/devEpisodeOverride';
 
 /**
   * Fetches key episodes data with aggressive refresh only during episode air windows.
@@ -8,22 +7,10 @@ import { loadOverrideConfig } from '~/lib/devEpisodeOverride';
   * @returnObj `KeyEpisodes`
   */
 export function useKeyEpisodes(seasonId: number | null) {
-  const queryClient = useQueryClient();
-
   return useQuery<KeyEpisodes>({
     queryKey: ['episodes', seasonId, 'key'],
     queryFn: async () => {
       if (!seasonId) return {} as KeyEpisodes;
-
-      // Check if there's an active override for this season
-      const overrideConfig = loadOverrideConfig();
-      if (overrideConfig?.enabled && overrideConfig.seasonId === seasonId) {
-        // Return the overridden data from cache if available
-        const cachedOverride = queryClient.getQueryData<KeyEpisodes>(['episodes', seasonId, 'key']);
-        if (cachedOverride) {
-          return cachedOverride;
-        }
-      }
 
       const res = await fetch(`/api/seasons/episodes/key?seasonId=${seasonId}`);
       if (!res.ok) {

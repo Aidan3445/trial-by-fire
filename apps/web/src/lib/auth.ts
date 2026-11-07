@@ -57,7 +57,7 @@ export async function systemAdminAuth() {
   * OR an empty object if the user is not authenticated
   * @returnObj `LeagueMemberAuth`
   */
-export async function leagueMemberAuth(hash: string) {
+async function getLeagueMemberAuth(hash: string) {
   const { userId } = await auth();
   const noAuth: LeagueMemberAuth = { userId, memberId: null, role: null, leagueId: null };
   if (!userId) return noAuth;
@@ -119,6 +119,19 @@ export async function leagueMemberAuth(hash: string) {
     ...member,
   } as LeagueMemberAuth;
 }
+
+/**
+  * Dev harness: passes the league status through the episode override.
+  */
+async function devLeagueMemberAuth(hash: string): Promise<LeagueMemberAuth> {
+  const memberAuth = await getLeagueMemberAuth(hash) as Partial<VerifiedLeagueMemberAuth> & LeagueMemberAuth;
+  if (memberAuth.seasonId === undefined || memberAuth.status === undefined) return memberAuth;
+  const { devHarness } = await import('~/server/devHarness');
+  return devHarness.league(memberAuth as typeof memberAuth & Pick<VerifiedLeagueMemberAuth, 'seasonId' | 'status'>);
+}
+
+// NODE_ENV is inlined at build time, so prod calls getLeagueMemberAuth directly and the harness is stripped
+export const leagueMemberAuth = process.env.NODE_ENV === 'development' ? devLeagueMemberAuth : getLeagueMemberAuth;
 
 /**
  * Wrapper for server actions with general user authentication

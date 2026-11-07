@@ -25,6 +25,8 @@ export interface MakePredictionsProps {
   totalBet?: number;
   setBetTotal?: (_betTotal: number) => void;
   className?: string;
+  /** Add the weekly secondary pick as the last slide, with a progress rail */
+  includeSecondary?: boolean;
 }
 
 export default function MakePredictions(props: MakePredictionsProps) {

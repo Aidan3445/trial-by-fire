@@ -1,19 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useSeasons } from '~/hooks/seasons/useSeasons';
-import { useEpisodes } from '~/hooks/seasons/useEpisodes';
-import { type Episode, type KeyEpisodes, type EpisodeOverrideConfig } from '~/types/episodes';
-import { calculateKeyEpisodes } from '~/lib/episodes';
-import {
-  loadOverrideConfig,
-  saveOverrideConfig,
-  clearOverrideConfig,
-} from '~/lib/devEpisodeOverride';
-import { useParams } from 'next/navigation';
-import { type League } from '~/types/leagues';
+import { useDevHarness, useUpdateDevHarness } from '~/hooks/helpers/useDevHarness';
+import { type Episode, type EpisodeOverrideConfig } from '~/types/episodes';
 
 const formSchema = z.object({
   seasonId: z.number(),
@@ -23,172 +15,85 @@ const formSchema = z.object({
   previousAirStatus: z.enum(['Aired', 'Airing']),
   leagueStatus: z.enum(['Predraft', 'Draft', 'Active', 'Inactive']),
   startWeek: z.number(),
-}).refine((data) => {
-  // If both previous and next are set, validate that previous < next
-  if (data.previousEpisodeId === null || data.nextEpisodeId === null) {
-    return true; // Allow nulls
-  }
-
-  return true; // We'll do episode number validation in the component
-}, {
-  message: 'Previous episode must come before next episode',
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
+const DEFAULT_VALUES: FormValues = {
+  seasonId: 0,
+  previousEpisodeId: null,
+  nextEpisodeId: null,
+  mergeEpisodeId: null,
+  previousAirStatus: 'Aired',
+  leagueStatus: 'Active',
+  startWeek: 1,
+};
+
+/**
+  * Dev harness override panel state. The override is stored on the dev server, which
+  * applies it to its own API responses; this only reads and writes that stored state.
+  */
 export function useDevEpisodeOverride() {
-  const params = useParams();
-  const hash = params.hash as string;
-
   const [open, setOpen] = useState(false);
-  const [overrideEnabled, setOverrideEnabled] = useState(false);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [selectedSeasonId, setSelectedSeasonIdState] = useState<number | null>(null);
+  // Only auto-fill the merge episode when the season is picked by hand, not when loading a stored config
+  const autoFillMerge = useRef(false);
 
-  const queryClient = useQueryClient();
+  const { data: harness } = useDevHarness();
+  const updateHarness = useUpdateDevHarness();
+  const config = harness?.config ?? null;
+  const overrideEnabled = !!config?.enabled;
+  const broadcastEnabled = !!harness?.broadcast;
+
   const { data: seasons } = useSeasons(true);
-  const { data: episodes, isLoading: episodesLoading } = useEpisodes(selectedSeasonId);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      seasonId: 0,
-      previousEpisodeId: null,
-      nextEpisodeId: null,
-      mergeEpisodeId: null,
-      previousAirStatus: 'Aired',
-      leagueStatus: 'Active',
-      startWeek: 1,
+  // Real episodes (raw=true skips the harness) so the override is configured against real data
+  const { data: episodes, isLoading: episodesLoading } = useQuery<Episode[]>({
+    queryKey: ['devHarnessEpisodes', selectedSeasonId],
+    queryFn: async () => {
+      const res = await fetch(`/api/seasons/episodes?seasonId=${selectedSeasonId}&raw=true`);
+      if (!res.ok) throw new Error('Failed to fetch episode data');
+      const { episodes } = await res.json() as { episodes: Episode[] };
+      return episodes.map(ep => ({ ...ep, airDate: new Date(ep.airDate) }));
     },
+    enabled: !!selectedSeasonId,
+  });
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: DEFAULT_VALUES,
   });
 
   const watchPrevious = form.watch('previousEpisodeId');
   const watchNext = form.watch('nextEpisodeId');
 
-  const applyOverride = useCallback((config: EpisodeOverrideConfig) => {
-    const episodesData = queryClient.getQueryData<Episode[]>(['episodes', config.seasonId]);
-    if (episodesData) {
-      // Special case: if next is null, simulate empty episodes response
-      if (config.nextEpisodeId === null) {
-        queryClient.setQueryData(['episodes', config.seasonId], []);
-        queryClient.setQueryData(['episodes', config.seasonId, 'key'], {
-          previousEpisode: null,
-          nextEpisode: null,
-          mergeEpisode: null,
-        } as KeyEpisodes);
-        return;
-      }
+  const setSelectedSeasonId = (seasonId: number | null) => {
+    autoFillMerge.current = true;
+    setSelectedSeasonIdState(seasonId);
+  };
 
-      // Find episodes for comparisons
-      const previousEp = config.previousEpisodeId
-        ? episodesData.find(e => e.episodeId === config.previousEpisodeId)
-        : null;
-      const nextEp = config.nextEpisodeId
-        ? episodesData.find(e => e.episodeId === config.nextEpisodeId)
-        : null;
-      const mergeEp = config.mergeEpisodeId
-        ? episodesData.find(e => e.episodeId === config.mergeEpisodeId)
-        : null;
-
-      // Update all episodes
-      const updatedEpisodes = episodesData.map(ep => {
-        const updated = { ...ep };
-
-        // Update air status based on position
-        if (previousEp && ep.episodeId === config.previousEpisodeId) {
-          updated.airStatus = config.previousAirStatus;
-        } else if (nextEp && ep.episodeId === config.nextEpisodeId) {
-          updated.airStatus = 'Upcoming';
-        } else if (previousEp && ep.episodeNumber < previousEp.episodeNumber) {
-          updated.airStatus = 'Aired';
-        } else if (nextEp && ep.episodeNumber > nextEp.episodeNumber) {
-          updated.airStatus = 'Upcoming';
-        } else if (previousEp && nextEp && ep.episodeNumber > previousEp.episodeNumber && ep.episodeNumber < nextEp.episodeNumber) {
-          updated.airStatus = 'Upcoming';
-        }
-
-        // Update merge flag (only one episode can be merge)
-        if (mergeEp) {
-          updated.isMerge = ep.episodeId === config.mergeEpisodeId;
-          // If episode is now merge, turn off finale flag
-          if (updated.isMerge && updated.isFinale) {
-            updated.isFinale = false;
-          }
-        } else {
-          // If merge is null, no episode has merge flag
-          updated.isMerge = false;
-        }
-
-        return updated;
-      });
-
-      // Cancel any in-flight queries to prevent them from overwriting our override
-      void queryClient.cancelQueries({ queryKey: ['episodes', config.seasonId] });
-      void queryClient.cancelQueries({ queryKey: ['episodes', config.seasonId, 'key'] });
-      // Update episodes cache
-      queryClient.setQueryData(['episodes', config.seasonId], updatedEpisodes);
-      // Recalculate and update key episodes using shared lib function
-      const keyEpisodes = calculateKeyEpisodes(updatedEpisodes) as KeyEpisodes;
-      queryClient.setQueryData(['episodes', config.seasonId, 'key'], keyEpisodes);
-      // Invalidate and refetch to ensure all observers get updated
-      void queryClient.invalidateQueries({
-        queryKey: ['episodes', config.seasonId, 'key'],
-        refetchType: 'active' // Refetch active queries to trigger re-render
-      });
-      // Invalidate the seasons query to trigger useSeasonsData to refetch/reselect
-      void queryClient.invalidateQueries({ queryKey: ['seasons'] });
-    }
-
-    // League override
-    const league = queryClient.getQueryData<League>(['league', hash]);
-    if (league?.seasonId === config.seasonId) {
-      const updatedLeague = {
-        ...league,
-        status: config.leagueStatus,
+  // Load the stored override into the form whenever the dialog opens
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && config) {
+      autoFillMerge.current = false;
+      setSelectedSeasonIdState(config.seasonId);
+      form.reset({
+        seasonId: config.seasonId,
+        previousEpisodeId: config.previousEpisodeId,
+        nextEpisodeId: config.nextEpisodeId,
+        mergeEpisodeId: config.mergeEpisodeId,
+        previousAirStatus: config.previousAirStatus,
+        leagueStatus: config.leagueStatus,
         startWeek: config.startWeek,
-      };
-      // Cancel any in-flight league queries
-      void queryClient.cancelQueries({ queryKey: ['league', hash] });
-      // Update league cache
-      queryClient.setQueryData(['league', hash], updatedLeague);
-      // Invalidate to refetch
-      void queryClient.invalidateQueries({ queryKey: ['league', hash] });
+      });
     }
+    setOpen(isOpen);
+  };
 
-  }, [hash, queryClient]);
-
-
-  // Load override config from localStorage on mount
+  // When the season is picked, auto-populate its real merge episode
   useEffect(() => {
-    const config = loadOverrideConfig();
-    if (config?.enabled) {
-      setOverrideEnabled(true);
-      setSelectedSeasonId(config.seasonId);
-      form.setValue('seasonId', config.seasonId);
-      form.setValue('previousEpisodeId', config.previousEpisodeId);
-      form.setValue('nextEpisodeId', config.nextEpisodeId);
-      form.setValue('mergeEpisodeId', config.mergeEpisodeId);
-      form.setValue('previousAirStatus', config.previousAirStatus);
-      form.setValue('leagueStatus', config.leagueStatus);
-      form.setValue('startWeek', config.startWeek);
-    }
-  }, [form]);
-
-  // Apply override when episodes are loaded
-  useEffect(() => {
-    const config = loadOverrideConfig();
-    if (config?.enabled && episodes && episodes.length > 0 && selectedSeasonId === config.seasonId) {
-      applyOverride(config);
-    }
-  }, [episodes, selectedSeasonId, applyOverride]);
-
-  // When season changes, auto-populate merge episode
-  useEffect(() => {
-    if (!episodes || episodes.length === 0) return;
-
-    const mergeEp = episodes.find(ep => ep.isMerge);
-    if (mergeEp) {
-      form.setValue('mergeEpisodeId', mergeEp.episodeId);
-    } else {
-      form.setValue('mergeEpisodeId', null);
-    }
+    if (!autoFillMerge.current || !episodes || episodes.length === 0) return;
+    autoFillMerge.current = false;
+    form.setValue('mergeEpisodeId', episodes.find(ep => ep.isMerge)?.episodeId ?? null);
   }, [selectedSeasonId, episodes, form]);
 
   // When previous changes, auto-set next
@@ -245,61 +150,34 @@ export function useDevEpisodeOverride() {
     }
   }, [watchNext, episodes, form]);
 
-  const handleApply = form.handleSubmit((data) => {
-    const config: EpisodeOverrideConfig = {
-      ...data,
-      enabled: true,
-    };
-    saveOverrideConfig(config);
-    setOverrideEnabled(true);
-    applyOverride(config);
+  const handleApply = form.handleSubmit(async (data) => {
+    const newConfig: EpisodeOverrideConfig = { ...data, enabled: true };
+    await updateHarness({ config: newConfig });
     setOpen(false);
-    alert('Episode override applied and saved to localStorage');
   });
 
-  const handleReset = () => {
-    const config = loadOverrideConfig();
-    clearOverrideConfig();
-    setOverrideEnabled(false);
-    form.reset();
-    setSelectedSeasonId(null);
-
-    if (config) {
-      // Invalidate cache to refetch real data
-      void queryClient.invalidateQueries({ queryKey: ['episodes', config.seasonId] });
-      void queryClient.invalidateQueries({ queryKey: ['episodes', config.seasonId, 'key'] });
-      void queryClient.invalidateQueries({ queryKey: ['seasons'] });
-      void queryClient.invalidateQueries({ queryKey: ['league', hash] });
-    }
-
-    alert('Episode override cleared');
+  const handleReset = async () => {
+    await updateHarness({ config: null });
+    form.reset(DEFAULT_VALUES);
+    setSelectedSeasonIdState(null);
   };
 
-  const handleToggle = (enabled: boolean) => {
-    const config = loadOverrideConfig();
+  const handleToggle = async (enabled: boolean) => {
     if (!config) return;
+    await updateHarness({ config: { ...config, enabled } });
+  };
 
-    const updatedConfig = { ...config, enabled };
-    saveOverrideConfig(updatedConfig);
-    setOverrideEnabled(enabled);
-
-    if (enabled) {
-      // Apply override to cache
-      applyOverride(updatedConfig);
-    } else {
-      // Invalidate cache to refetch real data
-      void queryClient.invalidateQueries({ queryKey: ['episodes', config.seasonId] });
-      void queryClient.invalidateQueries({ queryKey: ['episodes', config.seasonId, 'key'] });
-      void queryClient.invalidateQueries({ queryKey: ['seasons'] });
-      void queryClient.invalidateQueries({ queryKey: ['league', hash] });
-    }
+  const handleBroadcastToggle = async (broadcast: boolean) => {
+    await updateHarness({ broadcast });
   };
 
   return {
     open,
-    setOpen,
+    setOpen: handleOpenChange,
     overrideEnabled,
     handleToggle,
+    broadcastEnabled,
+    handleBroadcastToggle,
     seasons,
     episodes,
     episodesLoading,

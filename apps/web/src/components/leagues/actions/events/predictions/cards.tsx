@@ -1,18 +1,21 @@
 'use client';
 
 import { cn } from '~/lib/utils';
-import { CoverCarousel } from '~/components/common/carousel';
+import { type CarouselApi, CoverCarousel } from '~/components/common/carousel';
 import PredictionTimingHelp from '~/components/leagues/actions/events/predictions/timingHelp';
 import SubmissionCard, { BaseSubmissionCard } from '~/components/leagues/actions/events/predictions/submission';
 import { BaseEventDescriptions, BaseEventFullName, BasePredictionReferenceTypes } from '~/lib/events';
 import { type MakePredictionsProps } from '~/components/leagues/actions/events/predictions/view';
 import { type ScoringBaseEventName, type ReferenceType, type MakePrediction } from '~/types/events';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useShauhinActive } from '~/hooks/leagues/enrich/useShauhinActive';
 import { useLeague } from '~/hooks/leagues/useLeague';
 import { useCastaways } from '~/hooks/seasons/useCastaways';
-import { loadOverrideConfig } from '~/lib/devEpisodeOverride';
+import { useDevOverrideActive } from '~/hooks/helpers/useDevOverrideActive';
 import { PointsIcon } from '~/components/icons/generated';
+import { Check } from 'lucide-react';
+import { FOCUS_SECONDARY_PICK_EVENT, useSecondaryPick } from '~/hooks/leagues/enrich/useSecondaryPick';
+import SecondaryPickForm from '~/components/leagues/hub/picks/secondaryPick/form';
 
 export default function PredictionCards({
   rules,
@@ -22,9 +25,10 @@ export default function PredictionCards({
   wallet,
   totalBet,
   setBetTotal,
-  className
+  className,
+  includeSecondary
 }: MakePredictionsProps) {
-  const { enabled: devConfig } = loadOverrideConfig() ?? {};
+  const devConfig = useDevOverrideActive();
   const shauhinActive = useShauhinActive();
   const { data: league } = useLeague();
   const { data: seasonCastaways } = useCastaways(league?.seasonId ?? null);
@@ -135,9 +139,77 @@ export default function PredictionCards({
     setBetTotal(totalBet);
   }, [formBetValues, setBetTotal]);
 
-  if (enabledBasePredictions.length + customPredictions.length === 0) return null;
-  if (enabledBasePredictions.length + customPredictions.length === 1) {
-    const prediction = enabledBasePredictions[0] ?? customPredictions[0]!;
+  const secondary = useSecondaryPick();
+  const showSecondary = !!includeSecondary && secondary.active;
+  const allPredictions = useMemo(() =>
+    [...enabledBasePredictions, ...customPredictions], [enabledBasePredictions, customPredictions]);
+
+  const steps = useMemo(() => [
+    ...allPredictions.map((prediction) => ({
+      label: prediction.label ?? prediction.eventName,
+      done: !!prediction.predictionMade,
+    })),
+    ...(showSecondary ? [{ label: 'Secondary Pick', done: secondary.hasPick }] : []),
+  ], [allPredictions, showSecondary, secondary.hasPick]);
+
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    if (!api) return;
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    onSelect();
+    api.on('select', onSelect);
+    return () => void api.off('select', onSelect);
+  }, [api]);
+
+  // Open on the first unfinished pick, once everything has loaded
+  const jumpedToFirstOpen = useRef(false);
+  useEffect(() => {
+    if (!includeSecondary || !api || jumpedToFirstOpen.current) return;
+    if (showSecondary && !secondary.loaded) return;
+    jumpedToFirstOpen.current = true;
+    const firstOpen = steps.findIndex((step) => !step.done);
+    if (firstOpen > 0) api.scrollTo(firstOpen);
+  }, [includeSecondary, api, showSecondary, secondary.loaded, steps]);
+
+  // The missing-pick banner asks for the secondary slide
+  useEffect(() => {
+    if (!api || !showSecondary) return;
+    const focus = () => api.scrollTo(steps.length - 1);
+    window.addEventListener(FOCUS_SECONDARY_PICK_EVENT, focus);
+    return () => window.removeEventListener(FOCUS_SECONDARY_PICK_EVENT, focus);
+  }, [api, showSecondary, steps.length]);
+
+  if (steps.length === 0) return null;
+
+  const secondaryHeader = (
+    <span className='flex gap-2 items-center justify-center'>
+      <h3 className='text-lg text-nowrap font-bold uppercase tracking-wider text-card-foreground'>
+        Secondary Pick
+      </h3>
+      <span className='text-xs font-bold uppercase tracking-wider rounded-sm px-1.5 py-0.5 bg-amber-400 text-black'>
+        Weekly
+      </span>
+    </span>
+  );
+  const secondaryDescription = (
+    <p className='text-sm px-2 py-2 bg-secondary font-medium whitespace-normal'>{secondary.description}</p>
+  );
+
+  if (steps.length === 1) {
+    if (showSecondary) {
+      return (
+        <article className={cn(
+          'flex flex-col mx-2 text-center bg-accent/50 rounded-lg overflow-clip mb-2 border-2 border-primary/20 relative z-10 mt-4',
+          className
+        )}>
+          <div className='py-1'>{secondaryHeader}</div>
+          {secondaryDescription}
+          <SecondaryPickForm />
+        </article>
+      );
+    }
+    const prediction = allPredictions[0]!;
     return (
       <article className={cn(
         'flex flex-col mx-2 text-center bg-accent/50 rounded-lg overflow-clip mb-2 border-2 border-primary/20 relative z-10 mt-4',
@@ -170,7 +242,7 @@ export default function PredictionCards({
     );
   }
 
-  const predictionItems = [...enabledBasePredictions, ...customPredictions]
+  const predictionItems = allPredictions
     .map((prediction) => ({
       header: (
         <div>
@@ -203,9 +275,66 @@ export default function PredictionCards({
       ),
     }));
 
+  if (showSecondary) {
+    predictionItems.push({
+      header: <div>{secondaryHeader}</div>,
+      content: secondaryDescription,
+      footer: <SecondaryPickForm className='bg-b2' />,
+    });
+  }
+
   return (
     <span className={cn('w-full', className)}>
-      <CoverCarousel items={predictionItems} />
+      {includeSecondary && (
+        <PicksRail steps={steps} current={current} onSelect={(index) => api?.scrollTo(index)} />
+      )}
+      <CoverCarousel items={predictionItems} onApi={setApi} />
     </span>
+  );
+}
+
+interface PicksRailProps {
+  steps: { label: string; done: boolean }[];
+  current: number;
+  onSelect: (_index: number) => void;
+}
+
+/** The current pick is spelled out; the rest shrink to dots, or checks once made. Tap any to jump to it. */
+function PicksRail({ steps, current, onSelect }: PicksRailProps) {
+  return (
+    <div className='flex items-center justify-center gap-1.5 px-4 pb-3' role='tablist' aria-label='Weekly picks'>
+      {steps.map((step, index) => {
+        const isCurrent = index === current;
+        return (
+          <button
+            key={step.label}
+            type='button'
+            role='tab'
+            aria-selected={isCurrent}
+            aria-label={`${step.label}${step.done ? ' (done)' : ''}`}
+            title={step.label}
+            onClick={() => onSelect(index)}
+            className={cn(
+              'flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer',
+              isCurrent
+                ? cn('h-6 min-w-0 max-w-[60%] gap-1 px-3',
+                  step.done ? 'bg-green-600 text-white' : 'bg-primary text-primary-foreground')
+                : 'size-5 shrink-0 hover:bg-primary/10')}>
+            {isCurrent ? (
+              <>
+                {step.done && <Check className='size-3.5 shrink-0 stroke-white' strokeWidth={3} />}
+                <span className='truncate text-xs font-bold uppercase tracking-wide text-white'>{step.label}</span>
+              </>
+            ) : step.done ? (
+              <span className='flex size-4 items-center justify-center rounded-full bg-green-600 text-white'>
+                <Check className='size-2.5 stroke-white' strokeWidth={4} />
+              </span>
+            ) : (
+              <span className='size-2 rounded-full bg-primary/40' />
+            )}
+          </button>
+        );
+      })}
+    </div>
   );
 }
