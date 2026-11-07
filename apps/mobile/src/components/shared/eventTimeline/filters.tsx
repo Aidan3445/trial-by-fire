@@ -143,9 +143,9 @@ export default function TimelineFilters({
     ...(episodes?.map((episode) => ({
       value: episode.episodeNumber,
       label: `EP ${episode.episodeNumber}: ${episode.title}`,
-      renderLabel: () => (
+      renderLabel: (context?: { inTrigger: boolean }) => (
         <View className='flex-1'>
-          <Text className='text-foreground'>
+          <Text className='text-foreground' numberOfLines={context?.inTrigger ? 1 : undefined}>
             <Text className='font-bold'>EP {episode.episodeNumber}: </Text>
             {episode.title}
             {'  '}

@@ -69,11 +69,13 @@ export default function SearchableSelect<T extends string | number>({
         disabled={disabled}
         onPress={openModal}>
         {selectedOption ? (
-          selectedOption.renderLabel ? (
-            selectedOption.renderLabel()
-          ) : (
-            <Text className='font-medium text-foreground'>{selectedOption.label}</Text>
-          )
+          <View className='flex-1 flex-row items-center overflow-hidden mr-2'>
+            {selectedOption.renderLabel ? (
+              selectedOption.renderLabel({ inTrigger: true })
+            ) : (
+              <Text className='flex-1 font-medium text-foreground' numberOfLines={1}>{selectedOption.label}</Text>
+            )}
+          </View>
         ) : (
           <Text className='text-muted-foreground'>Select...</Text>
         )}
