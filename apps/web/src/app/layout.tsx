@@ -11,6 +11,12 @@ import QueryClientContextProvider from '~/context/reactQueryContext';
 import FloatingActionsWidget from '~/components/shared/floatingActions/widget';
 import { AppStoreInvite } from '~/components/sys/appStoreNotice';
 import { DonationManager } from '~/components/sys/donation/donationManager';
+import dynamic from 'next/dynamic';
+
+// NODE_ENV is inlined at build time, so the dev harness listener is stripped from prod
+const DevHarnessListener = process.env.NODE_ENV === 'development'
+  ? dynamic(() => import('~/components/sys/devHarnessListener'))
+  : () => null;
 
 //import { RebrandNotice } from '~/components/sys/rebrand';
 //import { LateLeagueTip } from '~/components/sys/lateLeagueTip';
@@ -65,6 +71,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
                 <SignedIn>
                   <DonationManager />
                 </SignedIn>
+                <DevHarnessListener />
               </SidebarProvider>
             </body>
           </html>

@@ -12,19 +12,21 @@ import { type DBTransaction } from '~/types/server';
   * Get the episodes for a season and caches the result
   * @param seasonId The season id
   * @param transactionOverride Optional transaction override
+  * @param options.skipDevHarness Dev only: return the real episodes even when an override is active
   * @returns the episodes starting from the next episode to air sorted by air date in descending order
   * @returnsObj `Episode[]`
   */
 export default async function getEpisodes(
   seasonId: number,
-  transactionOverride?: DBTransaction
+  transactionOverride?: DBTransaction,
+  options?: { skipDevHarness?: boolean }
 ) {
   // Bypass cache when inside a transaction to ensure fresh airStatus
   if (transactionOverride) {
     return fetchEpisodes(seasonId, transactionOverride);
   }
 
-  return unstable_cache(
+  const episodes = await unstable_cache(
     async (seasonId: number) => fetchEpisodes(seasonId),
     // Separate entries so toggling DEV_FAKE_AIRING doesn't serve the other state
     ['episodes', seasonId.toString(), fakeAiringSetting() ?? 'real'],
@@ -33,6 +35,13 @@ export default async function getEpisodes(
       tags: [`episodes-${seasonId}`, 'episodes']
     }
   )(seasonId);
+
+  // Dev harness: NODE_ENV is inlined at build time, so this branch and its import are stripped from prod
+  if (process.env.NODE_ENV === 'development' && !options?.skipDevHarness) {
+    const { devHarness } = await import('~/server/devHarness');
+    return devHarness.episodes(seasonId, episodes);
+  }
+  return episodes;
 }
 
 async function fetchEpisodes(seasonId: number, transactionOverride?: DBTransaction) {

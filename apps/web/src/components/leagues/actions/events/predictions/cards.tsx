@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useShauhinActive } from '~/hooks/leagues/enrich/useShauhinActive';
 import { useLeague } from '~/hooks/leagues/useLeague';
 import { useCastaways } from '~/hooks/seasons/useCastaways';
-import { loadOverrideConfig } from '~/lib/devEpisodeOverride';
+import { useDevOverrideActive } from '~/hooks/helpers/useDevOverrideActive';
 import { PointsIcon } from '~/components/icons/generated';
 import { Check } from 'lucide-react';
 import { FOCUS_SECONDARY_PICK_EVENT, useSecondaryPick } from '~/hooks/leagues/enrich/useSecondaryPick';
@@ -28,7 +28,7 @@ export default function PredictionCards({
   className,
   includeSecondary
 }: MakePredictionsProps) {
-  const { enabled: devConfig } = loadOverrideConfig() ?? {};
+  const devConfig = useDevOverrideActive();
   const shauhinActive = useShauhinActive();
   const { data: league } = useLeague();
   const { data: seasonCastaways } = useCastaways(league?.seasonId ?? null);

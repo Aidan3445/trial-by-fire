@@ -30,6 +30,8 @@ export default function DevEpisodeOverride() {
     setOpen,
     overrideEnabled,
     handleToggle,
+    broadcastEnabled,
+    handleBroadcastToggle,
     seasons,
     episodes,
     episodesLoading,
@@ -46,9 +48,18 @@ export default function DevEpisodeOverride() {
       <SidebarMenuButton className='h-10!' asChild size='lg'>
         <div
           className='text-primary! select-none cursor-pointer'
-          onClick={() => handleToggle(!overrideEnabled)}>
+          onClick={() => void handleToggle(!overrideEnabled)}>
           Episode Override
-          <Switch checked={overrideEnabled} onCheckedChange={handleToggle} className='ml-auto' />
+          <Switch checked={overrideEnabled} onCheckedChange={(checked) => void handleToggle(checked)} className='ml-auto' />
+        </div>
+      </SidebarMenuButton>
+
+      <SidebarMenuButton className='h-10!' asChild size='lg'>
+        <div
+          className='text-primary! select-none cursor-pointer'
+          onClick={() => void handleBroadcastToggle(!broadcastEnabled)}>
+          Broadcast
+          <Switch checked={broadcastEnabled} onCheckedChange={(checked) => void handleBroadcastToggle(checked)} className='ml-auto' />
         </div>
       </SidebarMenuButton>
 
@@ -64,7 +75,7 @@ export default function DevEpisodeOverride() {
               Dev Episode Override
             </AlertDialogTitle>
             <AlertDialogDescription className='text-base'>
-              Override episode states for testing purposes. Changes are stored in localStorage and only affect the frontend.
+              Override episode states for testing. The dev server applies the override to its own API responses: only for this device, or for every device on the dev server while Broadcast is on.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -282,11 +293,11 @@ export default function DevEpisodeOverride() {
           </Form>
 
           <AlertDialogFooter>
-            <Button variant='destructive' onClick={handleReset}>
+            <Button variant='destructive' onClick={() => void handleReset()}>
               Reset Override
             </Button>
             <AlertDialogCancel variant='secondary'>Cancel</AlertDialogCancel>
-            <Button variant='default' onClick={handleApply}>
+            <Button variant='default' onClick={(e) => void handleApply(e)}>
               Apply Override
             </Button>
           </AlertDialogFooter>

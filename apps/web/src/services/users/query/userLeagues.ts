@@ -112,8 +112,15 @@ export default async function getUserLeagues(userId: string) {
       return map;
     });
 
-  return leagues.map(l => ({
+  const result = leagues.map(l => ({
     ...l,
     memberCount: leagueMemberCounts[l.league.leagueId] ?? 0,
   }));
+
+  // Dev harness: NODE_ENV is inlined at build time, so this branch and its import are stripped from prod
+  if (process.env.NODE_ENV === 'development') {
+    const { devHarness } = await import('~/server/devHarness');
+    return Promise.all(result.map(async (l) => ({ ...l, league: await devHarness.league(l.league) })));
+  }
+  return result;
 }

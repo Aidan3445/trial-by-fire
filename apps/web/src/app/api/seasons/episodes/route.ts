@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const episodes = await getEpisodes(seasonId);
+    // Dev harness panel needs the real episodes to configure an override from
+    const skipDevHarness = request.nextUrl.searchParams.get('raw') === 'true';
+    const episodes = await getEpisodes(seasonId, undefined, { skipDevHarness });
     return NextResponse.json({ episodes }, { status: 200 });
   } catch (e) {
     console.error('Failed to get episodes', e);
