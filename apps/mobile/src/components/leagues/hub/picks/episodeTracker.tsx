@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import MarqueeText from '~/components/common/marquee';
 import { View, Text } from 'react-native';
 import ColorRow from '~/components/shared/colorRow';
 import AirStatus from '~/components/shared/episodes/airStatus';
@@ -98,9 +99,10 @@ export default function EpisodeTracker() {
                 airDate={tracker.episode.airDate}
                 airStatus={tracker.episode.airStatus}
                 showDate={false} />
-              <Text className='text-sm text-muted-foreground flex-1' numberOfLines={1}>
-                {tracker.episode.episodeNumber}: {tracker.episode.title}
-              </Text>
+              <MarqueeText
+                text={`${tracker.episode.episodeNumber}: ${tracker.episode.title}`}
+                className='text-sm text-muted-foreground'
+                containerClassName='flex-row flex-1' />
             </View>
           </View>
         </View>

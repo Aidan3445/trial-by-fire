@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import MarqueeText from '~/components/common/marquee';
 import { View, Text } from 'react-native';
 import { colors } from '~/lib/colors';
 import { cn } from '~/lib/utils';
@@ -124,14 +125,14 @@ export default function MakePredictions() {
         </View>
 
         {/* Episode Info */}
-        <View className='flex-row flex-wrap items-center justify-center gap-2'>
-          <Text className='text-base text-muted-foreground'>
-            {keyEpisodes.nextEpisode.episodeNumber}: {keyEpisodes.nextEpisode.title}
-          </Text>
+        <MarqueeText
+          center
+          text={`${keyEpisodes.nextEpisode.episodeNumber}: ${keyEpisodes.nextEpisode.title}`}
+          className='text-base text-muted-foreground'>
           <AirStatus
             airDate={new Date(keyEpisodes.nextEpisode.airDate)}
             airStatus={keyEpisodes.nextEpisode.airStatus} />
-        </View>
+        </MarqueeText>
       </View>
 
       {/* Prediction Cards */}

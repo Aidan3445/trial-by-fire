@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import MarqueeText from '~/components/common/marquee';
 import { View, Text } from 'react-native';
 import Button from '~/components/common/button';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
@@ -105,9 +106,10 @@ function EpisodeSection({ episode, isExpanded, isCurrent, onToggle }: EpisodeSec
           )}>
             EP {episode.episodeNumber}
           </Text>
-          <Text className='text-sm text-muted-foreground flex-1' numberOfLines={1}>
-            {episode.title}
-          </Text>
+          <MarqueeText
+            text={episode.title}
+            className='text-sm text-muted-foreground'
+            containerClassName='flex-row flex-1' />
           {isCurrent && (
             <View className='rounded-full bg-primary/15 px-2 py-0.5'>
               <Text className='text-sm font-bold text-primary'>LIVE</Text>
