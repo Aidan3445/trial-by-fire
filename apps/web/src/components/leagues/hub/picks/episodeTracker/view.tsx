@@ -136,11 +136,11 @@ export default function EpisodeTracker() {
 
           {tracker.predictions.length > 0 && (
             <Section title='Predictions'>
-              <ul className='flex flex-col gap-1'>
+              <ul className='flex flex-col gap-0 divide-y'>
                 {tracker.predictions.map((prediction) => (
-                  <li key={`${prediction.eventSource}-${prediction.predictionId}`} className='flex flex-col text-sm'>
+                  <li key={`${prediction.eventSource}-${prediction.predictionId}`} className='flex flex-col py-0.5 text-sm border-dashed'>
                     <span className='flex items-center justify-between gap-2'>
-                      <span className='truncate'>
+                      <span className='truncate text-left leading-tight'>
                         <span className='font-medium'>{prediction.label}:</span>{' '}
                         {referenceName(prediction.reference.type, prediction.reference.id)}
                       </span>
@@ -149,6 +149,7 @@ export default function EpisodeTracker() {
                           {prediction.status}
                         </span>
                         <Points
+                          className='min-w-14 justify-end'
                           value={prediction.status === 'miss' ? 0 : prediction.points}
                           muted={prediction.status === 'pending'} />
                       </span>
@@ -168,7 +169,7 @@ export default function EpisodeTracker() {
           )}
 
           {tracker.survivalBonus > 0 && (
-            <p className='flex items-end justify-end gap-1 text-sm text-muted-foreground'>
+            <p className={cn('flex items-end justify-end gap-1 text-sm text-muted-foreground', tracker.predictions.length > 0 && 'xl:col-span-3')}>
               Survival streak bonus <Points value={tracker.survivalBonus} />
             </p>
           )}

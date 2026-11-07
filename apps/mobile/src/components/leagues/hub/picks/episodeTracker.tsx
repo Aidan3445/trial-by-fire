@@ -7,14 +7,20 @@ import { PointsIcon } from '~/components/icons/generated';
 import { useEpisodeTracker } from '~/hooks/leagues/enrich/useEpisodeTracker';
 import { colors, getPointsColor } from '~/lib/colors';
 import { cn } from '~/lib/utils';
+import { divideY } from '~/lib/ui';
 import { type PredictionStatus, type TrackedEvent } from '~/lib/scores';
 
 const signed = (points: number) => (points > 0 ? `+${points}` : `${points}`);
 
-function Points({ value, muted, size = 'base' }: { value: number; muted?: boolean; size?: 'sm' | 'base' | '2xl' }) {
+function Points({ value, muted, size = 'base', className }: {
+  value: number;
+  muted?: boolean;
+  size?: 'sm' | 'base' | '2xl';
+  className?: string;
+}) {
   const color = muted ? colors.neutral! : getPointsColor(value)!;
   return (
-    <View className='flex-row items-center gap-0.5'>
+    <View className={cn('flex-row items-center gap-0.5', className)}>
       <Text
         allowFontScaling={false}
         className={cn('font-bold', size === '2xl' ? 'text-2xl' : size === 'sm' ? 'text-sm' : 'text-base')}
@@ -73,7 +79,7 @@ export default function EpisodeTracker() {
 
   const castaway = (castawayId: number) => castaways?.find((c) => c.castawayId === castawayId);
   const referenceName = (type: 'Castaway' | 'Tribe', id: number) => type === 'Castaway'
-    ? castaway(id)?.fullName ?? 'Unknown castaway'
+    ? castaway(id)?.shortName ?? 'Unknown'
     : tribes?.find((tribe) => tribe.tribeId === id)?.tribeName ?? 'Unknown tribe';
 
   const castawayRow = (castawayId: number) => {
@@ -141,22 +147,27 @@ export default function EpisodeTracker() {
 
       {tracker.predictions.length > 0 && (
         <Section title='Predictions'>
-          <View className='gap-1'>
-            {tracker.predictions.map((prediction) => (
-              <View key={`${prediction.eventSource}-${prediction.predictionId}`}>
+          <View>
+            {tracker.predictions.map((prediction, index) => (
+              <View
+                key={`${prediction.eventSource}-${prediction.predictionId}`}
+                className={cn('py-0.5', divideY(index), 'border-dashed')}>
                 <View className='flex-row items-center justify-between gap-2'>
-                  <Text className='flex-1 text-base text-foreground' numberOfLines={1}>
+                  <Text className='flex-1 text-base leading-tight text-foreground' numberOfLines={1}>
                     <Text className='font-medium'>{prediction.label}:</Text>{' '}
                     {referenceName(prediction.reference.type, prediction.reference.id)}
                   </Text>
-                  <View className={cn('rounded-md px-1.5', STATUS_STYLES[prediction.status].box)}>
-                    <Text className={cn('text-xs font-bold uppercase', STATUS_STYLES[prediction.status].text)}>
-                      {prediction.status}
-                    </Text>
+                  <View className='shrink-0 flex-row items-center gap-1.5'>
+                    <View className={cn('rounded-md px-1.5', STATUS_STYLES[prediction.status].box)}>
+                      <Text className={cn('text-xs font-bold uppercase', STATUS_STYLES[prediction.status].text)}>
+                        {prediction.status}
+                      </Text>
+                    </View>
+                    <Points
+                      className='min-w-14 justify-end'
+                      value={prediction.status === 'miss' ? 0 : prediction.points}
+                      muted={prediction.status === 'pending'} />
                   </View>
-                  <Points
-                    value={prediction.status === 'miss' ? 0 : prediction.points}
-                    muted={prediction.status === 'pending'} />
                 </View>
                 {prediction.bet !== null && (
                   <View className='flex-row items-center justify-end gap-1'>
