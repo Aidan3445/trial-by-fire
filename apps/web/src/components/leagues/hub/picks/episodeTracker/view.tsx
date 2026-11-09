@@ -45,7 +45,6 @@ function EventRows({ events, empty }: { events: TrackedEvent[]; empty: string })
         <li key={`${event.eventSource}-${event.eventId ?? index}`} className='flex items-center justify-between gap-2 text-sm'>
           <span className='truncate'>
             {event.label}
-            {event.viaTribe && <span className='ml-1 text-xs text-muted-foreground'>(tribe)</span>}
           </span>
           <Points value={event.points} />
         </li>

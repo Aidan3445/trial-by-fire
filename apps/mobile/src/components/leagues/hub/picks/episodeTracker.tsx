@@ -54,7 +54,6 @@ function EventRows({ events, empty }: { events: TrackedEvent[]; empty: string })
         <View key={`${event.eventSource}-${event.eventId ?? index}`} className='flex-row items-center justify-between gap-2'>
           <Text className='flex-1 text-base text-foreground' numberOfLines={1}>
             {event.label}
-            {event.viaTribe && <Text className='text-sm text-muted-foreground'> (tribe)</Text>}
           </Text>
           <Points value={event.points} />
         </View>
