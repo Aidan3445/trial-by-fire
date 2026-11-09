@@ -215,7 +215,7 @@ export default function ScoreChart({
       </View>
 
       {/* Legend */}
-      <View className='flex-row flex-wrap gap-2 px-2 pt-2 items-center tracking-tighter'>
+      <View className='flex-row flex-wrap gap-x-2 px-2 pt-2 items-center tracking-tighter'>
         {series.map((s) => {
           const isSelected = selectedKey === s.key;
           const isOther = selectedKey && !isSelected;
@@ -224,7 +224,7 @@ export default function ScoreChart({
             <Button
               key={s.key}
               onPress={() => setSelectedKey((prev) => (prev === s.key ? null : s.key))}
-              className='h-8 flex-row items-center gap-1 py-1 active:opacity-70'>
+              className='h-min flex-row items-center gap-1 py-0.5 active:opacity-70'>
               {s.highlight && (
                 <View
                   className='-mr-0.5 rotate-90 animate-pulse'>
@@ -241,7 +241,7 @@ export default function ScoreChart({
                 <Text
                   allowFontScaling={false}
                   className={cn(
-                    'text-base transition-all',
+                    'text-base transition-all leading-none',
                     isOther ? 'text-muted-foreground' : 'text-primary'
                   )}>
                   {s.label}
