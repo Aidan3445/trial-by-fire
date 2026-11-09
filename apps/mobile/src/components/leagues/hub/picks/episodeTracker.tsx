@@ -133,9 +133,11 @@ export default function EpisodeTracker() {
           title='Secondary Pick'
           aside={
             <View className='flex-row items-center gap-1.5'>
-              <View className='rounded-md bg-primary/15 px-1.5'>
-                <Text className='text-sm font-bold text-primary'>×{tracker.secondary.multiplier}</Text>
-              </View>
+              {tracker.secondary.multiplier !== 1 && (
+                <View className='rounded-md bg-primary/15 px-1.5'>
+                  <Text className='text-sm font-bold text-primary'>×{tracker.secondary.multiplier}</Text>
+                </View>
+              )}
               <Points value={tracker.secondary.points} />
             </View>
           }>

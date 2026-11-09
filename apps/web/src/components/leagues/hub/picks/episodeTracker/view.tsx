@@ -122,9 +122,11 @@ export default function EpisodeTracker() {
               title='Secondary Pick'
               aside={
                 <span className='flex items-center gap-1.5'>
-                  <span className='rounded-md bg-primary/15 px-1.5 text-xs font-bold text-primary'>
-                    ×{tracker.secondary.multiplier}
-                  </span>
+                  {tracker.secondary.multiplier !== 1 && (
+                    <span className='rounded-md bg-primary/15 px-1.5 text-xs font-bold text-primary'>
+                      ×{tracker.secondary.multiplier}
+                    </span>
+                  )}
                   <Points value={tracker.secondary.points} />
                 </span>
               }>
