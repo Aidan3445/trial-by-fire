@@ -76,7 +76,7 @@ export default function MemberRow({
           {place}
         </Text>
       </View>
-      <View className='w-12 -ml-2 items-center justify-center flex-row'>
+      <View className='w-12 ml-0.5 items-center justify-start flex-row'>
         <Text
           allowFontScaling={false}
           className='text-center font-black tracking-tightest text-primary'>
@@ -97,7 +97,7 @@ export default function MemberRow({
           </View>
         )}
       </View>
-      <ColorRow color={color} donor={member.donor} loggedIn={member.loggedIn} className='flex-1 items-center'>
+      <ColorRow color={color} donor={member.donor} loggedIn={member.loggedIn} className='flex-1 items-center -ml-1 mr-1'>
         <MarqueeText
           allowFontScaling={false}
           text={member.displayName}
@@ -115,7 +115,6 @@ export default function MemberRow({
             allowFontScaling={false}
             className={cn(
               'text-base font-medium text-black text-nowrap',
-              // Set both ways: NativeWind can leave a removed class's style behind
               isFullyEliminated ? 'line-through opacity-40' : 'no-underline opacity-100'
             )}>
             {castaway?.shortName || 'None'}

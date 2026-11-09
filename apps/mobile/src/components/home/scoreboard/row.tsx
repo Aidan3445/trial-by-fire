@@ -58,7 +58,7 @@ export default function CastawayRow({
           <View className='-ml-2 w-10 items-center justify-center'>
             <Text
               allowFontScaling={false}
-              className='text-center font-black tracking-tightest text-primary'>
+              className='text-left font-black tracking-tightest text-primary'>
               {points}
             </Text>
           </View>
