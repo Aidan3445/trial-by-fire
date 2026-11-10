@@ -62,14 +62,14 @@ export default function SelectSeason({ seasons, value, setValue, someHidden }: C
               {someHidden !== undefined && (
                 <div className='grid grid-cols-2 gap-1'>
                   <CommandItem
-                    className='bg-accent/50'
+                    className='bg-secondary'
                     onSelect={() => router.push('/playground')}>
                     <span className='mx-auto text-nowrap text-xs py-0.5'>
-                      {someHidden ? 'See all seasons' : 'Scoring playground'}
+                      Scoring playground
                     </span>
                   </CommandItem>
                   <CommandItem
-                    className='bg-accent/50'
+                    className='bg-secondary'
                     onSelect={() => router.push('/seasons')}>
                     <span className='mx-auto text-nowrap text-xs py-0.5'>
                       Browse seasons
