@@ -198,7 +198,9 @@ export default function SecondaryPickSettings() {
                     <View className='flex-row items-center justify-between'>
                       <Text className='font-bold text-foreground'>Points Multiplier</Text>
                       <Text className='text-sm text-muted-foreground'>
-                        {field.value === 1 ? 'Full (100%)' : '1/2 (50%)'}
+                        {field.value === 0.5 && '1/2 (50%)'}
+                        {field.value === 1 && 'Full (100%)'}
+                        {field.value === 2 && 'Double (200%)'}
                       </Text>
                     </View>
                   ) : (
@@ -235,6 +237,22 @@ export default function SecondaryPickSettings() {
                               field.value === 1 ? 'text-primary' : 'text-foreground'
                             )}>
                             Full (100%)
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          className={cn(
+                            'flex-1 rounded-lg border-2 p-2 active:opacity-80',
+                            field.value === 2
+                              ? 'border-primary bg-primary/10'
+                              : 'border-primary/20 bg-card'
+                          )}
+                          onPress={() => field.onChange(2)}>
+                          <Text
+                            className={cn(
+                              'text-center font-semibold',
+                              field.value === 2 ? 'text-primary' : 'text-foreground'
+                            )}>
+                            Double (200%)
                           </Text>
                         </Pressable>
                       </View>

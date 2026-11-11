@@ -165,3 +165,6 @@ yarn-error.log*
 
 # manually hidden files
 **/*<hide>*
+
+# App Store artwork workspace
+/store-assets

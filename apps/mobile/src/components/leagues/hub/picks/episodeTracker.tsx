@@ -54,7 +54,6 @@ function EventRows({ events, empty }: { events: TrackedEvent[]; empty: string })
         <View key={`${event.eventSource}-${event.eventId ?? index}`} className='flex-row items-center justify-between gap-2'>
           <Text className='flex-1 text-base text-foreground' numberOfLines={1}>
             {event.label}
-            {event.viaTribe && <Text className='text-sm text-muted-foreground'> (tribe)</Text>}
           </Text>
           <Points value={event.points} />
         </View>
@@ -134,9 +133,11 @@ export default function EpisodeTracker() {
           title='Secondary Pick'
           aside={
             <View className='flex-row items-center gap-1.5'>
-              <View className='rounded-md bg-primary/15 px-1.5'>
-                <Text className='text-sm font-bold text-primary'>×{tracker.secondary.multiplier}</Text>
-              </View>
+              {tracker.secondary.multiplier !== 1 && (
+                <View className='rounded-md bg-primary/15 px-1.5'>
+                  <Text className='text-sm font-bold text-primary'>×{tracker.secondary.multiplier}</Text>
+                </View>
+              )}
               <Points value={tracker.secondary.points} />
             </View>
           }>

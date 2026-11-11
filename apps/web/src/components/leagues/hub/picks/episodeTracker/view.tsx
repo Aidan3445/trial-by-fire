@@ -45,7 +45,6 @@ function EventRows({ events, empty }: { events: TrackedEvent[]; empty: string })
         <li key={`${event.eventSource}-${event.eventId ?? index}`} className='flex items-center justify-between gap-2 text-sm'>
           <span className='truncate'>
             {event.label}
-            {event.viaTribe && <span className='ml-1 text-xs text-muted-foreground'>(tribe)</span>}
           </span>
           <Points value={event.points} />
         </li>
@@ -123,9 +122,11 @@ export default function EpisodeTracker() {
               title='Secondary Pick'
               aside={
                 <span className='flex items-center gap-1.5'>
-                  <span className='rounded-md bg-primary/15 px-1.5 text-xs font-bold text-primary'>
-                    ×{tracker.secondary.multiplier}
-                  </span>
+                  {tracker.secondary.multiplier !== 1 && (
+                    <span className='rounded-md bg-primary/15 px-1.5 text-xs font-bold text-primary'>
+                      ×{tracker.secondary.multiplier}
+                    </span>
+                  )}
                   <Points value={tracker.secondary.points} />
                 </span>
               }>

@@ -50,7 +50,7 @@ export default function Scores({ isActive = false }: ScoresProps) {
   return (
     <View className='shrink rounded-xl border-2 border-primary/20 bg-card'>
       {/* Tabs */}
-      <View className='flex-row rounded-lg bg-accent p-1 gap-1 m-2'>
+      <View className='flex-row rounded-lg bg-accent p-1 gap-1 m-2 mb-0'>
         {!isActive && renderTab('podium', 'Podium')}
         {renderTab('scoreboard', 'Scoreboard')}
         {renderTab('chart', 'Chart')}

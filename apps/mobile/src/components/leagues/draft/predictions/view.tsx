@@ -6,6 +6,10 @@ import { type Tribe } from '~/types/tribes';
 import { useSecondaryPick } from '~/hooks/leagues/mutation/useSecondaryPick';
 import PredictionCards from '~/components/leagues/actions/events/predictions/cards';
 import SecondaryPickForm from '~/components/leagues/hub/picks/secondaryPick/form';
+import MarqueeText from '~/components/common/marquee';
+import AirStatus from '~/components/shared/episodes/airStatus';
+import { useLeague } from '~/hooks/leagues/query/useLeague';
+import { useKeyEpisodes } from '~/hooks/seasons/useKeyEpisodes';
 
 export interface WhileYouWaitProps {
   rules?: LeagueRules;
@@ -23,9 +27,16 @@ export default function WhileYouWait({
   tribes,
 }: WhileYouWaitProps) {
   const { active: secondaryActive, options: secondaryOptions } = useSecondaryPick();
+  const { data: league } = useLeague();
+  const { data: keyEpisodes } = useKeyEpisodes(league?.seasonId ?? null);
 
   const showSecondaryPick = secondaryActive && secondaryOptions.length > 0;
   const showPredictions = rules && predictionRuleCount > 0;
+
+  const spokeTitleRule = rules?.basePrediction?.spokeEpTitle;
+  const titleEpisode = showPredictions && spokeTitleRule?.enabled && spokeTitleRule.timing.includes('Draft')
+    ? keyEpisodes?.nextEpisode
+    : null;
 
   if (!showSecondaryPick && !showPredictions) return null;
 
@@ -46,6 +57,16 @@ export default function WhileYouWait({
               ? 'Make your secondary pick to earn extra points!'
               : 'Make your predictions and earn points if you are correct!'}
         </Text>
+        {titleEpisode && (
+          <MarqueeText
+            center
+            text={`${titleEpisode.episodeNumber}: ${titleEpisode.title}`}
+            className='text-base text-muted-foreground'>
+            <AirStatus
+              airDate={new Date(titleEpisode.airDate)}
+              airStatus={titleEpisode.airStatus} />
+          </MarqueeText>
+        )}
       </View>
 
       {/* Secondary Pick */}

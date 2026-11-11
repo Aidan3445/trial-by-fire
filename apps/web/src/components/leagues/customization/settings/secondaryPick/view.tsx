@@ -242,6 +242,7 @@ export default function SecondaryPickSettings() {
                               <SelectContent>
                                 <SelectItem value='0.5'>1/2 (50%)</SelectItem>
                                 <SelectItem value='1'>Full (100%)</SelectItem>
+                                <SelectItem value='2'>Double (200%)</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormControl>
