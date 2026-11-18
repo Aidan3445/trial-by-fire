@@ -30,15 +30,22 @@ export default function CreateBaseEvent() {
   const season = seasonsData?.[0];
   const { activeAutoEvent, clearAutoEvent } = useAutoEventContext();
 
+  const defaultEpisodeId = episodes?.find(episode => episode.airStatus === 'Airing')?.episodeId ??
+    episodes?.findLast(episode => episode.airStatus === 'Aired')?.episodeId ??
+    episodes?.[0]?.episodeId;
+
   const reactForm = useForm<BaseEventInsert>({
     defaultValues: {
-      episodeId: episodes?.find(episode => episode.airStatus === 'Airing')?.episodeId ??
-        episodes?.findLast(episode => episode.airStatus === 'Aired')?.episodeId ??
-        episodes?.[0]?.episodeId,
+      episodeId: defaultEpisodeId,
       notes: null,
     },
     resolver: zodResolver(BaseEventInsertZod),
   });
+
+  useEffect(() => {
+    if (defaultEpisodeId === undefined || reactForm.getValues('episodeId')) return;
+    reactForm.setValue('episodeId', defaultEpisodeId);
+  }, [defaultEpisodeId, reactForm]);
 
   const selectedReferences = reactForm.watch('references');
   const selectedEvent = reactForm.watch('eventName');
@@ -329,10 +336,11 @@ export default function CreateBaseEvent() {
                 Create
               </Button>
             </form>
-            <div className='w-[calc(100svw-2rem)] md:w-[calc(100svw-3.25rem-var(--sidebar-width))]'>
+            {/* Not loaded yet on pages that don't already show the season, like predraft */}
+            {season && <div className='w-[calc(100svw-2rem)] md:w-[calc(100svw-3.25rem-var(--sidebar-width))]'>
               <EpisodeEvents
                 episodeNumber={selectedEpisode ?? 1}
-                seasonData={season!}
+                seasonData={season}
                 mockEvents={mockEvent ? [mockEvent] : []}
                 edit
                 filters={{
@@ -341,7 +349,7 @@ export default function CreateBaseEvent() {
                   member: [],
                   event: []
                 }} />
-            </div>
+            </div>}
           </span>
         </Form>
       </section >

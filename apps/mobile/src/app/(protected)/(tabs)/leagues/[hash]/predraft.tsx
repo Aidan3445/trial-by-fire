@@ -12,38 +12,52 @@ import { useLeagueRefresh } from '~/hooks/helpers/refresh/useLeagueRefresh';
 import { cn } from '~/lib/utils';
 import SecondaryPickSettings from '~/components/leagues/customization/settings/secondary/view';
 import SafeAreaRefreshView from '~/components/common/refresh/safeAreaRefreshView';
+import EventFAB from '~/components/leagues/actions/events/fab';
+import { useSysAdmin } from '~/hooks/user/useSysAdmin';
+import { useLocalSearchParams } from 'expo-router';
+import { Fragment } from 'react';
 
 export default function PredraftScreen() {
-  const { refreshing, onRefresh, scrollY, handleScroll } = useLeagueRefresh();
+  const { hash } = useLocalSearchParams<{ hash: string }>();
+  const { refreshing, onRefresh, scrollY, handleScroll, league } = useLeagueRefresh();
+  const { data: userId } = useSysAdmin();
 
   return (
-    <SafeAreaRefreshView
-      alreadySafe
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      scrollY={scrollY}
-      handleScroll={handleScroll}>
-      <View
-        className={cn(
-          'page justify-start gap-y-4 px-1.5 pt-8 pb-1.5',
-          refreshing && Platform.OS === 'ios' && 'pt-12'
-        )}>
-        <InviteLink />
-        <DraftCountdown className='w-full rounded-xl bg-card p-2 border-2 border-primary/20' />
-        <DraftOrder />
-        <View className='w-full flex-row items-center justify-center gap-2 p-2 bg-card rounded-xl border-2 border-primary/20'>
-          <View className='h-5 w-0.5 bg-primary rounded-full' />
-          <Text className='text-2xl font-black tracking-tight text-center uppercase'>
-            League Scoring
-          </Text>
-          <View className='h-5 w-0.5 bg-primary rounded-full' />
+    <Fragment>
+      <SafeAreaRefreshView
+        alreadySafe
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        scrollY={scrollY}
+        handleScroll={handleScroll}>
+        <View
+          className={cn(
+            'page justify-start gap-y-4 px-1.5 pt-8 pb-1.5',
+            refreshing && Platform.OS === 'ios' && 'pt-12'
+          )}>
+          <InviteLink />
+          <DraftCountdown className='w-full rounded-xl bg-card p-2 border-2 border-primary/20' />
+          <DraftOrder />
+          <View className='w-full flex-row items-center justify-center gap-2 p-2 bg-card rounded-xl border-2 border-primary/20'>
+            <View className='h-5 w-0.5 bg-primary rounded-full' />
+            <Text className='text-2xl font-black tracking-tight text-center uppercase'>
+              League Scoring
+            </Text>
+            <View className='h-5 w-0.5 bg-primary rounded-full' />
+          </View>
+          <SurvivalStreaks />
+          <SecondaryPickSettings />
+          <BaseEventRules />
+          <ShauhinMode />
+          <CustomEventRules />
         </View>
-        <SurvivalStreaks />
-        <SecondaryPickSettings />
-        <BaseEventRules />
-        <ShauhinMode />
-        <CustomEventRules />
-      </View>
-    </SafeAreaRefreshView>
+      </SafeAreaRefreshView>
+      <EventFAB
+        hash={hash}
+        isLeagueAdmin={false}
+        isSysAdmin={!!userId}
+        leagueStatus={league?.status}
+        customEventsOpen={false} />
+    </Fragment>
   );
 }

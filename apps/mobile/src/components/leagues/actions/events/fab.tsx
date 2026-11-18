@@ -11,6 +11,7 @@ import { Platform, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Fragment, useCallback } from 'react';
 import { colors } from '~/lib/colors';
+import { type LeagueStatus } from '~/types/leagues';
 const FAB_SIZE = 56;
 const MARGINS = {
   x: 8,
@@ -21,9 +22,10 @@ interface EventFABProps {
   hash: string;
   isLeagueAdmin: boolean;
   isSysAdmin: boolean;
-  isActive: boolean;
+  leagueStatus?: LeagueStatus;
+  customEventsOpen: boolean;
 }
-export default function EventFAB({ hash, isLeagueAdmin, isSysAdmin, isActive }: EventFABProps) {
+export default function EventFAB({ hash, isLeagueAdmin, isSysAdmin, leagueStatus, customEventsOpen }: EventFABProps) {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -68,13 +70,15 @@ export default function EventFAB({ hash, isLeagueAdmin, isSysAdmin, isActive }: 
       snapToCorner();
     },
   });
+  const showSysAdmin = isSysAdmin && !!leagueStatus && leagueStatus !== 'Draft';
+  const showCustom = isLeagueAdmin && customEventsOpen;
   const navigate = useCallback(() => {
-    if (isSysAdmin) {
+    if (showSysAdmin) {
       router.push(`/sysAdmin?hash=${hash}`);
-    } else if (isLeagueAdmin) {
+    } else if (showCustom) {
       router.push(`/customEvent?hash=${hash}`);
     }
-  }, [router, hash, isSysAdmin, isLeagueAdmin]);
+  }, [router, hash, showSysAdmin, showCustom]);
   const tap = useTapGesture({
     runOnJS: true,
     onBegin: () => {
@@ -102,7 +106,7 @@ export default function EventFAB({ hash, isLeagueAdmin, isSysAdmin, isActive }: 
     opacity: withSpring(isDragging.value ? 1 : 0),
   }));
 
-  if (!isActive || (!isLeagueAdmin && !isSysAdmin)) return null;
+  if (!showSysAdmin && !showCustom) return null;
 
   return (
     <Fragment>

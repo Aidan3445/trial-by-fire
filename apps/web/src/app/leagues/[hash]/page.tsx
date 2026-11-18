@@ -23,6 +23,8 @@ import { getSeasonData } from '~/services/seasons/query/seasonsData';
 import LeagueTimeline from '~/components/leagues/hub/activity/leagueTimeline/view';
 import Scores from '~/components/leagues/hub/shared/scores/view';
 import Spacer from '~/components/shared/floatingActions/spacer';
+import NeverDrafted from '~/components/leagues/hub/neverDrafted/view';
+import { customEventsOpen } from '~/lib/leagues';
 
 export default async function LeaguePage({ params }: LeaguePageProps) {
   const { hash } = await params;
@@ -38,16 +40,30 @@ export default async function LeaguePage({ params }: LeaguePageProps) {
       seasonData = await getSeasonData(league.seasonId);
     }
   }
+  // Commissioners can keep logging custom events for a week after the finale
+  const eventsOpen = !!league && customEventsOpen(league.status, seasonData?.season.finaleDate, league.neverDrafted);
+
+  const neverDrafted = league?.status === 'Inactive' && league.neverDrafted;
+  // Sys admins keep the tabs so they can still log base events
+  if (neverDrafted && !userId) {
+    return (
+      <ScrollArea className='px-4 md:h-[calc(100svh-7.5rem)] h-[calc(100svh-6rem-var(--navbar-height))]'>
+        <NeverDrafted />
+        <Spacer />
+        <ScrollBar className='pb-4 pt-2' />
+      </ScrollArea>
+    );
+  }
 
   return (
     <AutoEventProvider defaultTab='scores'>
       <LeagueTabs className='w-full overflow-hidden'>
         <TabsList className='sticky flex w-full px-10 rounded-none z-50 bg-accent'>
           <TabsTrigger className='flex-1' value='scores'>Scores</TabsTrigger>
-          {isActive && auth.role !== 'Member' && (
+          {eventsOpen && auth.role !== 'Member' && (
             <TabsTrigger className='flex-1' value='events'>Commish</TabsTrigger>
           )}
-          {isActive && userId && (
+          {userId && (
             <TabsTrigger className='flex-1' value='Base'>Base</TabsTrigger>
           )}
           <TabsTrigger className='flex-none w-fit' value='settings'>Settings</TabsTrigger>
@@ -63,11 +79,15 @@ export default async function LeaguePage({ params }: LeaguePageProps) {
         <ScrollArea className='px-4 md:h-[calc(100svh-10.5rem)] h-[calc(100svh-9rem-var(--navbar-height))]'>
           <div className='pb-4 overflow-hidden'>
             <TabsContent className='space-y-4 data-[state=inactive]:hidden' value='scores' forceMount>
-              <Scores isActive={isActive} />
-              <Predictions />
-              {seasonData && <LeagueTimeline initialSeasonData={seasonData} />}
+              {neverDrafted ? <NeverDrafted /> : (
+                <>
+                  <Scores isActive={isActive} />
+                  <Predictions />
+                  {seasonData && <LeagueTimeline initialSeasonData={seasonData} />}
+                </>
+              )}
             </TabsContent>
-            {isActive && auth.role !== 'Member' && (
+            {eventsOpen && auth.role !== 'Member' && (
               <TabsContent value='events'>
                 <CreateCustomEvent />
               </TabsContent>
