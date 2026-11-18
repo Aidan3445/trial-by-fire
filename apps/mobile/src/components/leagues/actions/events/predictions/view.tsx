@@ -33,7 +33,6 @@ export default function MakePredictions() {
     predictionRuleCount,
     keyEpisodes,
     predictionsMade,
-    basePredictionsMade,
     rules,
   } = useLeagueActionDetails();
   const { active: secondaryActive } = useSecondaryPick();
@@ -52,14 +51,6 @@ export default function MakePredictions() {
 
   const [formBetTotal, setFormBetTotal] = useState(0);
 
-  const pendingBetTotal = useMemo(() =>
-    Object.values(basePredictionsMade ?? {})
-      .flatMap((preds) => preds)
-      .filter((p) => p.eventId === null && (p.bet ?? 0) > 0)
-      .reduce((total, p) => total + (p.bet ?? 0), 0),
-    [basePredictionsMade]
-  );
-
   const submittedBetTotal = useMemo(() =>
     predictionsMade.reduce(
       (total, p) => total + (p.eventId !== null ? 0 : p.bet ?? 0),
@@ -70,10 +61,11 @@ export default function MakePredictions() {
 
   const balance = useMemo(() =>
     (scores?.Member[leagueMembers?.loggedIn?.memberId ?? -1]?.slice().pop() ?? 0) -
-    submittedBetTotal -
-    pendingBetTotal,
-    [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal, pendingBetTotal]
+    submittedBetTotal,
+    [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal]
   );
+
+  const pendingBalance = balance + submittedBetTotal - formBetTotal;
 
   if ((predictionRuleCount === 0 && !secondaryActive) || !keyEpisodes?.nextEpisode) return null;
 
@@ -100,13 +92,13 @@ export default function MakePredictions() {
               <View
                 className={cn(
                   'flex-row items-center rounded-md px-1 bg-amber-400',
-                  balance - formBetTotal < 0 && 'bg-red-400',
+                  pendingBalance < 0 && 'bg-red-400',
                   formBetTotal < submittedBetTotal && 'bg-green-400'
                 )}>
                 <Text
                   allowFontScaling={false}
                   className='text-sm text-primary italic'>
-                  Pending: {balance - formBetTotal}
+                  Pending: {pendingBalance}
                 </Text>
                 <PointsIcon size={11} color={colors.primary} />
               </View>
@@ -143,7 +135,7 @@ export default function MakePredictions() {
           predictionsMade={predictionsMade}
           castaways={castaways}
           tribes={tribes}
-          wallet={balance}
+          wallet={balance + submittedBetTotal}
           totalBet={formBetTotal}
           setBetTotal={setFormBetTotal}
           includeSecondary />

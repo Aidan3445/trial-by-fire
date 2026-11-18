@@ -17,7 +17,6 @@ export default function MakePredictions() {
     predictionRuleCount,
     keyEpisodes,
     predictionsMade,
-    basePredictionsMade,
     rules
   } = useLeagueActionDetails();
   const { active: secondaryActive } = useSecondaryPick();
@@ -29,20 +28,16 @@ export default function MakePredictions() {
     Object.values(actionDetails ?? {}).map(({ tribe }) => tribe), [actionDetails]);
 
   const [formBetTotal, setFormBetTotal] = useState(0);
-  const pendingBetTotal = useMemo(() =>
-    Object.values(basePredictionsMade ?? {})
-      .flatMap(preds => preds)
-      .filter(p => p.eventId === null && (p.bet ?? 0) > 0)
-      .reduce((total, p) => total + (p.bet ?? 0), 0),
-    [basePredictionsMade]);
   const submittedBetTotal = useMemo(() => predictionsMade
     .reduce((total, p) => total +
       (p.eventId !== null
         ? 0
         : (p.bet ?? 0)), 0), [predictionsMade]);
   const balance = useMemo(() =>
-    (scores?.Member[leagueMembers?.loggedIn?.memberId ?? -1]?.slice().pop() ?? 0) - submittedBetTotal - pendingBetTotal,
-    [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal, pendingBetTotal]);
+    (scores?.Member[leagueMembers?.loggedIn?.memberId ?? -1]?.slice().pop() ?? 0) - submittedBetTotal,
+    [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal]);
+
+  const pendingBalance = balance + submittedBetTotal - formBetTotal;
 
   if ((predictionRuleCount === 0 && !secondaryActive) || !keyEpisodes?.nextEpisode) return null;
   // Locked while an episode airs; the episode tracker shows those predictions
@@ -58,10 +53,10 @@ export default function MakePredictions() {
               <>
                 <br />
                 <span className={cn('text-xs rounded-sm text-muted-foreground p-0.5 bg-amber-400', {
-                  'bg-red-400': balance - formBetTotal < 0,
+                  'bg-red-400': pendingBalance < 0,
                   'bg-green-400': formBetTotal < submittedBetTotal
                 })}>
-                  Pending Balance: {balance - formBetTotal}<PointsIcon className='inline mb-1 w-4 h-min fill-muted-foreground' />
+                  Pending Balance: {pendingBalance}<PointsIcon className='inline mb-1 w-4 h-min fill-muted-foreground' />
                 </span>
               </>
             )}
@@ -90,7 +85,7 @@ export default function MakePredictions() {
               predictionsMade={predictionsMade}
               castaways={castaways}
               tribes={tribes}
-              wallet={balance}
+              wallet={balance + submittedBetTotal}
               totalBet={formBetTotal}
               setBetTotal={setFormBetTotal}
               includeSecondary />
