@@ -8,8 +8,8 @@ export const seasonSchema = createTable(
   {
     seasonId: serial('season_id').notNull().primaryKey(),
     name: varchar('season_name', { length: 64 }).notNull().unique(),
+    // Announced premiere; once episode 1 exists its air date wins (see seasonDates)
     premiereDate: timestamp('premier_date', { mode: 'string' }).notNull(),
-    finaleDate: timestamp('finale_date', { mode: 'string' }),
   }
 );
 

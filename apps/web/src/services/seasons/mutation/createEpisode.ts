@@ -66,25 +66,8 @@ export async function createEpisodeLogic(
 
     if (!newEpisode) throw new Error('Failed to create episode');
 
-    if (episode.episodeNumber === 1) {
-      // Update the premiere date of the season
-      await trx
-        .update(seasonSchema)
-        .set({ premiereDate: date.toISOString() })
-        .where(eq(seasonSchema.seasonId, season.seasonId));
-      // Invalidate seasons
-      revalidateTag('seasons', 'max');
-    }
-
-    if (episode.isFinale) {
-      // Update the finale date of the season
-      await trx
-        .update(seasonSchema)
-        .set({ finaleDate: date.toISOString() })
-        .where(eq(seasonSchema.seasonId, season.seasonId));
-      // Invalidate seasons
-      revalidateTag('seasons', 'max');
-    }
+    // Season premiere and finale dates come from the episodes
+    revalidateTag('seasons', 'max');
 
     // Invalidate cache for the season's episodes
     revalidateTag(`episodes-${season.seasonId}`, 'max');

@@ -153,7 +153,7 @@ export default function Import() {
       return;
     }
     try {
-      await createSeason(data.seasonName, season.premiereDate, season.finaleDate ?? undefined);
+      await createSeason(data.seasonName, season.premiereDate);
       await Promise.all(tribes.map(tribe => createTribe(data.seasonName, tribe)));
       await Promise.all(castaways.map(castaway => createCastaway(data.seasonName, castaway)));
       await invalidateAll();
@@ -246,6 +246,7 @@ export default function Import() {
             key={index}
             {...episode}
             seasonName={reactForm.watch('seasonName')}
+            seasonFinaleDate={season?.finaleDate ?? null}
             parsedEvents={mergedEpisodeDetails.get(episode.episodeNumber) ?? []}
             seasonData={seasonData ?? null}
             allDbEpisodes={seasonData?.episodes ?? []}
@@ -296,6 +297,8 @@ interface ImportEpisodeProps {
   title: string;
   airDate: string;
   seasonName: string;
+  // From the season's airing dates, to guess which episode is the finale
+  seasonFinaleDate: Date | string | null;
   parsedEvents: ParsedEvent[];
   seasonData: {
     castaways: EnrichedCastaway[];
@@ -308,14 +311,19 @@ interface ImportEpisodeProps {
 }
 
 function ImportEpisode({
-  seasonName, episodeNumber, title, airDate,
+  seasonName, episodeNumber, title, airDate, seasonFinaleDate,
   parsedEvents, seasonData, allDbEpisodes, onImported,
 }: ImportEpisodeProps) {
-  const [isMerge, setIsMerge] = useState(false);
-  const [isFinale, setIsFinale] = useState(false);
-  const [runtime, setRuntime] = useState(90);
-
   const dbEpisode = seasonData?.episodes.find(ep => ep.episodeNumber === episodeNumber);
+  // Importing the premiere or finale sets the season's premiere or finale date,
+  // and leagues end once the finale's runtime is over, so guess those well
+  const airsOnFinaleDate = !!seasonFinaleDate
+    && new Date(seasonFinaleDate).toDateString() === new Date(airDate).toDateString();
+  const guessFinale = dbEpisode?.isFinale ?? airsOnFinaleDate;
+  const [isMerge, setIsMerge] = useState(dbEpisode?.isMerge ?? false);
+  const [isFinale, setIsFinale] = useState(guessFinale);
+  const [runtime, setRuntime] = useState(dbEpisode?.runtime ?? (guessFinale ? 180 : episodeNumber === 1 ? 120 : 90));
+
   const existingEvents = dbEpisode
     ? seasonData?.baseEvents[episodeNumber]
     : undefined;

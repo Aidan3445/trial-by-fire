@@ -13,6 +13,7 @@ import { type EnrichedCastaway } from '~/types/castaways';
 import getKeyEpisodes from '~/services/seasons/query/getKeyEpisodes';
 import { seasonSchema } from '~/server/db/schema/seasons';
 import { db } from '~/server/db';
+import { seasonColumns, toSeason } from '~/services/seasons/query/seasonDates';
 import { eq } from 'drizzle-orm';
 
 /**
@@ -26,17 +27,12 @@ export default async function getSeasonsData(includeInactive: boolean) {
   if (seasons.length === 0) return [];
 
   return Promise.all(seasons.map(async (season) => {
-    const datedSeason = {
+    // The cache can hand dates back as strings
+    const datedSeason: Season = {
       ...season,
-      premiereDate: typeof season.premiereDate === 'string'
-        ? new Date(`${season.premiereDate as string}`)
-        : season.premiereDate,
-      finaleDate: season.finaleDate
-        ? (typeof season.finaleDate === 'string'
-          ? new Date(`${season.finaleDate as string}`)
-          : season.finaleDate)
-        : null
-    } as Season;
+      premiereDate: new Date(season.premiereDate),
+      finaleDate: season.finaleDate ? new Date(season.finaleDate) : null,
+    };
     return await getSeasonData(season.seasonId, datedSeason);
   }));
 }
@@ -62,14 +58,10 @@ export async function getSeasonData(seasonId: number, season?: Season) {
     getEliminations(seasonId),
     getKeyEpisodes(seasonId),
     season ? Promise.resolve(season) : db
-      .select()
+      .select(seasonColumns)
       .from(seasonSchema)
       .where(eq(seasonSchema.seasonId, seasonId))
-      .then(rows => rows[0] ? {
-        ...rows[0],
-        premiereDate: new Date(`${rows[0].premiereDate} Z`),
-        finaleDate: rows[0].finaleDate ? new Date(`${rows[0].finaleDate} Z`) : null
-      } as Season : null)
+      .then((rows): Season | null => rows[0] ? toSeason(rows[0]) : null)
   ]);
 
   const enrichedCastaways: EnrichedCastaway[] = castaways.map(castaway => {
