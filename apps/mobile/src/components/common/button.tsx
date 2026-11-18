@@ -6,6 +6,7 @@ interface ButtonProps {
   onPress?: (_event: GestureResponderEvent) => void;
   onLongPress?: (_event: GestureResponderEvent) => void;
   disabled?: boolean;
+  activeOpacity?: number;
   className?: string;
   children: ReactNode;
   // Popovers measure their trigger through this
@@ -16,6 +17,7 @@ export default function Button({
   onPress,
   onLongPress,
   disabled = false,
+  activeOpacity = 0.7,
   className,
   children,
   ref
@@ -27,7 +29,7 @@ export default function Button({
       onPress={onPress}
       onLongPress={onLongPress}
       disabled={disabled}
-      activeOpacity={0.7}>
+      activeOpacity={activeOpacity}>
       {children}
     </TouchableOpacity>
   );
