@@ -6,3 +6,4 @@ export * from './scores';
 export * from './utils';
 export * from './autoEvents';
 export * from './episodeTracker';
+export * from './appVersion';
