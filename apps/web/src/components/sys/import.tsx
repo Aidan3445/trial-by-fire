@@ -319,10 +319,34 @@ function ImportEpisode({
   // and leagues end once the finale's runtime is over, so guess those well
   const airsOnFinaleDate = !!seasonFinaleDate
     && new Date(seasonFinaleDate).toDateString() === new Date(airDate).toDateString();
-  const guessFinale = dbEpisode?.isFinale ?? airsOnFinaleDate;
+  // The wiki only lists the finale date once it's announced
+  const guessFinale = !!dbEpisode?.isFinale || airsOnFinaleDate;
+  const defaultRuntime = (finale: boolean) => finale ? 180 : episodeNumber === 1 ? 120 : 90;
   const [isMerge, setIsMerge] = useState(dbEpisode?.isMerge ?? false);
   const [isFinale, setIsFinale] = useState(guessFinale);
-  const [runtime, setRuntime] = useState(dbEpisode?.runtime ?? (guessFinale ? 180 : episodeNumber === 1 ? 120 : 90));
+  const [runtime, setRuntime] = useState(dbEpisode?.runtime ?? defaultRuntime(guessFinale));
+  // Stop following the guesses once edited by hand
+  const [touched, setTouched] = useState({ flags: false, runtime: false });
+
+  // The database's episodes can load after this card first renders: catch up
+  const guessKey = `${dbEpisode?.episodeId ?? 'new'}-${guessFinale}`;
+  const [syncedKey, setSyncedKey] = useState(guessKey);
+  if (guessKey !== syncedKey) {
+    setSyncedKey(guessKey);
+    if (!touched.flags) {
+      setIsMerge(dbEpisode?.isMerge ?? false);
+      setIsFinale(guessFinale);
+    }
+    if (!touched.runtime) setRuntime(dbEpisode?.runtime ?? defaultRuntime(guessFinale));
+  }
+
+  const toggleFinale = () => {
+    const finale = !isFinale;
+    setIsFinale(finale);
+    setTouched((current) => ({ ...current, flags: true }));
+    // Finales run long; follow the checkbox until the runtime is set by hand
+    if (!touched.runtime) setRuntime(defaultRuntime(finale));
+  };
 
   const existingEvents = dbEpisode
     ? seasonData?.baseEvents[episodeNumber]
@@ -358,11 +382,17 @@ function ImportEpisode({
       )}
       <form action={() => handleSubmit()}>
         <label className='inline-flex items-center space-x-2'>
-          <input type='checkbox' checked={isMerge} onChange={() => setIsMerge(!isMerge)} />
+          <input
+            type='checkbox'
+            checked={isMerge}
+            onChange={() => {
+              setIsMerge(!isMerge);
+              setTouched((current) => ({ ...current, flags: true }));
+            }} />
           <span>Is Merge</span>
         </label>
         <label className='inline-flex items-center space-x-2 ml-4'>
-          <input type='checkbox' checked={isFinale} onChange={() => setIsFinale(!isFinale)} />
+          <input type='checkbox' checked={isFinale} onChange={toggleFinale} />
           <span>Is Finale</span>
         </label>
         <label className='inline-flex items-center space-x-2 ml-4'>
@@ -370,7 +400,10 @@ function ImportEpisode({
           <input
             type='number'
             value={runtime}
-            onChange={(e) => setRuntime(parseInt(e.target.value, 10))}
+            onChange={(e) => {
+              setRuntime(parseInt(e.target.value, 10));
+              setTouched((current) => ({ ...current, runtime: true }));
+            }}
             className='w-16 text-right rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50' />
         </label>
         <Button type='submit'>Import Episode</Button>
