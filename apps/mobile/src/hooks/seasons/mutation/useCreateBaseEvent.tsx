@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -27,17 +27,26 @@ export function useCreateBaseEvent(seasonId: number | null) {
 
   const postEvent = useFetch('POST');
 
+  // The airing episode, else the latest aired one, else the first
+  const defaultEpisodeId =
+    episodes?.find((ep) => ep.airStatus === 'Airing')?.episodeId ??
+    episodes?.findLast((ep) => ep.airStatus === 'Aired')?.episodeId ??
+    episodes?.[0]?.episodeId;
+
   // Form setup
   const form = useForm<BaseEventInsert>({
     defaultValues: {
-      episodeId:
-        episodes?.find((ep) => ep.airStatus === 'Airing')?.episodeId ??
-        episodes?.findLast((ep) => ep.airStatus === 'Aired')?.episodeId ??
-        episodes?.[0]?.episodeId,
+      episodeId: defaultEpisodeId,
       notes: null,
     },
     resolver: zodResolver(BaseEventInsertZod),
   });
+
+  // Episodes may still be loading on first render
+  useEffect(() => {
+    if (defaultEpisodeId === undefined || form.getValues('episodeId')) return;
+    form.setValue('episodeId', defaultEpisodeId);
+  }, [defaultEpisodeId, form]);
 
   // Watched values
   const selectedEventName = form.watch('eventName');
