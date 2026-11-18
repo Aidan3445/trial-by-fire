@@ -1,6 +1,7 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type Ref } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, Platform, type Animated } from 'react-native';
 import { type Edges, SafeAreaView } from 'react-native-safe-area-context';
+import { type KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { cn } from '~/lib/utils';
 import { AndroidRefreshView } from '~/components/common/refresh/androidView';
 import IOSRefreshView from '~/components/common/refresh/iosView';
@@ -17,6 +18,7 @@ export interface SafeAreaRefreshViewProps {
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  scrollRef?: Ref<KeyboardAwareScrollViewRef>;
 }
 
 export default function SafeAreaRefreshView({
@@ -30,7 +32,8 @@ export default function SafeAreaRefreshView({
   alreadySafe,
   children,
   footer,
-  className
+  className,
+  scrollRef
 }: SafeAreaRefreshViewProps) {
   const edges: Edges = alreadySafe
     ? []
@@ -48,7 +51,8 @@ export default function SafeAreaRefreshView({
           handleScroll={handleScroll}
           scrollY={scrollY}
           header={header}
-          extraHeight={extraHeight}>
+          extraHeight={extraHeight}
+          scrollRef={scrollRef}>
           {children}
         </IOSRefreshView>
       ) : (
@@ -57,7 +61,8 @@ export default function SafeAreaRefreshView({
           refreshing={refreshing}
           onRefresh={onRefresh}
           handleScroll={handleScroll}
-          header={header}>
+          header={header}
+          scrollRef={scrollRef}>
           {children}
         </AndroidRefreshView>
       )}

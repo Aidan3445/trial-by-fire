@@ -14,6 +14,7 @@ export default function IOSRefreshView({
   extraHeight,
   alreadySafe,
   children,
+  scrollRef,
 }: SafeAreaRefreshViewProps) {
   return (
     <Fragment>
@@ -26,6 +27,7 @@ export default function IOSRefreshView({
           extraHeight={extraHeight} />
       )}
       <KeyboardAwareScrollView
+        ref={scrollRef}
         scrollEnabled={!disableScroll}
         className='w-full'
         showsVerticalScrollIndicator={false}

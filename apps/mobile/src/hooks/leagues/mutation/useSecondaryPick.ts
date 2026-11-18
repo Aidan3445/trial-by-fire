@@ -5,6 +5,9 @@ import { useLeagueActionDetails } from '~/hooks/leagues/enrich/useActionDetails'
 import { useFetch } from '~/hooks/helpers/useFetch';
 import { MAX_SEASON_LENGTH } from '~/lib/leagues';
 
+/** Fired on DeviceEventEmitter to bring the weekly picks into view on the secondary pick slide */
+export const FOCUS_SECONDARY_PICK_EVENT = 'focus-secondary-pick';
+
 /**
  * Secondary pick state for the logged in member and the next episode:
  * which castaways they can choose, what they already chose, and how to submit.

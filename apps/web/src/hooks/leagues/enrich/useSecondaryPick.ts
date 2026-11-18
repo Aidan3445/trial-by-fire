@@ -9,6 +9,12 @@ import { MAX_SEASON_LENGTH } from '~/lib/leagues';
 /** Fired to bring the weekly picks carousel to the secondary pick slide */
 export const FOCUS_SECONDARY_PICK_EVENT = 'focus-secondary-pick';
 
+/** Scroll the weekly picks into view and open the secondary pick slide */
+export function focusSecondaryPick() {
+  document.getElementById('weekly-picks')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.dispatchEvent(new Event(FOCUS_SECONDARY_PICK_EVENT));
+}
+
 /**
  * Secondary pick state for the logged in member and the next episode:
  * which castaways they can choose, what they already chose, and how to submit.
