@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Platform } from 'react-native';
 import { useSysAdmin } from '~/hooks/user/useSysAdmin';
 import { useMemo, useState } from 'react';
@@ -8,11 +8,14 @@ import CreateBaseEvent from '~/components/leagues/actions/events/base/create';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { cn } from '~/lib/utils';
 import SafeAreaRefreshView from '~/components/common/refresh/safeAreaRefreshView';
+import { useLeague } from '~/hooks/leagues/query/useLeague';
 import { useRefresh } from '~/hooks/helpers/refresh/useRefresh';
 
 export default function BaseEventScreen() {
   const { data: userId, isLoading, isError } = useSysAdmin();
   const router = useRouter();
+  const { hash } = useLocalSearchParams<{ hash?: string }>();
+  const { data: league } = useLeague(hash);
 
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const { data: scoreData } = useSeasonsData(true);
@@ -21,12 +24,14 @@ export default function BaseEventScreen() {
     if (!scoreData) return null;
     const selected = scoreData.find(season => season.season.name === selectedSeason);
     if (selected) return selected;
-    if (scoreData.length > 0) {
-      setSelectedSeason(scoreData[0]!.season.name);
-      return scoreData[0];
+    if (hash && !league) return null;
+    const fallback = scoreData.find(season => season.season.seasonId === league?.seasonId) ?? scoreData[0];
+    if (fallback) {
+      setSelectedSeason(fallback.season.name);
+      return fallback;
     }
     return null;
-  }, [scoreData, selectedSeason]);
+  }, [scoreData, selectedSeason, league, hash]);
 
   const { refreshing, onRefresh, scrollY, handleScroll } = useRefresh(
     [['seasons', undefined, true], ['episodes', selectedSeasonData?.season.seasonId]]
