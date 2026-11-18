@@ -172,7 +172,20 @@ export default function PredictionCards({
     if (firstOpen > 0) api.scrollTo(firstOpen);
   }, [includeSecondary, api, showSecondary, secondary.loaded, steps]);
 
-  // The missing-pick banner asks for the secondary slide
+  // Submitting moves on to the next pick still to make, wrapping back to any skipped ones
+  const stepsRef = useRef(steps);
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
+  const advanceFrom = useCallback((from: number) => {
+    if (!api) return;
+    const steps = stepsRef.current;
+    const target = nextOpenIndex(steps, from);
+    if (target !== -1) api.scrollTo(target);
+    else if (from + 1 < steps.length) api.scrollTo(from + 1);
+  }, [api]);
+
+  // The scoreboard's "Pick now" asks for the secondary slide
   useEffect(() => {
     if (!api || !showSecondary) return;
     const focus = () => api.scrollTo(steps.length - 1);
@@ -243,7 +256,7 @@ export default function PredictionCards({
   }
 
   const predictionItems = allPredictions
-    .map((prediction) => ({
+    .map((prediction, index) => ({
       header: (
         <div>
           <h3 className='text-lg text-nowrap font-bold uppercase tracking-wider text-card-foreground'>
@@ -271,7 +284,8 @@ export default function PredictionCards({
           wallet={wallet}
           updateBetTotal={updateFormBetValue}
           totalBet={totalBet}
-          maxBet={rules?.shauhinMode?.enabled ? rules.shauhinMode.maxBet : undefined} />
+          maxBet={rules?.shauhinMode?.enabled ? rules.shauhinMode.maxBet : undefined}
+          onSubmitSuccess={() => advanceFrom(index)} />
       ),
     }));
 
@@ -279,7 +293,7 @@ export default function PredictionCards({
     predictionItems.push({
       header: <div>{secondaryHeader}</div>,
       content: secondaryDescription,
-      footer: <SecondaryPickForm className='bg-b2' />,
+      footer: <SecondaryPickForm className='bg-b2' onSubmitted={() => advanceFrom(steps.length - 1)} />,
     });
   }
 
@@ -291,6 +305,16 @@ export default function PredictionCards({
       <CoverCarousel items={predictionItems} onApi={setApi} />
     </span>
   );
+}
+
+/**
+ * After finishing slide `from`, the next unfinished slide to its right,
+ * else the first unfinished one before it, else -1 once everything is done
+ */
+function nextOpenIndex(steps: { done: boolean }[], from: number) {
+  const right = steps.findIndex((step, index) => index > from && !step.done);
+  if (right !== -1) return right;
+  return steps.findIndex((step, index) => index < from && !step.done);
 }
 
 interface PicksRailProps {

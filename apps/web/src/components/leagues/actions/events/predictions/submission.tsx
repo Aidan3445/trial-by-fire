@@ -31,6 +31,8 @@ interface SubmissionCardProps {
   wallet?: number;
   updateBetTotal: (_eventName: string, _bet: number) => void;
   totalBet?: number;
+  /** Runs after a successful submit in place of moving to the next slide */
+  onSubmitSuccess?: () => void;
 }
 
 export default function SubmissionCard(props: SubmissionCardProps) {
@@ -52,7 +54,8 @@ export function BaseSubmissionCard({
   updateBetTotal,
   totalBet,
   canScrollNext,
-  scrollNext
+  scrollNext,
+  onSubmitSuccess
 }: BaseSubmissionCardProps) {
   const queryClient = useQueryClient();
   const { data: league } = useLeague();
@@ -116,7 +119,8 @@ export function BaseSubmissionCard({
 
       alert('Prediction submitted');
 
-      if (canScrollNext && scrollNext) scrollNext();
+      if (onSubmitSuccess) onSubmitSuccess();
+      else if (canScrollNext && scrollNext) scrollNext();
     } catch (error) {
       console.error(error);
       alert('Failed to submit prediction');
