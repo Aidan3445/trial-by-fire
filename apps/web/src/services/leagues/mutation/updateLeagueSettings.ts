@@ -5,6 +5,7 @@ import { leagueSchema, leagueSettingsSchema } from '~/server/db/schema/leagues';
 import { type VerifiedLeagueMemberAuth } from '~/types/api';
 import { type LeagueSettingsUpdate } from '~/types/leagues';
 import { scheduleDraftDateNotification } from '~/lib/qStash';
+import { seasonCastReady } from '~/services/seasons/query/castReady';
 
 /**
  * Update the league settings
@@ -35,6 +36,9 @@ export default async function updateLeagueSettingsLogic(
     safeDraftDate = draftDate;
   } else if (draftDate !== undefined) {
     throw new Error('Invalid draft date');
+  }
+  if (safeDraftDate && !await seasonCastReady(auth.seasonId)) {
+    throw new Error('The draft can be scheduled once the cast is announced');
   }
 
   // Transaction to update the league settings

@@ -19,6 +19,7 @@ import { DraftDateField } from '~/components/leagues/customization/settings/draf
 import { useQueryClient } from '@tanstack/react-query';
 import IsProtectedToggle from '~/components/leagues/customization/settings/league/isProtected';
 import { ScrollArea, ScrollBar } from '~/components/common/scrollArea';
+import { useTargetSeason } from '~/hooks/seasons/useTargetSeason';
 
 interface CreateLeagueFormProps {
   onSubmit?: () => void;
@@ -29,6 +30,8 @@ export default function CreateLeagueForm({ onSubmit }: CreateLeagueFormProps) {
   const queryClient = useQueryClient();
   const { user } = useUser();
   const { api, setApi, current, count } = useCarouselProgress();
+  // Drafts can't be scheduled until the cast is out
+  const { season, castReady } = useTargetSeason();
   const progress = count > 0 ? current / (count - 1) * 100 : 0;
   const reactForm = useForm<LeagueInsert>({
     defaultValues: {
@@ -89,7 +92,14 @@ export default function CreateLeagueForm({ onSubmit }: CreateLeagueFormProps) {
             </CarouselItem>
             <CarouselItem className='pl-14 flex flex-col gap-4 pt-4'>
               <ScrollArea className='min-h-[40svh]'>
-                <DraftDateField />
+                {castReady === false ? (
+                  <p className='text-sm font-medium text-muted-foreground text-center text-pretty px-4 mb-4'>
+                    You can schedule your draft once the {season?.name ?? 'next season'} cast is announced.
+                    For now, invite friends and set your rules.
+                  </p>
+                ) : (
+                  <DraftDateField />
+                )}
                 <IsProtectedToggle />
                 <ScrollBar orientation='vertical' forceMount />
               </ScrollArea>

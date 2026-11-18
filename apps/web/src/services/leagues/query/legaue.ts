@@ -1,7 +1,8 @@
 import 'server-only';
 
 import { db } from '~/server/db';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { castawaySchema } from '~/server/db/schema/castaways';
 import { leagueSchema } from '~/server/db/schema/leagues';
 import { seasonSchema } from '~/server/db/schema/seasons';
 import { type VerifiedLeagueMemberAuth } from '~/types/api';
@@ -24,6 +25,9 @@ export default async function getLeague(auth: VerifiedLeagueMemberAuth) {
       season: seasonSchema.name,
       seasonId: seasonSchema.seasonId,
       startWeek: leagueSchema.startWeek,
+      neverDrafted: leagueSchema.neverDrafted,
+      castReady: sql<boolean>`EXISTS (
+        SELECT 1 FROM ${castawaySchema} WHERE ${castawaySchema.seasonId} = ${leagueSchema.seasonId})`,
     })
     .from(leagueSchema)
     .innerJoin(seasonSchema, eq(leagueSchema.seasonId, seasonSchema.seasonId))

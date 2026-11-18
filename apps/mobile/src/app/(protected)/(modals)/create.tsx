@@ -8,12 +8,14 @@ import { useCreateLeague } from '~/hooks/leagues/mutation/useCreateLeague';
 import { cn } from '~/lib/utils';
 import { ArrowLeft } from 'lucide-react-native';
 import LeagueName from '~/components/leagues/actions/create/leagueName';
-import { type ReactNode, useCallback } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo } from 'react';
 import DraftDate from '~/components/leagues/actions/create/draftDate';
 import LeagueMember from '~/components/leagues/actions/create/leagueMember';
 import { colors } from '~/lib/colors';
 import CreateLeagueHeader from '~/components/leagues/actions/create/header/view';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSeasons } from '~/hooks/seasons/useSeasons';
+import { useCastaways } from '~/hooks/seasons/useCastaways';
 
 interface CreateLeagueFormProps {
   onSubmit?: () => void;
@@ -30,27 +32,54 @@ interface PageConfig {
 export default function CreateLeagueScreen({ onSubmit }: CreateLeagueFormProps) {
   const { reactForm, handleSubmit, isSubmitting } = useCreateLeague(onSubmit);
 
-  const pages: PageConfig[] = [
+  // The league goes in the soonest season that hasn't finished
+  const { data: seasons, refetch: refetchSeasons } = useSeasons(true);
+  // The cached list may predate the new season
+  useEffect(() => void refetchSeasons(), [refetchSeasons]);
+  const targetSeasonId = useMemo(() => {
+    const now = Date.now();
+    return seasons
+      ?.filter((season) => !season.finaleDate || new Date(season.finaleDate).getTime() > now)
+      .toSorted((a, b) => new Date(a.premiereDate).getTime() - new Date(b.premiereDate).getTime())[0]
+      ?.seasonId ?? null;
+  }, [seasons]);
+  // A cached empty cast may be stale, so check again
+  const { data: castaways } = useCastaways(targetSeasonId, true);
+  // Until we know there's a cast, there's no draft to schedule
+  const castReady = !!castaways?.length;
+
+  const pages: PageConfig[] = useMemo(() => [
     {
       name: 'leagueName' as const,
       content: null, // Will be rendered dynamically
       optional: false,
       isFirst: true,
     },
-    {
+    ...(castReady ? [{
       name: 'draftDate' as const,
       content: null,
       optional: true,
-    },
+    }] : []),
     {
       name: 'member' as const,
       content: null,
       optional: false,
       isLast: true,
     },
-  ];
+  ], [castReady]);
 
-  const { props, progressProps, ref, container: { width, onLayout } } = useCarousel<PageConfig>(pages);
+  const {
+    props,
+    progressProps,
+    ref,
+    setCarouselData,
+    container: { width, onLayout },
+  } = useCarousel<PageConfig>(pages);
+
+  useEffect(() => {
+    setCarouselData(pages);
+    if (!castReady) reactForm.resetField('draftDate');
+  }, [pages, castReady, setCarouselData, reactForm]);
 
   const goNext = useCallback(() => {
     Keyboard.dismiss();

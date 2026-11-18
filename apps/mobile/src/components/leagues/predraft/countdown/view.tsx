@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useFetch } from '~/hooks/helpers/useFetch';
 import Clock from '~/components/leagues/predraft/countdown/clock';
-import { Calendar, CalendarX2 } from 'lucide-react-native';
+import { Calendar, CalendarClock, CalendarX2 } from 'lucide-react-native';
 import { colors } from '~/lib/colors';
 import { cn } from '~/lib/utils';
 import SetDraftDate from '~/components/leagues/predraft/countdown/edit';
@@ -27,12 +27,16 @@ export function DraftCountdown({ overrideHash, className }: DraftCountdownProps)
   const segments = useSegments();
   const router = useRouter();
 
+  // No cast yet, so nothing to draft: no scheduling or starting
+  const awaitingCast = league?.castReady === false;
+
   const editable = useMemo(
     () =>
       leagueMembers?.loggedIn
       && leagueMembers.loggedIn.role === 'Owner'
-      && leagueSettings,
-    [leagueMembers, leagueSettings]
+      && leagueSettings
+      && !awaitingCast,
+    [leagueMembers, leagueSettings, awaitingCast]
   );
 
   const trackedDraftDate = useMemo(() => {
@@ -76,52 +80,61 @@ export function DraftCountdown({ overrideHash, className }: DraftCountdownProps)
 
       {/* Countdown / Action */}
       <View className='justify-center grow'>
-        <View className='bg-accent border border-primary/40 rounded-md overflow-hidden'>
-          <View className='px-3 pb-1 flex-row items-center gap-2'>
-            {trackedDraftDate ? (trackedDraftDate.getTime() > Date.now() && (
-              <>
-                <Calendar size={16} stroke={colors.primary} />
-                <Text
-                  allowFontScaling={false}
-                  className='text-base font-medium text-primary'>
-                  Starts: {trackedDraftDate.toLocaleString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </>
-            )) : (
-              <>
-                <CalendarX2 size={16} stroke={colors.primary} />
-                <Text className='text-base font-medium text-primary'>
-                  Draft date not scheduled
-                </Text>
-              </>
-            )}
+        {awaitingCast ? (
+          <View className='bg-accent border border-primary/40 rounded-md px-3 py-2 flex-row items-start gap-2'>
+            <CalendarClock size={16} stroke={colors.primary} style={{ marginTop: 2 }} />
+            <Text className='flex-1 text-base font-medium text-primary'>
+              The draft opens once the {league.season} cast is announced. Invite friends and set your rules in the meantime.
+            </Text>
           </View>
-          <Clock
-            endDate={trackedDraftDate}
-            replacedBy={
-              <Button
-                className='flex items-center justify-center rounded-md py-4 bg-primary m-2 mt-1'
-                disabled={!league || (leagueMembers?.loggedIn?.role !== 'Owner' && league?.status !== 'Draft')}
-                onPress={onDraftJoin}>
-                <Text
-                  adjustsFontSizeToFit
-                  numberOfLines={1}
-                  className='text-center text-2xl font-black uppercase tracking-wider text-primary-foreground'>
-                  {league?.status === 'Draft'
-                    ? 'Join Draft'
-                    : leagueMembers?.loggedIn?.role === 'Owner'
-                      ? 'Start Draft'
-                      : 'Waiting for Commissioner'}
-                </Text>
-              </Button>
-            } />
-        </View>
+        ) : (
+          <View className='bg-accent border border-primary/40 rounded-md overflow-hidden'>
+            <View className='px-3 pb-1 flex-row items-center gap-2'>
+              {trackedDraftDate ? (trackedDraftDate.getTime() > Date.now() && (
+                <>
+                  <Calendar size={16} stroke={colors.primary} />
+                  <Text
+                    allowFontScaling={false}
+                    className='text-base font-medium text-primary'>
+                    Starts: {trackedDraftDate.toLocaleString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </>
+              )) : (
+                <>
+                  <CalendarX2 size={16} stroke={colors.primary} />
+                  <Text className='text-base font-medium text-primary'>
+                    Draft date not scheduled
+                  </Text>
+                </>
+              )}
+            </View>
+            <Clock
+              endDate={trackedDraftDate}
+              replacedBy={
+                <Button
+                  className='flex items-center justify-center rounded-md py-4 bg-primary m-2 mt-1'
+                  disabled={!league || (leagueMembers?.loggedIn?.role !== 'Owner' && league?.status !== 'Draft')}
+                  onPress={onDraftJoin}>
+                  <Text
+                    adjustsFontSizeToFit
+                    numberOfLines={1}
+                    className='text-center text-2xl font-black uppercase tracking-wider text-primary-foreground'>
+                    {league?.status === 'Draft'
+                      ? 'Join Draft'
+                      : leagueMembers?.loggedIn?.role === 'Owner'
+                        ? 'Start Draft'
+                        : 'Waiting for Commissioner'}
+                  </Text>
+                </Button>
+              } />
+          </View>
+        )}
       </View>
     </View>
   );

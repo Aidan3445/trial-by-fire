@@ -27,6 +27,10 @@ export type League = {
   season: string;
   seasonId: number;
   startWeek: number | null;
+  // Ended while still in predraft or draft, so it never played
+  neverDrafted?: boolean;
+  // The season's cast has been added, so the draft can be scheduled or started
+  castReady?: boolean;
 };
 
 export type PublicLeague = {

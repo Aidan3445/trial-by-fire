@@ -2,15 +2,14 @@
 
 import { FormControl, FormDescription, FormField, FormItem, FormMessage } from '~/components/common/form';
 import { DateTimePicker } from '~/components/common/dateTimePicker';
-import { useSeasons } from '~/hooks/seasons/useSeasons';
+import { useTargetSeason } from '~/hooks/seasons/useTargetSeason';
 
 interface DraftDateFieldProps {
   disabled?: boolean;
 }
 
 export function DraftDateField({ disabled }: DraftDateFieldProps) {
-  const { data: seasons } = useSeasons(true);
-  const currentSeason = seasons?.[0] ?? null;
+  const { season: currentSeason } = useTargetSeason();
 
   const rangeEnd = currentSeason?.finaleDate
     ? new Date(new Date(currentSeason.finaleDate).setHours(12, 0, 0, 0))

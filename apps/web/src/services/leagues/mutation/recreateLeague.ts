@@ -80,6 +80,7 @@ export default async function recreateLeagueLogic(
       undefined,
       originalLeague.league_settings?.isProtected,
       trx,
+      originalLeague.league.seasonId,
     );
 
     // set the owner's draft order to the correct value
