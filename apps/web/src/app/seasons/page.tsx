@@ -37,6 +37,8 @@ export default function SeasonsPage() {
   );
 
   const { data: seasons } = useSeasons(true);
+  // The newest current season has a cast; an upcoming season without one has nothing to show
+  const { data: currentSeasons } = useSeasons(false);
   const { data: seasonData } = useSeasonsData(true, selectedSeasonId ?? undefined);
   const season = seasonData?.[0];
 
@@ -51,14 +53,14 @@ export default function SeasonsPage() {
     }, [router, searchParams]
   );
 
-  // Auto-select most recent season on mount (only if no query param)
+  // Auto-select the newest season with a cast on mount (only if no query param)
   useEffect(() => {
-    if (!selectedSeasonId && seasons && seasons.length > 0) {
-      const id = seasons[0]!.seasonId;
+    if (!selectedSeasonId && seasons && seasons.length > 0 && currentSeasons) {
+      const id = currentSeasons.at(-1)?.seasonId ?? seasons[0]!.seasonId;
       setSelectedSeasonId(id);
       updateParams(id, selectedTab);
     }
-  }, [seasons, selectedSeasonId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [seasons, currentSeasons, selectedSeasonId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSeasonChange = (value: string) => {
     const id = Number(value);

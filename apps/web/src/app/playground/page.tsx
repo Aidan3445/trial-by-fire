@@ -42,10 +42,12 @@ export default function PlaygroundPage() {
     resolver: zodResolver(formSchema)
   });
 
-  // Auto-select most recent season on mount
+  // Auto-select the newest season that has premiered, so there are scores to play with
   useEffect(() => {
     if (!selectedSeasonId && seasons && seasons.length > 0) {
-      setSelectedSeasonId(seasons[0]!.seasonId);
+      const now = Date.now();
+      const premiered = seasons.find((season) => new Date(season.premiereDate).getTime() <= now);
+      setSelectedSeasonId((premiered ?? seasons[0]!).seasonId);
     }
   }, [seasons, selectedSeasonId]);
 
