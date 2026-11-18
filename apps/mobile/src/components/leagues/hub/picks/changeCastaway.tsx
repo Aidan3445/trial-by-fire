@@ -5,7 +5,7 @@ import { colors } from '~/lib/colors';
 import SearchableSelect from '~/components/common/searchableSelect';
 import ColorRow from '~/components/shared/colorRow';
 import ShotInTheDark from '~/components/leagues/hub/picks/shotInTheDark';
-import { useChangeCastaway } from '~/hooks/leagues/mutation/useChangeCastaway';
+import { useChangeCastaway, isFinallyEliminated } from '~/hooks/leagues/mutation/useChangeCastaway';
 import Modal from '~/components/common/modal';
 import { getContrastingColor } from '@uiw/color-convert';
 import Button from '~/components/common/button';
@@ -33,12 +33,8 @@ export default function ChangeCastaway() {
   // Picks are locked while an episode airs; show how this one is going instead
   if (isEpisodeAiring) return <EpisodeTracker />;
 
-  const isActiveAfterRedemption = (castaway: typeof availableCastaways[number]) =>
-    castaway.redemption?.some((r) => r.secondEliminationEpisode === null) ?? false;
-
   const mainPickOptions = availableCastaways.map((castaway) => {
-    const isFinallyEliminated = !!(castaway.eliminatedEpisode && !isActiveAfterRedemption(castaway));
-    const isDisabled = castaway.castawayId !== +selected && !!(castaway.pickedBy || isFinallyEliminated);
+    const isDisabled = castaway.castawayId !== +selected && !!(castaway.pickedBy || isFinallyEliminated(castaway));
     return {
       value: castaway.castawayId,
       label: castaway.fullName,

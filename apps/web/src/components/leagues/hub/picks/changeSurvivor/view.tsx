@@ -26,6 +26,16 @@ const formSchema = z.object({
   castawayId: z.coerce.number({ required_error: 'Please select a castaway' }),
 });
 
+// Out for good: eliminated and not currently back in through redemption
+function isFinallyEliminated(castaway: {
+  eliminatedEpisode?: number | null;
+  redemption?: { secondEliminationEpisode: number | null }[] | null;
+}) {
+  const activeAfterRedemption =
+    castaway.redemption?.some((r) => r.secondEliminationEpisode === null) ?? false;
+  return !!castaway.eliminatedEpisode && !activeAfterRedemption;
+}
+
 export default function ChangeCastaway() {
   const queryClient = useQueryClient();
   const {
@@ -138,8 +148,9 @@ export default function ChangeCastaway() {
   // After the finale there is no next episode to wait for
   const seasonOver = !!keyEpisodes?.previousEpisode?.isFinale;
   const noUpcomingEpisode = !!keyEpisodes && !keyEpisodes.nextEpisode && !seasonOver;
+  // Nobody left to swap to once every castaway is either taken or out for good
   const allCastawaysTaken = (availableCastaways.length > 0 || seasonOver)
-    && availableCastaways.every(castaway => castaway.pickedBy);
+    && !availableCastaways.some(castaway => !castaway.pickedBy && !isFinallyEliminated(castaway));
   const loggedInMemberId = leagueMembers?.loggedIn?.memberId;
 
   const priorityTimeLeft = keyEpisodes?.previousEpisode
@@ -233,9 +244,7 @@ export default function ChangeCastaway() {
                                 <SelectGroup>
                                   {availableCastaways.map((castaway) =>
                                     currentSurvivorPick?.castawayId !== castaway.castawayId &&
-                                      (castaway.pickedBy ??
-                                        (castaway.eliminatedEpisode && !castaway.redemption?.some((r) =>
-                                          r.secondEliminationEpisode === null)))
+                                      (!!castaway.pickedBy || isFinallyEliminated(castaway))
                                       ? (
                                         <SelectLabel
                                           key={castaway.castawayId}

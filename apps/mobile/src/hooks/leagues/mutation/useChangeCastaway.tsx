@@ -16,6 +16,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Out for good: eliminated and not currently back in through redemption
+export function isFinallyEliminated(castaway: {
+  eliminatedEpisode?: number | null;
+  redemption?: { secondEliminationEpisode: number | null }[] | null;
+}) {
+  const activeAfterRedemption =
+    castaway.redemption?.some((r) => r.secondEliminationEpisode === null) ?? false;
+  return !!castaway.eliminatedEpisode && !activeAfterRedemption;
+}
+
 export function useChangeCastaway() {
   const queryClient = useQueryClient();
   const postCastaway = useFetch('POST');
@@ -147,7 +157,9 @@ export function useChangeCastaway() {
     // After the finale there is no next episode to wait for
     const seasonOver = !!keyEpisodes?.previousEpisode?.isFinale;
     if (keyEpisodes && !keyEpisodes.nextEpisode && !seasonOver) return 'no-episode';
-    if ((availableCastaways.length > 0 || seasonOver) && availableCastaways.every((c) => c.pickedBy)) return 'no-castaways';
+    // Nobody left to swap to once every castaway is either taken or out for good
+    const hasTakeable = availableCastaways.some((c) => !c.pickedBy && !isFinallyEliminated(c));
+    if ((availableCastaways.length > 0 || seasonOver) && !hasTakeable) return 'no-castaways';
 
     if (
       keyEpisodes?.previousEpisode &&
