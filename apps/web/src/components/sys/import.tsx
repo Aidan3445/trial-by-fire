@@ -143,8 +143,8 @@ export default function Import() {
 
     setSeason(data.season);
     setCastaways(data.castaways);
-    setTribes(data.tribes);
-    setEpisodes(data.episodes);
+    setTribes(data.tribes.filter(t => !t.tribeName.includes('[')));
+    setEpisodes(data.episodes.filter(ep => ep.episodeNumber > 0));
     setEpisodeDetails(data.episodeDetails);
     setTribeSwaps(data.tribeSwaps ?? []);
   };
@@ -380,7 +380,7 @@ function ImportEpisode({
   };
 
   return (
-    <div className='flex flex-col gap-1 bg-card rounded-lg p-4 min-w-[280px]'>
+    <div className='flex flex-col gap-1 bg-card rounded-lg p-4 min-w-70'>
       <h2 className='font-bold'>Episode {current.episodeNumber}</h2>
       <p>{current.title}</p>
       <p className='text-sm'>{current.airDate.toLocaleString()}</p>
@@ -514,7 +514,7 @@ function AddEpisode({ seasonName, episodes, takenNumbers, onAdded }: AddEpisodeP
       <AlertDialogTrigger asChild>
         <button
           type='button'
-          className='flex flex-col items-center justify-center gap-2 min-w-[280px] rounded-lg border-2 border-dashed border-primary/30 p-4 text-muted-foreground hover:bg-primary/5 hover:text-primary'>
+          className='flex flex-col items-center justify-center gap-2 min-w-70 rounded-lg border-2 border-dashed border-primary/30 p-4 text-muted-foreground hover:bg-primary/5 hover:text-primary'>
           <Plus />
           <span className='font-bold'>Add Episode</span>
           <span className='text-xs'>For episodes fandom doesn&apos;t list yet</span>
