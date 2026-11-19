@@ -6,6 +6,7 @@ import { customEventReferenceSchema, customEventRuleSchema, customEventSchema } 
 import { leagueSchema } from '~/server/db/schema/leagues';
 import { type CustomEventInsert } from '~/types/events';
 import { type VerifiedLeagueMemberAuth } from '~/types/api';
+import { assertCustomEventsOpen } from '~/services/leagues/query/customEventsOpen';
 
 /**
   * Update a base event for the season
@@ -22,7 +23,7 @@ export default async function updateCustomEventLogic(
   customEventId: number,
   customEvent: CustomEventInsert
 ) {
-  if (auth.status === 'Inactive') throw new Error('League is inactive');
+  await assertCustomEventsOpen(auth);
   // Transaction to update the event
   return await db.transaction(async (trx) => {
     // Get league information
@@ -35,9 +36,6 @@ export default async function updateCustomEventLogic(
       .where(eq(leagueSchema.leagueId, auth.leagueId))
       .then((res) => res[0]);
     if (!league) throw new Error('League not found');
-
-    if (league.leagueStatus === 'Inactive')
-      throw new Error('League events cannot be updated while the league is inactive');
 
     // ensure the rule is in the league
     const rule = await trx

@@ -138,3 +138,27 @@ export const defaultSecondaryPickSettings: SecondaryPickSettings = {
   publicPicks: DEFAULT_SECONDARY_PICK_PUBLIC_PICKS,
   multiplier: DEFAULT_SECONDARY_PICK_MULTIPLIER,
 };
+
+// Commissioners can keep logging custom events this long after the finale airs
+export const CUSTOM_EVENT_GRACE_DAYS = 7;
+const CUSTOM_EVENT_GRACE_MS = CUSTOM_EVENT_GRACE_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+  * Whether custom events can still be created, edited or deleted. Leagues go
+  * inactive as the finale ends, but stay open for custom events for a week
+  * after the finale airs. Leagues that never drafted have nothing to score.
+  * @param status The league's status
+  * @param finaleDate When the season's finale aired, if known
+  * @param neverDrafted Whether the league ended before drafting
+  * @param now Defaults to the current time
+  */
+export function customEventsOpen(
+  status: (typeof LeagueStatuses)[number],
+  finaleDate: Date | string | null | undefined,
+  neverDrafted = false,
+  now = Date.now(),
+) {
+  if (status !== 'Inactive') return true;
+  if (neverDrafted || !finaleDate) return false;
+  return now < new Date(finaleDate).getTime() + CUSTOM_EVENT_GRACE_MS;
+}

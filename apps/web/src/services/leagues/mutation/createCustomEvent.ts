@@ -6,6 +6,7 @@ import { type CustomEventInsert } from '~/types/events';
 import { type VerifiedLeagueMemberAuth } from '~/types/api';
 import { leagueSchema } from '~/server/db/schema/leagues';
 import { customEventReferenceSchema, customEventRuleSchema, customEventSchema } from '~/server/db/schema/customEvents';
+import { assertCustomEventsOpen } from '~/services/leagues/query/customEventsOpen';
 import { sendCustomEventNotification } from '~/services/notifications/events/customEvents';
 
 /**
@@ -20,7 +21,7 @@ export default async function createCustomEventLogic(
   auth: VerifiedLeagueMemberAuth,
   customEvent: CustomEventInsert
 ) {
-  if (auth.status === 'Inactive') throw new Error('League is inactive');
+  await assertCustomEventsOpen(auth);
   // Create custom event in transaction
   const result = await db.transaction(async (trx) => {
     // ensure the rule is in the league
