@@ -70,7 +70,7 @@ export default function ChangeCastaway() {
 
   return (
     <>
-      <View className='rounded-xl border-2 border-primary/20 bg-card p-2 gap-4'>
+      <View className='w-full rounded-xl border-2 border-primary/20 bg-card p-2 gap-4'>
 
         {/* Primary pick section */}
         {uiState === 'no-episode' ? (
