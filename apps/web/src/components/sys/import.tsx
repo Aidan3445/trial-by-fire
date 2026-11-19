@@ -16,7 +16,7 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from '~/components/common/alertDialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/common/tooltip';
-import { Circle, Check, X, Info } from 'lucide-react';
+import { Circle, Check, X, Info, Plus } from 'lucide-react';
 import { type CastawayInsert, type EnrichedCastaway } from '~/types/castaways';
 import { type TribeInsert, type Tribe } from '~/types/tribes';
 import { type Episode } from '~/types/episodes';
@@ -183,6 +183,19 @@ export default function Import() {
     return map;
   }, [episodeDetails, tribeSwaps]);
 
+  // Fandom's episodes, plus any in the database that fandom doesn't list yet
+  const allEpisodes = useMemo(() => {
+    const listed = new Set(episodes.map((episode) => episode.episodeNumber));
+    const dbOnly = (seasonData?.episodes ?? [])
+      .filter((episode) => !listed.has(episode.episodeNumber))
+      .map((episode) => ({
+        episodeNumber: episode.episodeNumber,
+        title: episode.title,
+        airDate: new Date(episode.airDate).toISOString(),
+      }));
+    return [...episodes, ...dbOnly].sort((a, b) => a.episodeNumber - b.episodeNumber);
+  }, [episodes, seasonData?.episodes]);
+
   // Unmatched swaps (episodeNumber = 0)
   const unmatchedSwaps = tribeSwaps.filter(s => s.episodeNumber === 0);
 
@@ -243,9 +256,9 @@ export default function Import() {
       </span>
 
       <div className='overflow-x-scroll flex gap-4 pb-2'>
-        {episodes.map((episode, index) => (
+        {allEpisodes.map((episode) => (
           <ImportEpisode
-            key={index}
+            key={episode.episodeNumber}
             {...episode}
             seasonName={reactForm.watch('seasonName')}
             seasonFinaleDate={season?.finaleDate ?? null}
@@ -254,6 +267,13 @@ export default function Import() {
             allDbEpisodes={seasonData?.episodes ?? []}
             onImported={invalidateAll} />
         ))}
+        {seasonId && (
+          <AddEpisode
+            seasonName={reactForm.watch('seasonName')}
+            episodes={allEpisodes}
+            takenNumbers={allEpisodes.map((episode) => episode.episodeNumber)}
+            onAdded={invalidateAll} />
+        )}
       </div>
 
       {unmatchedSwaps.length > 0 && (
@@ -445,6 +465,76 @@ function ImportEpisode({
         </AlertDialog>
       )}
     </div>
+  );
+}
+
+// ── Add Episode Card ──
+
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+
+interface AddEpisodeProps {
+  seasonName: string;
+  episodes: { episodeNumber: number; airDate: string }[];
+  takenNumbers: number[];
+  onAdded: () => Promise<void>;
+}
+
+/**
+  * Add an episode fandom doesn't list yet
+  */
+function AddEpisode({ seasonName, episodes, takenNumbers, onAdded }: AddEpisodeProps) {
+  const [open, setOpen] = useState(false);
+
+  // The next number, a week after the last episode at the same time
+  const last = episodes.reduce<AddEpisodeProps['episodes'][number] | undefined>((latest, episode) =>
+    !latest || episode.episodeNumber > latest.episodeNumber ? episode : latest, undefined);
+  const episodeNumber = (last?.episodeNumber ?? 0) + 1;
+  const initial: EpisodeDraft = {
+    episodeNumber,
+    title: '',
+    airDate: last ? new Date(new Date(last.airDate).getTime() + WEEK) : new Date(),
+    runtime: defaultRuntime(episodeNumber, false),
+    isMerge: false,
+    isFinale: false,
+  };
+
+  const handleSave = async (draft: EpisodeDraft) => {
+    try {
+      await createEpisode(seasonName, draft);
+      await onAdded();
+      setOpen(false);
+    } catch (error) {
+      console.error('Error adding episode', error);
+      alert('Error adding episode');
+    }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <button
+          type='button'
+          className='flex flex-col items-center justify-center gap-2 min-w-[280px] rounded-lg border-2 border-dashed border-primary/30 p-4 text-muted-foreground hover:bg-primary/5 hover:text-primary'>
+          <Plus />
+          <span className='font-bold'>Add Episode</span>
+          <span className='text-xs'>For episodes fandom doesn&apos;t list yet</span>
+        </button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className='max-w-xl' customOverlay>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Add Episode</AlertDialogTitle>
+          <AlertDialogDescription>Adds an episode to {seasonName}.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogCancel className='absolute top-2 right-2 h-min p-1'>
+          <X stroke='white' />
+        </AlertDialogCancel>
+        <EpisodeEditor
+          initial={initial}
+          existing={false}
+          takenNumbers={takenNumbers}
+          onSave={handleSave} />
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
