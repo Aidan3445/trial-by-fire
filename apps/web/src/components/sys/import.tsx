@@ -277,7 +277,7 @@ export default function Import() {
       </div>
 
       {unmatchedSwaps.length > 0 && (
-        <div className='bg-destructive/10 border border-destructive/30 rounded-lg p-4 space-y-2'>
+        <div className='bg-card/40 border border-destructive/30 rounded-lg p-4 space-y-2'>
           <h3 className='font-bold text-destructive'>Unmatched Tribe Events (episode unknown)</h3>
           <p className='text-xs text-muted-foreground'>
             These tribe swap/merge events couldn&apos;t be auto-matched to an episode.
