@@ -38,8 +38,9 @@ export function useShotInTheDark() {
       return 'hidden';
     }
 
+    // Once it's used up there's nothing left to do with it
     if (hasUsedThisSeason && !isPending) {
-      return 'used';
+      return 'hidden';
     }
 
     if (!isActivationWindow && !isPending) {

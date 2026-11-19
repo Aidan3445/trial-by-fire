@@ -45,20 +45,8 @@ export default function ShotInTheDark({ className }: ShotInTheDarkProps) {
   const nextEpisode = leagueData.keyEpisodes?.nextEpisode;
   const isActivationWindow = previousEpisode?.airStatus !== 'Airing' && !!nextEpisode;
 
-  // If already used and not pending, show used message
-  if (hasUsedThisSeason && !isPending) {
-    return (
-      <Card className={cn('p-4 opacity-50 border-2 rounded-md', className)}>
-        <div className='flex items-center gap-2 mb-2'>
-          <ShieldCheck className='w-5 h-5 stroke-muted-foreground' />
-          <h3 className='font-bold text-muted-foreground'>Shot in the Dark</h3>
-        </div>
-        <p className='text-sm text-muted-foreground'>
-          Shot in the Dark has been used this season
-        </p>
-      </Card>
-    );
-  }
+  // Once it's used up there's nothing left to do with it
+  if (hasUsedThisSeason && !isPending) return null;
 
   // If not in activation window and not pending, don't show
   if (!isActivationWindow && !isPending) {
