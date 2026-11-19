@@ -26,6 +26,7 @@ export default function ChangeCastaway() {
     closedDialog,
     markDialogClosed,
     uiState,
+    remainingActions,
     hoursRemainingForPriority,
   } = useChangeCastaway();
 
@@ -158,13 +159,36 @@ export default function ChangeCastaway() {
           <Text className='text-xl font-black uppercase tracking-tight text-foreground text-center'>
             Oh no!
           </Text>
-          <Text className='text-base text-muted-foreground'>
-            Your survivor was eliminated, but you get another chance.
-            {'\n\n'}
-            Choose from the remaining castaways to continue earning points.
-            {'\n\n'}
-            You're still in it, good luck!
-          </Text>
+          {uiState !== 'no-castaways' ? (
+            <Text className='text-base text-muted-foreground'>
+              Your survivor was eliminated, but you get another chance.
+              {'\n\n'}
+              Choose from the remaining castaways to continue earning points.
+              {'\n\n'}
+              You're still in it, good luck!
+            </Text>
+          ) : remainingActions.length > 0 ? (
+            <View className='gap-2'>
+              <Text className='text-base text-muted-foreground'>
+                Your survivor was eliminated and there are no castaways left to pick,
+                but you can still earn points with:
+              </Text>
+              <View className='gap-1 pl-2'>
+                {remainingActions.map((action) => (
+                  <Text key={action} className='text-base text-foreground'>• {action}</Text>
+                ))}
+              </View>
+              <Text className='text-base text-muted-foreground'>
+                You're still in it, good luck!
+              </Text>
+            </View>
+          ) : (
+            <Text className='text-base text-muted-foreground'>
+              Your survivor was eliminated and there are no castaways left to pick.
+              {'\n\n'}
+              The Tribe has spoken
+            </Text>
+          )}
           <Button
             onPress={markDialogClosed}
             className='rounded-lg bg-primary p-3 active:opacity-80'>

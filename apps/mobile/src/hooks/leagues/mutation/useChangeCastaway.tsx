@@ -6,6 +6,8 @@ import { Alert } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLeagueActionDetails } from '~/hooks/leagues/enrich/useActionDetails';
 import { useEliminations } from '~/hooks/seasons/useEliminations';
+import { useLeagueRules } from '~/hooks/leagues/query/useLeagueRules';
+import { getRemainingActions } from '~/lib/events';
 import { useFetch } from '~/hooks/helpers/useFetch';
 import { type LeagueMember } from '~/types/leagueMembers';
 import * as StoreReview from 'expo-store-review';
@@ -36,7 +38,10 @@ export function useChangeCastaway() {
     keyEpisodes,
     leagueMembers,
     membersWithPicks,
+    settings,
   } = useLeagueActionDetails();
+  // Unfiltered rules: the action details rules only cover the current timing
+  const { data: rules } = useLeagueRules();
 
   const { data: eliminations } = useEliminations(league?.seasonId ?? null);
 
@@ -174,6 +179,13 @@ export function useChangeCastaway() {
     return 'can-pick';
   }, [league, availableCastaways, keyEpisodes, pickPriority, loggedInMemberId, dialogOpen, priorityTimeLeft]);
 
+  // What's left to play for when there's no survivor to swap to
+  const remainingActions = useMemo(() => getRemainingActions({
+    rules,
+    secondaryPickEnabled: !!settings?.secondaryPickEnabled,
+    keyEpisodes,
+  }), [rules, settings, keyEpisodes]);
+
   const canSubmitMain =
     formSchema.safeParse(form.watch())?.success &&
     !isSubmitting &&
@@ -199,6 +211,7 @@ export function useChangeCastaway() {
     setDialogOpen,
     markDialogClosed,
     uiState,
+    remainingActions,
     hoursRemainingForPriority: priorityTimeLeft,
   };
 }

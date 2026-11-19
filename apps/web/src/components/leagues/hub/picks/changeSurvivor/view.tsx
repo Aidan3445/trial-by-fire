@@ -18,6 +18,8 @@ import { useLeagueActionDetails } from '~/hooks/leagues/enrich/useLeagueActionDe
 import chooseCastaway from '~/actions/chooseCastaway';
 import { type LeagueMember } from '~/types/leagueMembers';
 import { useEliminations } from '~/hooks/seasons/useEliminations';
+import { useLeagueRules } from '~/hooks/leagues/useLeagueRules';
+import { getRemainingActions } from '~/lib/events';
 import { Card, CardContent } from '~/components/common/card';
 import ShotInTheDark from '~/components/leagues/hub/picks/shotInTheDark/view';
 import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker/view';
@@ -44,8 +46,18 @@ export default function ChangeCastaway() {
     keyEpisodes,
     leagueMembers,
     membersWithPicks,
+    settings,
   } = useLeagueActionDetails();
   const { data: eliminations } = useEliminations(league?.seasonId ?? null);
+  // Unfiltered rules: the action details rules only cover the current timing
+  const { data: rules } = useLeagueRules();
+
+  // What's left to play for when there's no survivor to swap to
+  const remainingActions = useMemo(() => getRemainingActions({
+    rules,
+    secondaryPickEnabled: !!settings?.secondaryPickEnabled,
+    keyEpisodes,
+  }), [rules, settings, keyEpisodes]);
 
   const reactForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -308,13 +320,34 @@ export default function ChangeCastaway() {
             <AlertDialogTitle className='text-center'>
               Oh no!
             </AlertDialogTitle>
-            <AlertDialogDescription className='text-left'>
-              Your survivor was eliminated, but you get another chance.
-              <br />
-              Choose from the reaming castaways to continue earning points.
-              <br />
-              {'You\'re still in it, good luck!'}
-            </AlertDialogDescription>
+            {!allCastawaysTaken ? (
+              <AlertDialogDescription className='text-left'>
+                Your survivor was eliminated, but you get another chance.
+                <br />
+                Choose from the remaining castaways to continue earning points.
+                <br />
+                {'You\'re still in it, good luck!'}
+              </AlertDialogDescription>
+            ) : remainingActions.length > 0 ? (
+              <AlertDialogDescription asChild className='text-left'>
+                <div className='flex flex-col gap-2'>
+                  <span>
+                    Your survivor was eliminated and there are no castaways left to pick,
+                    but you can still earn points with:
+                  </span>
+                  <ul className='list-disc pl-6 text-foreground'>
+                    {remainingActions.map((action) => <li key={action}>{action}</li>)}
+                  </ul>
+                  <span>{'You\'re still in it, good luck!'}</span>
+                </div>
+              </AlertDialogDescription>
+            ) : (
+              <AlertDialogDescription className='text-left'>
+                Your survivor was eliminated and there are no castaways left to pick.
+                <br />
+                Thanks for playing, better luck next time!
+              </AlertDialogDescription>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction className='w-full' onClick={markModalClosed}>
