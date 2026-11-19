@@ -25,6 +25,8 @@ import { type EventWithReferences, type BaseEventName } from '~/types/events';
 import { BaseEventNames } from '~/lib/events';
 import { cn } from '~/lib/utils';
 import createEpisode from '~/actions/sys/createEpisode';
+import updateEpisode from '~/actions/sys/updateEpisode';
+import EpisodeEditor, { defaultRuntime, type EpisodeDraft } from '~/components/sys/episodes/editor';
 import createTribe from '~/actions/sys/createTribe';
 import createCastaway from '~/actions/sys/createCastaway';
 import createSeason from '~/actions/sys/createSeason';
@@ -314,100 +316,99 @@ function ImportEpisode({
   seasonName, episodeNumber, title, airDate, seasonFinaleDate,
   parsedEvents, seasonData, allDbEpisodes, onImported,
 }: ImportEpisodeProps) {
+  const [editing, setEditing] = useState(false);
   const dbEpisode = seasonData?.episodes.find(ep => ep.episodeNumber === episodeNumber);
-  // Importing the premiere or finale sets the season's premiere or finale date,
-  // and leagues end once the finale's runtime is over, so guess those well
-  const airsOnFinaleDate = !!seasonFinaleDate
-    && new Date(seasonFinaleDate).toDateString() === new Date(airDate).toDateString();
-  // The wiki only lists the finale date once it's announced
-  const guessFinale = !!dbEpisode?.isFinale || airsOnFinaleDate;
-  const defaultRuntime = (finale: boolean) => finale ? 180 : episodeNumber === 1 ? 120 : 90;
-  const [isMerge, setIsMerge] = useState(dbEpisode?.isMerge ?? false);
-  const [isFinale, setIsFinale] = useState(guessFinale);
-  const [runtime, setRuntime] = useState(dbEpisode?.runtime ?? defaultRuntime(guessFinale));
-  // Stop following the guesses once edited by hand
-  const [touched, setTouched] = useState({ flags: false, runtime: false });
+  const fandom = { title: title.replaceAll('"', ''), airDate: new Date(airDate) };
+  // Leagues end once the finale's runtime is over, so guess it well.
+  // The wiki only lists the finale date once it's announced.
+  const guessFinale = !!seasonFinaleDate
+    && new Date(seasonFinaleDate).toDateString() === fandom.airDate.toDateString();
 
-  // The database's episodes can load after this card first renders: catch up
-  const guessKey = `${dbEpisode?.episodeId ?? 'new'}-${guessFinale}`;
-  const [syncedKey, setSyncedKey] = useState(guessKey);
-  if (guessKey !== syncedKey) {
-    setSyncedKey(guessKey);
-    if (!touched.flags) {
-      setIsMerge(dbEpisode?.isMerge ?? false);
-      setIsFinale(guessFinale);
-    }
-    if (!touched.runtime) setRuntime(dbEpisode?.runtime ?? defaultRuntime(guessFinale));
-  }
-
-  const toggleFinale = () => {
-    const finale = !isFinale;
-    setIsFinale(finale);
-    setTouched((current) => ({ ...current, flags: true }));
-    // Finales run long; follow the checkbox until the runtime is set by hand
-    if (!touched.runtime) setRuntime(defaultRuntime(finale));
+  // What's in the database, else what fandom lists
+  const current: EpisodeDraft = dbEpisode ? {
+    episodeNumber: dbEpisode.episodeNumber,
+    title: dbEpisode.title,
+    airDate: new Date(dbEpisode.airDate),
+    runtime: dbEpisode.runtime,
+    isMerge: dbEpisode.isMerge,
+    isFinale: dbEpisode.isFinale,
+  } : {
+    episodeNumber,
+    ...fandom,
+    runtime: defaultRuntime(episodeNumber, guessFinale),
+    isMerge: false,
+    isFinale: guessFinale,
   };
 
   const existingEvents = dbEpisode
     ? seasonData?.baseEvents[episodeNumber]
     : undefined;
 
-  const handleSubmit = async () => {
+  const handleSave = async (draft: EpisodeDraft) => {
     try {
-      await createEpisode(seasonName, {
-        episodeNumber,
-        title: title.replaceAll('"', ''),
-        airDate: new Date(airDate),
-        isMerge,
-        isFinale,
-        runtime,
-      });
+      if (dbEpisode) {
+        await updateEpisode({ episodeId: dbEpisode.episodeId, ...draft });
+      } else {
+        await createEpisode(seasonName, draft);
+      }
       await onImported();
-      alert('Episode imported successfully');
+      setEditing(false);
     } catch (error) {
-      console.error('Error importing episode', error);
-      alert('Error importing episode');
+      console.error('Error saving episode', error);
+      alert(`Error ${dbEpisode ? 'updating' : 'importing'} episode`);
     }
   };
 
   return (
-    <div className='items-center bg-card rounded-lg p-4 min-w-[280px]'>
-      <h2 className='font-bold'>Episode {episodeNumber}</h2>
-      <p>{title}</p>
-      <p>{new Date(airDate).toDateString()}</p>
-      {dbEpisode && (
-        <span className='text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded-full'>
-          DB ID: {dbEpisode.episodeId}
-        </span>
-      )}
-      <form action={() => handleSubmit()}>
-        <label className='inline-flex items-center space-x-2'>
-          <input
-            type='checkbox'
-            checked={isMerge}
-            onChange={() => {
-              setIsMerge(!isMerge);
-              setTouched((current) => ({ ...current, flags: true }));
-            }} />
-          <span>Is Merge</span>
-        </label>
-        <label className='inline-flex items-center space-x-2 ml-4'>
-          <input type='checkbox' checked={isFinale} onChange={toggleFinale} />
-          <span>Is Finale</span>
-        </label>
-        <label className='inline-flex items-center space-x-2 ml-4'>
-          <span>Runtime (minutes):</span>
-          <input
-            type='number'
-            value={runtime}
-            onChange={(e) => {
-              setRuntime(parseInt(e.target.value, 10));
-              setTouched((current) => ({ ...current, runtime: true }));
-            }}
-            className='w-16 text-right rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50' />
-        </label>
-        <Button type='submit'>Import Episode</Button>
-      </form>
+    <div className='flex flex-col gap-1 bg-card rounded-lg p-4 min-w-[280px]'>
+      <h2 className='font-bold'>Episode {current.episodeNumber}</h2>
+      <p>{current.title}</p>
+      <p className='text-sm'>{current.airDate.toLocaleString()}</p>
+      <p className='text-sm text-muted-foreground'>{current.runtime} minutes</p>
+      <div className='flex flex-wrap gap-1'>
+        {dbEpisode ? (
+          <span className='text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded-full'>
+            DB ID: {dbEpisode.episodeId}
+          </span>
+        ) : (
+          <span className='text-xs bg-destructive/20 text-destructive px-2 py-1 rounded-full'>
+            Not in DB
+          </span>
+        )}
+        {current.isMerge && (
+          <span className='text-xs bg-blue-500/20 text-blue-500 px-2 py-1 rounded-full'>Merge</span>
+        )}
+        {current.isFinale && (
+          <span className='text-xs bg-primary/20 text-primary px-2 py-1 rounded-full'>Finale</span>
+        )}
+      </div>
+
+      <AlertDialog open={editing} onOpenChange={setEditing}>
+        <AlertDialogTrigger asChild>
+          <Button className='mt-2 w-full'>
+            {dbEpisode ? 'Edit Episode' : 'Import Episode'}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent className='max-w-xl' customOverlay>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dbEpisode ? 'Edit' : 'Import'} Episode {episodeNumber}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dbEpisode ? 'Already imported; saving updates it.' : 'Check what fandom lists before importing.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogCancel className='absolute top-2 right-2 h-min p-1'>
+            <X stroke='white' />
+          </AlertDialogCancel>
+          <EpisodeEditor
+            initial={current}
+            existing={!!dbEpisode}
+            takenNumbers={allDbEpisodes
+              .filter((ep) => ep.episodeId !== dbEpisode?.episodeId)
+              .map((ep) => ep.episodeNumber)}
+            reference={{ source: 'Fandom', ...fandom }}
+            onSave={handleSave} />
+        </AlertDialogContent>
+      </AlertDialog>
 
       {parsedEvents.length > 0 && (
         <AlertDialog>

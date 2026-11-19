@@ -66,11 +66,12 @@ export async function createEpisodeLogic(
 
     if (!newEpisode) throw new Error('Failed to create episode');
 
-    // Season premiere and finale dates come from the episodes
-    revalidateTag('seasons', 'max');
+    // Season premiere and finale dates come from the episodes.
+    // Expired right away so the sys admin editors show the change on their next fetch.
+    revalidateTag('seasons', { expire: 0 });
 
     // Invalidate cache for the season's episodes
-    revalidateTag(`episodes-${season.seasonId}`, 'max');
+    revalidateTag(`episodes-${season.seasonId}`, { expire: 0 });
 
     return {
       newEpisode,

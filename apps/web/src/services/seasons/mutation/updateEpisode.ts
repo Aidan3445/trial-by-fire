@@ -46,11 +46,12 @@ export async function updateEpisodeLogic(
 
     if (!update) throw new Error('Failed to update episode');
 
-    // Season premiere and finale dates come from the episodes
-    revalidateTag('seasons', 'max');
+    // Season premiere and finale dates come from the episodes.
+    // Expired right away so the sys admin editors show the change on their next fetch.
+    revalidateTag('seasons', { expire: 0 });
 
     // Invalidate cache for the season's episodes
-    revalidateTag(`episodes-${update.seasonId}`, 'max');
+    revalidateTag(`episodes-${update.seasonId}`, { expire: 0 });
 
     // Jobs queued for the old time skip themselves, so queue new ones
     const moved = before?.airDate !== update.airDate || before.runtime !== update.runtime;
