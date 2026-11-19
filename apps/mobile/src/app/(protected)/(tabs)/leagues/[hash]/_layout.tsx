@@ -35,8 +35,9 @@ export default function LeagueLayout() {
       return <Redirect href={`/leagues/${hash}/draft`} />;
     }
 
+    // Finished leagues, including ones that never drafted, live on the hub
     if (
-      league.status === 'Active' &&
+      (league.status === 'Active' || league.status === 'Inactive') &&
       (currentLeaf === 'draft' || currentLeaf === 'predraft')
     ) {
       return <Redirect href={`/leagues/${hash}`} />;
