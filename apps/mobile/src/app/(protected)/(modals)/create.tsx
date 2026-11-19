@@ -40,7 +40,7 @@ export default function CreateLeagueScreen({ onSubmit }: CreateLeagueFormProps) 
     const now = Date.now();
     return seasons
       ?.filter((season) => !season.finaleDate || new Date(season.finaleDate).getTime() > now)
-      .toSorted((a, b) => new Date(a.premiereDate).getTime() - new Date(b.premiereDate).getTime())[0]
+      .sort((a, b) => new Date(a.premiereDate).getTime() - new Date(b.premiereDate).getTime())[0]
       ?.seasonId ?? null;
   }, [seasons]);
   // A cached empty cast may be stale, so check again
