@@ -47,7 +47,7 @@ export default function NeverDrafted() {
             <Button
               className='flex-row items-center justify-center gap-2 rounded-lg bg-primary p-3'
               onPress={() => router.push({ pathname: '/(modals)/recreate', params: { hash: league.hash } })}>
-              <Text className='text-center font-semibold text-white'>Clone for next season</Text>
+              <Text className='text-center font-semibold text-white'>Clone League</Text>
               <Recycle size={16} color='white' />
             </Button>
             <Button
