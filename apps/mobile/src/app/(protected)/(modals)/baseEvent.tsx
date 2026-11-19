@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Platform } from 'react-native';
 import { useSysAdmin } from '~/hooks/user/useSysAdmin';
 import { useMemo, useState } from 'react';
-import BaseEventHeader from '~/components/leagues/actions/events/base/header/view';
+import ManagerHeader from '~/components/sys/managerHeader';
 import { useSeasonsData } from '~/hooks/seasons/useSeasonsData';
 import CreateBaseEvent from '~/components/leagues/actions/events/base/create';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,8 +40,9 @@ export default function BaseEventScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className='flex-1 bg-background pt-16 justify-center items-center'>
-        <BaseEventHeader
-          seasons={scoreData ?? []}
+        <ManagerHeader
+          title='Base Event Manager'
+          seasonNames={scoreData?.map(({ season }) => season.name) ?? []}
           value={selectedSeason}
           setValue={setSelectedSeason} />
         <Text className='text-lg text-center'>Checking Sys Admin Status...</Text>
@@ -58,8 +59,9 @@ export default function BaseEventScreen() {
     <SafeAreaRefreshView
       className={cn('pt-8', refreshing && Platform.OS === 'ios' && 'pt-12')}
       header={
-        <BaseEventHeader
-          seasons={scoreData ?? []}
+        <ManagerHeader
+          title='Base Event Manager'
+          seasonNames={scoreData?.map(({ season }) => season.name) ?? []}
           value={selectedSeason}
           setValue={setSelectedSeason} />
       }
