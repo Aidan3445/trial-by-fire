@@ -10,6 +10,7 @@ import Modal from '~/components/common/modal';
 import { getContrastingColor } from '@uiw/color-convert';
 import Button from '~/components/common/button';
 import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker';
+import { SnuffedIcon } from '~/components/icons/generated';
 
 export default function ChangeCastaway() {
   const {
@@ -27,6 +28,7 @@ export default function ChangeCastaway() {
     markDialogClosed,
     uiState,
     remainingActions,
+    hasPrimaryPick,
     hoursRemainingForPriority,
   } = useChangeCastaway();
 
@@ -151,7 +153,8 @@ export default function ChangeCastaway() {
           </View>
         )}
 
-        <ShotInTheDark />
+        {/* Shot in the Dark protects a survivor pick, so it's moot without one */}
+        {hasPrimaryPick && <ShotInTheDark />}
       </View>
 
       <Modal visible={dialogOpen && !closedDialog} onClose={markDialogClosed}>
@@ -183,11 +186,14 @@ export default function ChangeCastaway() {
               </Text>
             </View>
           ) : (
-            <Text className='text-base text-muted-foreground'>
-              Your survivor was eliminated and there are no castaways left to pick.
-              {'\n\n'}
-              The Tribe has spoken
-            </Text>
+            <View className='items-center gap-3'>
+              <SnuffedIcon width={160} height={119} color={colors.primary} accessibilityLabel='Snuffed torch' />
+              <Text className='self-stretch text-base text-muted-foreground'>
+                Your survivor was eliminated and there are no castaways left to pick.
+                {'\n\n'}
+                The Tribe has spoken
+              </Text>
+            </View>
           )}
           <Button
             onPress={markDialogClosed}

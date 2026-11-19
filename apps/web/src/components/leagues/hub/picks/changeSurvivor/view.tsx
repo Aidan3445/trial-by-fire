@@ -12,6 +12,7 @@ import {
 } from '~/components/common/alertDialog';
 import { getContrastingColor } from '@uiw/color-convert';
 import { useEffect, useMemo, useState } from 'react';
+import { SnuffedIcon } from '~/components/icons/generated';
 import ColorRow from '~/components/shared/colorRow';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLeagueActionDetails } from '~/hooks/leagues/enrich/useLeagueActionDetails';
@@ -308,7 +309,8 @@ export default function ChangeCastaway() {
                 </div>
               )}
 
-              <ShotInTheDark />
+              {/* Shot in the Dark protects a survivor pick, so it's moot without one */}
+              {(!allCastawaysTaken || !!currentSurvivorPick) && <ShotInTheDark />}
             </CardContent>
           </form>
         </Card>
@@ -342,10 +344,16 @@ export default function ChangeCastaway() {
                 </div>
               </AlertDialogDescription>
             ) : (
-              <AlertDialogDescription className='text-left'>
-                Your survivor was eliminated and there are no castaways left to pick.
-                <br />
-                Thanks for playing, better luck next time!
+              <AlertDialogDescription asChild className='text-left'>
+                <div className='flex flex-col items-center gap-3'>
+                  <SnuffedIcon width={160} height={119} className='text-primary' aria-label='Snuffed torch' />
+                  <span className='self-start'>
+                    Your survivor was eliminated and there are no castaways left to pick.
+                    <br />
+                    <br />
+                    The Tribe has spoken
+                  </span>
+                </div>
               </AlertDialogDescription>
             )}
           </AlertDialogHeader>

@@ -179,6 +179,10 @@ export function useChangeCastaway() {
     return 'can-pick';
   }, [league, availableCastaways, keyEpisodes, pickPriority, loggedInMemberId, dialogOpen, priorityTimeLeft]);
 
+  // Still in the survivor game: either holding a live pick or able to take one
+  const hasPrimaryPick = uiState !== 'no-castaways'
+    || membersWithPicks.some((mwp) => mwp.member.memberId === loggedInMemberId && !mwp.out);
+
   // What's left to play for when there's no survivor to swap to
   const remainingActions = useMemo(() => getRemainingActions({
     rules,
@@ -212,6 +216,7 @@ export function useChangeCastaway() {
     markDialogClosed,
     uiState,
     remainingActions,
+    hasPrimaryPick,
     hoursRemainingForPriority: priorityTimeLeft,
   };
 }
