@@ -11,7 +11,7 @@ export default function DeleteLeague() {
     setConfirmName,
     isSubmitting,
     isOwner,
-    isInactive,
+    isLocked,
     canDelete,
     handleDelete
   } = useDeleteLeague();
@@ -22,7 +22,7 @@ export default function DeleteLeague() {
     <View
       className={cn(
         'w-full rounded-xl bg-card p-2 border-2 border-destructive/20 gap-2',
-        isInactive && 'opacity-50'
+        isLocked && 'opacity-50'
       )}>
       {/* Header */}
       <View className='flex-row items-center gap-1 h-8'>
@@ -53,7 +53,7 @@ export default function DeleteLeague() {
           placeholderTextColor={colors.primary}
           value={confirmName}
           onChangeText={setConfirmName}
-          editable={!isInactive} />
+          editable={!isLocked} />
       </View>
 
       {/* Delete Button */}
@@ -69,7 +69,7 @@ export default function DeleteLeague() {
         </Text>
       </Button>
 
-      {isInactive && (
+      {isLocked && (
         <Text className='text-sm text-destructive'>
           This league is already inactive and cannot be deleted.
         </Text>

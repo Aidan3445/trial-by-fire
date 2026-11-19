@@ -17,12 +17,19 @@ export default async function deleteLeagueLogic(auth: VerifiedLeagueMemberAuth) 
   if (auth.role !== 'Owner') {
     throw new Error('User not authorized to delete league');
   }
-  if (auth.status === 'Inactive') {
-    throw new Error('League is inactive');
-  }
 
   // Delete the league in a transaction
   return db.transaction(async (trx) => {
+    // Finished leagues are kept for their history, but ones that never drafted can go
+    if (auth.status === 'Inactive') {
+      const league = await trx
+        .select({ neverDrafted: leagueSchema.neverDrafted })
+        .from(leagueSchema)
+        .where(eq(leagueSchema.leagueId, auth.leagueId))
+        .then((res) => res[0]);
+      if (!league?.neverDrafted) throw new Error('League is inactive');
+    }
+
     // Delete the league
     await trx
       .delete(leagueSchema)

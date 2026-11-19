@@ -22,8 +22,11 @@ export default function DeleteLeague() {
     },
   });
 
+  // Finished leagues are kept, but ones that never drafted can be deleted
+  const locked = league?.status === 'Inactive' && !league.neverDrafted;
+
   const handleSubmit = reactForm.handleSubmit(async (data) => {
-    if (!league || league.status === 'Inactive') return;
+    if (!league || locked) return;
 
     if (data.confirmName !== league.name) {
       alert('League name does not match. Please type the league name exactly to confirm deletion.');
@@ -52,7 +55,7 @@ export default function DeleteLeague() {
   }
 
   return (
-    <div className={league?.status === 'Inactive' ? 'pointer-events-none opacity-50' : ''}>
+    <div className={locked ? 'pointer-events-none opacity-50' : ''}>
       <Form {...reactForm}>
         <form
           action={() => handleSubmit()}
@@ -87,12 +90,12 @@ export default function DeleteLeague() {
               type='submit'
               className='mt-auto font-bold uppercase text-xs tracking-wider'
               variant='destructive'
-              disabled={league?.status === 'Inactive'
+              disabled={locked
                 || reactForm.watch('confirmName') !== league?.name
                 || reactForm.formState.isSubmitting}>
               {reactForm.formState.isSubmitting ? 'Deleting...' : 'Delete League'}
             </Button>
-            {league?.status === 'Inactive' && (
+            {locked && (
               <p className='text-sm text-red-600'>
                 This league is already inactive and cannot be deleted.
               </p>

@@ -40,7 +40,9 @@ export default function LeagueCard({
 
           {/* Draft Status */}
           <View className='mt-3'>
-            {currentSelection ? (
+            {league.neverDrafted && league.status === 'Inactive' ? (
+              <Text className='font-bold text-muted-foreground'>Never drafted</Text>
+            ) : currentSelection ? (
               <View className='flex-row items-center gap-1'>
                 <Text className='font-bold text-muted-foreground'>Draft:</Text>
                 <Text className='italic text-muted-foreground' numberOfLines={1}>

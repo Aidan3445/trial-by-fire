@@ -8,7 +8,10 @@ import { useLeague } from '~/hooks/leagues/query/useLeague';
 import { useLeagueMembers } from '~/hooks/leagues/query/useLeagueMembers';
 import { useLeagueRefresh } from '~/hooks/helpers/refresh/useLeagueRefresh';
 
-export function useDeleteLeague() {
+/**
+ * @param requireName Require typing the league name before deleting; the alert confirms either way
+ */
+export function useDeleteLeague(requireName = true) {
   const { keysToInvalidate } = useLeagueRefresh();
   const deleteData = useFetch('DELETE');
   const queryClient = useQueryClient();
@@ -21,8 +24,9 @@ export function useDeleteLeague() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isOwner = leagueMembers?.loggedIn?.role === 'Owner';
-  const isInactive = league?.status === 'Inactive';
-  const canDelete = confirmName === league?.name && !isInactive && !isSubmitting;
+  // Finished leagues are kept, unless they ended before ever drafting
+  const isLocked = league?.status === 'Inactive' && !league.neverDrafted;
+  const canDelete = (!requireName || confirmName === league?.name) && !isLocked && !isSubmitting;
 
   const performDelete = async () => {
     if (!league || !hash) return;
@@ -88,7 +92,7 @@ export function useDeleteLeague() {
     setConfirmName,
     isSubmitting,
     isOwner,
-    isInactive,
+    isLocked,
     canDelete,
     handleDelete,
     resetConfirmation
