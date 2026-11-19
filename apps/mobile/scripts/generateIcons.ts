@@ -12,7 +12,8 @@
 import fs from 'fs';
 import path from 'path';
 
-const ICONS_DIR = path.resolve('~/../../your-survivor-fantasy/assets/icons');
+// Shared with web; run from apps/mobile
+const ICONS_DIR = path.resolve('../web/assets/icons');
 const OUTPUT_FILE = path.resolve('./src/components/icons/generated.tsx');
 
 // Map of lowercase SVG elements → react-native-svg components
