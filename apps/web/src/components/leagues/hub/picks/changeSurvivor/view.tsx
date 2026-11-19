@@ -118,16 +118,24 @@ export default function ChangeCastaway() {
     }, { pickPriority: [], elim: [] } as { pickPriority: LeagueMember[], elim: LeagueMember[] });
   }, [eliminations, keyEpisodes, membersWithPicks]);
 
+  // Dismissal is remembered per league and elimination episode, so it only returns after a new elimination
+  const dialogKey = league?.hash && keyEpisodes?.previousEpisode
+    ? `closedDialog:${league.hash}:${keyEpisodes.previousEpisode.episodeNumber}`
+    : null;
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [closedDialog, setClosedDialog] = useState(false);
+  const [closedAt, setClosedAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (leagueMembers?.loggedIn && elim.some(member => member.memberId === leagueMembers.loggedIn?.memberId)) {
       setDialogOpen(true);
     }
-    setClosedDialog(localStorage.getItem('closedDialog') ?
-      Date.now() - JSON.parse(localStorage.getItem('closedDialog')!) < 1000 * 60 * 10 : false);
-  }, [elim, leagueMembers]);
+    try {
+      const stored = dialogKey ? Number(localStorage.getItem(dialogKey)) : 0;
+      setClosedAt(stored > 0 ? stored : null);
+    } catch {
+      setClosedAt(null);
+    }
+  }, [elim, leagueMembers, dialogKey]);
 
 
 
@@ -149,8 +157,11 @@ export default function ChangeCastaway() {
     ?? null;
 
   const markModalClosed = () => {
-    setClosedDialog(true);
-    localStorage.setItem('closedDialog', JSON.stringify(Date.now()));
+    const now = Date.now();
+    setClosedAt(now);
+    try {
+      if (dialogKey) localStorage.setItem(dialogKey, String(now));
+    } catch { /* storage unavailable */ }
   };
 
   if (league?.status === 'Inactive') return null;
@@ -164,6 +175,8 @@ export default function ChangeCastaway() {
   // Nobody left to swap to once every castaway is either taken or out for good
   const allCastawaysTaken = (availableCastaways.length > 0 || seasonOver)
     && !availableCastaways.some(castaway => !castaway.pickedBy && !isFinallyEliminated(castaway));
+  // With castaways left to pick the dialog returns after 10 minutes; with none left it stays dismissed
+  const closedDialog = closedAt !== null && (allCastawaysTaken || Date.now() - closedAt < 1000 * 60 * 10);
   const loggedInMemberId = leagueMembers?.loggedIn?.memberId;
 
   const priorityTimeLeft = keyEpisodes?.previousEpisode

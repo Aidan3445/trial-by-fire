@@ -11,6 +11,7 @@ import { getRemainingActions } from '~/lib/events';
 import { useFetch } from '~/hooks/helpers/useFetch';
 import { type LeagueMember } from '~/types/leagueMembers';
 import * as StoreReview from 'expo-store-review';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const formSchema = z.object({
   castawayId: z.coerce.number({ required_error: 'Please select a castaway' }),
@@ -51,7 +52,7 @@ export function useChangeCastaway() {
 
   const [selected, setSelected] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [closedDialog, setClosedDialog] = useState(false);
+  const [closedAt, setClosedAt] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableCastaways = useMemo(() =>
@@ -138,9 +139,26 @@ export function useChangeCastaway() {
     }
   });
 
+  // Dismissal is remembered per league and elimination episode, so it only returns after a new elimination
+  const dialogKey = league?.hash && keyEpisodes?.previousEpisode
+    ? `closedDialog:${league.hash}:${keyEpisodes.previousEpisode.episodeNumber}`
+    : null;
+
+  useEffect(() => {
+    setClosedAt(null);
+    if (!dialogKey) return;
+    let cancelled = false;
+    AsyncStorage.getItem(dialogKey)
+      .then((v) => { if (!cancelled && Number(v) > 0) setClosedAt(Number(v)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [dialogKey]);
+
   const markDialogClosed = async () => {
-    setClosedDialog(true);
+    const now = Date.now();
+    setClosedAt(now);
     setDialogOpen(false);
+    if (dialogKey) AsyncStorage.setItem(dialogKey, String(now)).catch(() => {});
   };
 
   // Matches web: 48h window + episode runtime
@@ -178,6 +196,10 @@ export function useChangeCastaway() {
 
     return 'can-pick';
   }, [league, availableCastaways, keyEpisodes, pickPriority, loggedInMemberId, dialogOpen, priorityTimeLeft]);
+
+  // With castaways left to pick the dialog returns after 10 minutes; with none left it stays dismissed
+  const closedDialog = closedAt !== null
+    && (uiState === 'no-castaways' || Date.now() - closedAt < 1000 * 60 * 10);
 
   // Still in the survivor game: either holding a live pick or able to take one
   const hasPrimaryPick = uiState !== 'no-castaways'
