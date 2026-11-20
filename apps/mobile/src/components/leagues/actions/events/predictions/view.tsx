@@ -21,7 +21,8 @@ export interface MakePredictionsProps {
   tribes: Array<{ tribeId: number; tribeName: string; tribeColor: string }>;
   wallet?: number;
   totalBet?: number;
-  setBetTotal?: (_total: number) => void;
+  /** Bets edited in the form, by event name */
+  setFormBets?: (_bets: Record<string, number>) => void;
   /** Add the weekly secondary pick as the last slide, with a progress rail */
   includeSecondary?: boolean;
 }
@@ -49,15 +50,19 @@ export default function MakePredictions() {
     [actionDetails]
   );
 
-  const [formBetTotal, setFormBetTotal] = useState(0);
+  const [formBets, setFormBets] = useState<Record<string, number>>({});
 
-  const submittedBetTotal = useMemo(() =>
-    predictionsMade.reduce(
-      (total, p) => total + (p.eventId !== null ? 0 : p.bet ?? 0),
-      0
-    ),
+  // Bets on predictions that haven't resolved yet, by event name
+  const submittedBets = useMemo(() =>
+    Object.fromEntries(predictionsMade
+      .filter((p) => p.eventId === null)
+      .map((p) => [p.eventName, p.bet ?? 0])),
     [predictionsMade]
   );
+  const submittedBetTotal = Object.values(submittedBets).reduce((total, bet) => total + bet, 0);
+  // Edits laid over what's saved, worked out in the same render so saved bets
+  // never show as pending while the form catches up
+  const formBetTotal = Object.values({ ...submittedBets, ...formBets }).reduce((total, bet) => total + bet, 0);
 
   const balance = useMemo(() =>
     (scores?.Member[leagueMembers?.loggedIn?.memberId ?? -1]?.slice().pop() ?? 0) -
@@ -76,7 +81,7 @@ export default function MakePredictions() {
   return (
     <View className='rounded-xl border-2 border-primary/20 bg-card overflow-hidden w-full'>
       {/* Header */}
-      <View className='p-3 gap-2'>
+      <View className='px-3 py-1.5 gap-1'>
         {/* Bet Balance (Shauhin Mode) */}
         {rules?.shauhinMode?.enabled && rules.shauhinMode.enabledBets.length > 0 && (
           <View className='absolute top-0 right-0 items-end'>
@@ -118,7 +123,6 @@ export default function MakePredictions() {
 
         {/* Episode Info */}
         <MarqueeText
-          center
           text={`${keyEpisodes.nextEpisode.episodeNumber}: ${keyEpisodes.nextEpisode.title}`}
           className='text-base text-muted-foreground'>
           <AirStatus
@@ -137,7 +141,7 @@ export default function MakePredictions() {
           tribes={tribes}
           wallet={balance + submittedBetTotal}
           totalBet={formBetTotal}
-          setBetTotal={setFormBetTotal}
+          setFormBets={setFormBets}
           includeSecondary />
       )}
     </View>
