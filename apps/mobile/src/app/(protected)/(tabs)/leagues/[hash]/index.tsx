@@ -17,6 +17,7 @@ import SafeAreaRefreshView from '~/components/common/refresh/safeAreaRefreshView
 import { Fragment, useEffect, useMemo, useRef } from 'react';
 import { FOCUS_SECONDARY_PICK_EVENT } from '~/hooks/leagues/mutation/useSecondaryPick';
 import NeverDrafted from '~/components/leagues/hub/neverDrafted/view';
+import CloneRequest from '~/components/leagues/hub/cloneRequest/view';
 import { useSeasons } from '~/hooks/seasons/useSeasons';
 import { useSeasonsData } from '~/hooks/seasons/useSeasonsData';
 import { customEventsOpen } from '~/lib/leagues';
@@ -64,6 +65,7 @@ export default function LeagueHubScreen() {
           {neverDrafted ? <NeverDrafted /> : (
             <>
               <Scores isActive={league?.status === 'Active'} />
+              <CloneRequest />
               <View onLayout={(e) => { picksY.current = e.nativeEvent.layout.y; }}>
                 <MakePredictions />
               </View>

@@ -24,6 +24,7 @@ import LeagueTimeline from '~/components/leagues/hub/activity/leagueTimeline/vie
 import Scores from '~/components/leagues/hub/shared/scores/view';
 import Spacer from '~/components/shared/floatingActions/spacer';
 import NeverDrafted from '~/components/leagues/hub/neverDrafted/view';
+import CloneRequest from '~/components/leagues/hub/cloneRequest/view';
 import { customEventsOpen } from '~/lib/leagues';
 
 export default async function LeaguePage({ params }: LeaguePageProps) {
@@ -82,6 +83,7 @@ export default async function LeaguePage({ params }: LeaguePageProps) {
               {neverDrafted ? <NeverDrafted /> : (
                 <>
                   <Scores isActive={isActive} />
+                  <CloneRequest />
                   <Predictions />
                   {seasonData && <LeagueTimeline initialSeasonData={seasonData} />}
                 </>
