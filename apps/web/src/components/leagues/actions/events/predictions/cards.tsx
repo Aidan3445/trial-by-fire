@@ -24,7 +24,7 @@ export default function PredictionCards({
   tribes,
   wallet,
   totalBet,
-  setBetTotal,
+  setFormBets,
   className,
   includeSecondary
 }: MakePredictionsProps) {
@@ -133,11 +133,8 @@ export default function PredictionCards({
   }, []);
 
   useEffect(() => {
-    if (!setBetTotal) return;
-
-    const totalBet = Object.values(formBetValues).reduce((sum, val) => sum + val, 0);
-    setBetTotal(totalBet);
-  }, [formBetValues, setBetTotal]);
+    setFormBets?.(formBetValues);
+  }, [formBetValues, setFormBets]);
 
   const secondary = useSecondaryPick();
   const showSecondary = !!includeSecondary && secondary.active;

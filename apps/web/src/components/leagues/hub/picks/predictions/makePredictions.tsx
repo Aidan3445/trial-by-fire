@@ -27,12 +27,17 @@ export default function MakePredictions() {
   const tribes = useMemo(() =>
     Object.values(actionDetails ?? {}).map(({ tribe }) => tribe), [actionDetails]);
 
-  const [formBetTotal, setFormBetTotal] = useState(0);
-  const submittedBetTotal = useMemo(() => predictionsMade
-    .reduce((total, p) => total +
-      (p.eventId !== null
-        ? 0
-        : (p.bet ?? 0)), 0), [predictionsMade]);
+  const [formBets, setFormBets] = useState<Record<string, number>>({});
+  // Bets on predictions that haven't resolved yet, by event name
+  const submittedBets = useMemo(() =>
+    Object.fromEntries(predictionsMade
+      .filter((p) => p.eventId === null)
+      .map((p) => [p.eventName, p.bet ?? 0])),
+  [predictionsMade]);
+  const submittedBetTotal = Object.values(submittedBets).reduce((total, bet) => total + bet, 0);
+  // Edits laid over what's saved, worked out in the same render so saved bets
+  // never show as pending while the form catches up
+  const formBetTotal = Object.values({ ...submittedBets, ...formBets }).reduce((total, bet) => total + bet, 0);
   const balance = useMemo(() =>
     (scores?.Member[leagueMembers?.loggedIn?.memberId ?? -1]?.slice().pop() ?? 0) - submittedBetTotal,
     [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal]);
@@ -87,7 +92,7 @@ export default function MakePredictions() {
               tribes={tribes}
               wallet={balance + submittedBetTotal}
               totalBet={formBetTotal}
-              setBetTotal={setFormBetTotal}
+              setFormBets={setFormBets}
               includeSecondary />
           )}
       </CardContent>

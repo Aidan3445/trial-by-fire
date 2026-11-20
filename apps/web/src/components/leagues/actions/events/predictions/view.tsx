@@ -23,7 +23,8 @@ export interface MakePredictionsProps {
   tribes: Tribe[];
   wallet?: number;
   totalBet?: number;
-  setBetTotal?: (_betTotal: number) => void;
+  /** Bets edited in the form, by event name */
+  setFormBets?: (_bets: Record<string, number>) => void;
   className?: string;
   /** Add the weekly secondary pick as the last slide, with a progress rail */
   includeSecondary?: boolean;
