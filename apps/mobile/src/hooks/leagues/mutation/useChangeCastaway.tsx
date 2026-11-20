@@ -53,6 +53,8 @@ export function useChangeCastaway() {
   const [selected, setSelected] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [closedAt, setClosedAt] = useState<number | null>(null);
+  // Which dialog key's dismissal has been read from storage
+  const [checkedKey, setCheckedKey] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableCastaways = useMemo(() =>
@@ -150,7 +152,8 @@ export function useChangeCastaway() {
     let cancelled = false;
     AsyncStorage.getItem(dialogKey)
       .then((v) => { if (!cancelled && Number(v) > 0) setClosedAt(Number(v)); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setCheckedKey(dialogKey); });
     return () => { cancelled = true; };
   }, [dialogKey]);
 
@@ -197,9 +200,10 @@ export function useChangeCastaway() {
     return 'can-pick';
   }, [league, availableCastaways, keyEpisodes, pickPriority, loggedInMemberId, dialogOpen, priorityTimeLeft]);
 
-  // With castaways left to pick the dialog returns after 10 minutes; with none left it stays dismissed
-  const closedDialog = closedAt !== null
-    && (uiState === 'no-castaways' || Date.now() - closedAt < 1000 * 60 * 10);
+  // With castaways left to pick the dialog returns after 10 minutes; with none left it stays dismissed.
+  // Hidden until this league's dismissal is read, so switching leagues doesn't flash it.
+  const closedDialog = dialogKey === null || checkedKey !== dialogKey || (closedAt !== null
+    && (uiState === 'no-castaways' || Date.now() - closedAt < 1000 * 60 * 10));
 
   // Still in the survivor game: either holding a live pick or able to take one
   const hasPrimaryPick = uiState !== 'no-castaways'
