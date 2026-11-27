@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { defaultBasePredictionRules } from '~/lib/leagues';
+import { scoringEventName } from '~/lib/events';
 import { type EnrichedCastaway } from '~/types/castaways';
 import { type EnrichedPrediction, type EnrichedEvent, type Prediction, type ScoringBaseEventName } from '~/types/events';
 import { type LeagueMember } from '~/types/leagueMembers';
@@ -97,7 +98,33 @@ export function useEnrichPredictions(
       return [];
     }
 
-    const predictionGroups: Record<string, EnrichedPrediction> = {};
+    const predictionGroups: Record<string, { prediction: EnrichedPrediction; eventIds: Set<number> }> = {};
+
+    // combine the references of every event with the same name into one prediction row
+    const mergeEvent = (existing: { prediction: EnrichedPrediction; eventIds: Set<number> }, event: EnrichedEvent) => {
+      if (event.eventId === null || existing.eventIds.has(event.eventId)) return;
+      existing.eventIds.add(event.eventId);
+      const target = existing.prediction.event;
+      target.referenceMap = [
+        ...target.referenceMap,
+        ...event.referenceMap.filter(newRef =>
+          !target.referenceMap.some(existingRef =>
+            JSON.stringify(existingRef) === JSON.stringify(newRef)))
+      ];
+      target.references = [
+        ...target.references,
+        ...event.references.filter(newRef =>
+          !target.references.some(existingRef =>
+            existingRef.id === newRef.id &&
+            existingRef.type === newRef.type))
+      ];
+        existing.prediction.event.eventId = null;
+      if (!target.label?.includes(event.label ?? '') && event.label) {
+        target.label = target.label
+          ? `${target.label}#/& ${event.label}`
+          : event.label;
+      }
+    };
 
     for (const prediction of predictions) {
       if (!prediction.eventId || prediction.hit === null) {
@@ -108,8 +135,8 @@ export function useEnrichPredictions(
       if (!eventRef) continue;
       const event = { ...eventRef };
 
-      let existingPrediction = predictionGroups[prediction.eventName];
-      if (!existingPrediction) {
+      let existingGroup = predictionGroups[prediction.eventName];
+      if (!existingGroup) {
         let points: number | null = null;
         if (event.eventSource === 'Base') {
           const basePredictionRules = rules.basePrediction ?? defaultBasePredictionRules;
@@ -120,32 +147,25 @@ export function useEnrichPredictions(
 
         if (points === null) continue;
 
-        existingPrediction = { event, points, hits: [], misses: [] };
-        predictionGroups[prediction.eventName] = existingPrediction;
-      } else if (existingPrediction.event.eventId !== event.eventId) {
-        // we then need to make sure to combine the references if multiple events with the same name exist
-        // only add new references to both referenceMap and references list
-        existingPrediction.event.referenceMap = [
-          ...existingPrediction.event.referenceMap,
-          ...event.referenceMap.filter(newRef =>
-            !existingPrediction!.event.referenceMap.some(existingRef =>
-              JSON.stringify(existingRef) === JSON.stringify(newRef)))
-        ];
-        existingPrediction.event.references = [
-          ...existingPrediction.event.references,
-          ...event.references.filter(newRef =>
-            !existingPrediction!.event.references.some(existingRef =>
-              existingRef.id === newRef.id &&
-              existingRef.type === newRef.type))
-        ];
-        existingPrediction.event.eventId = null;
-        if (!existingPrediction.event.label?.includes(event.label ?? '') && event.label) {
-          const newLabel = existingPrediction.event.label
-            ? `${existingPrediction.event.label}#/& ${event.label}`
-            : event.label;
-          existingPrediction.event.label = newLabel;
+        existingGroup = {
+          prediction: { event, points, hits: [], misses: [] },
+          eventIds: new Set(event.eventId !== null ? [event.eventId] : [])
+        };
+        predictionGroups[prediction.eventName] = existingGroup;
+
+        // pull in sibling results nobody predicted, so every result shows
+        for (const sibling of events ?? []) {
+          if (sibling.episodeNumber !== event.episodeNumber || sibling.eventSource !== event.eventSource) continue;
+          const siblingName = sibling.eventSource === 'Base'
+            ? scoringEventName(sibling.eventName)
+            : sibling.eventName;
+          if (siblingName !== prediction.eventName) continue;
+          mergeEvent(existingGroup, sibling);
         }
+      } else {
+        mergeEvent(existingGroup, event);
       }
+      const existingPrediction = existingGroup.prediction;
 
       const member = lookupMaps.membersById.get(prediction.predictionMakerId);
       if (!member) continue;
@@ -206,8 +226,8 @@ export function useEnrichPredictions(
       }
     }
 
-    return Object.values(predictionGroups);
-  }, [predictions, lookupMaps, findTribe, rules]);
+    return Object.values(predictionGroups).map(group => group.prediction);
+  }, [predictions, lookupMaps, findTribe, rules, events]);
 
   return enrichedPredictions;
 }

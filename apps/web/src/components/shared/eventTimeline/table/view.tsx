@@ -12,6 +12,7 @@ import {
 } from '~/components/common/table';
 import EpisodeEventsTableBody from '~/components/shared/eventTimeline/table/body';
 import { findTribeCastaways } from '~/lib/utils';
+import { scoringEventName } from '~/lib/events';
 import { type Prediction, type EventWithReferences } from '~/types/events';
 import { type SeasonsDataQuery } from '~/types/seasons';
 import type { LeagueData } from '~/components/shared/eventTimeline/filters';
@@ -92,9 +93,13 @@ export default function EpisodeEvents({
           if (matchingEvent) {
             // If the event is from a different episode than where prediction was made
             if (eventEpNum !== episode.episodeNumber) {
-              if (!enrichmentEvents.some(e => e.eventId === matchingEvent.eventId)) {
-                enrichmentEvents.push(matchingEvent);
-              }
+              // every result with this name, so unpredicted ones still show
+              allEvents[eventEpNum]?.forEach((sibling) => {
+                if (sibling.eventName === prediction.eventName
+                  && !enrichmentEvents.some((e) => e.eventId === sibling.eventId)) {
+                  enrichmentEvents.push(sibling);
+                }
+              });
             }
             return true;
           }
@@ -116,10 +121,13 @@ export default function EpisodeEvents({
         if (matchingEvent) {
           // If the event is from a different episode, add it to enrichment only
           if (eventEpNum !== episodeNumber) {
-            // Avoid duplicates
-            if (!enrichmentEvents.some(e => e.eventId === matchingEvent.eventId)) {
-              enrichmentEvents.push(matchingEvent);
-            }
+            // every result with this name, so unpredicted ones still show
+            allEvents[eventEpNum]?.forEach((sibling) => {
+              if (sibling.eventName === prediction.eventName
+                && !enrichmentEvents.some((e) => e.eventId === sibling.eventId)) {
+                enrichmentEvents.push(sibling);
+              }
+            });
           }
           return true;
         }
@@ -222,7 +230,10 @@ export default function EpisodeEvents({
 
         // Check if any predictions for this event exist (without mutating)
         const hasPredictions = filteredPredictions[numKey]?.some((prediction) =>
-          prediction.eventId === event.eventId);
+          prediction.eventId === event.eventId
+          // sibling results nobody predicted still back the prediction row
+          || (prediction.eventEpisodeNumber === numKey
+            && prediction.eventName === (scoringEventName(event.eventName) ?? event.eventName)));
 
         if (keep) {
           return { ...event, predOnly: false };
