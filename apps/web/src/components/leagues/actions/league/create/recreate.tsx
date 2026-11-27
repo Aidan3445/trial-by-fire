@@ -6,8 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 import ColorRow from '~/components/shared/colorRow';
 import { getContrastingColor } from '@uiw/color-convert';
 import { Recycle } from 'lucide-react';
-import { useSeasons } from '~/hooks/seasons/useSeasons';
-import { useLeagueData } from '~/hooks/leagues/enrich/useLeagueData';
+import { useTargetSeason } from '~/hooks/seasons/useTargetSeason';
+import { useCloneOrder } from '~/hooks/leagues/enrich/useCloneOrder';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/common/popover';
 import { cn } from '~/lib/utils';
 import { PopoverArrow } from '@radix-ui/react-popover';
@@ -19,16 +19,11 @@ interface RecreateLeagueProps {
 }
 
 export default function RecreateLeague({ hash }: RecreateLeagueProps) {
-  const { data: seasons } = useSeasons(true);
-  const { sortedMemberScores, leagueMembers } = useLeagueData(hash);
+  const { cloneOrder, leagueMembers, league } = useCloneOrder(hash);
+  const { season: currentSeason } = useTargetSeason(league?.seasonId);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<Set<number>>(new Set());
   const router = useRouter();
-
-  const currentSeason = useMemo(() => {
-    if (!seasons || seasons.length === 0) return null;
-    return seasons[0];
-  }, [seasons]);
 
   const ownerLoggedIn = useMemo(() => {
     if (!leagueMembers?.loggedIn) return false;
@@ -36,17 +31,14 @@ export default function RecreateLeague({ hash }: RecreateLeagueProps) {
   }, [leagueMembers]);
 
   useEffect(() => {
-    if (sortedMemberScores) {
-      setSelectedMembers(new Set(sortedMemberScores.map(({ member }) => member.memberId)));
-    }
-  }, [sortedMemberScores]);
+    setSelectedMembers(new Set(cloneOrder.map((member) => member.memberId)));
+  }, [cloneOrder]);
 
   const handleSubmit = async () => {
     try {
-      const sortedSelectedMembers = sortedMemberScores
-        .toReversed()
-        .filter(({ member }) => selectedMembers.has(member.memberId))
-        .map(({ member }) => member.memberId);
+      const sortedSelectedMembers = cloneOrder
+        .filter((member) => selectedMembers.has(member.memberId))
+        .map((member) => member.memberId);
       const { newHash } = await recreateLeague(hash, sortedSelectedMembers);
       alert('League recreated successfully!');
       router.push(`/leagues/${newHash}/predraft`);
@@ -92,7 +84,7 @@ export default function RecreateLeague({ hash }: RecreateLeagueProps) {
                 Selected members will automatically be added to the new league.
               </AlertDialogDescription>
               <form className='space-y-2' action={handleSubmit}>
-                {sortedMemberScores.toReversed().map(({ member }) => (
+                {cloneOrder.map((member) => (
                   <ColorRow key={member.memberId} color={member.color}>
                     <input
                       type='checkbox'
@@ -115,7 +107,7 @@ export default function RecreateLeague({ hash }: RecreateLeagueProps) {
                       htmlFor={`member-${member.memberId}`}
                       className='text-sm'
                       style={{ color: getContrastingColor(member.color) }}>
-                      {member.displayName} {member.memberId}
+                      {member.displayName}
                     </label>
                   </ColorRow>
                 ))}

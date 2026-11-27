@@ -4,13 +4,24 @@ import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFetch } from '~/hooks/helpers/useFetch';
 import { useLeagueData } from '~/hooks/leagues/enrich/useLeagueData';
+import { type LeagueMember } from '~/types/leagueMembers';
 
 export function useRecreateLeague(hash: string, onSuccess?: () => void) {
   const postData = useFetch('POST');
   const fetchData = useFetch('GET');
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { sortedMemberScores, leagueMembers } = useLeagueData(hash);
+  const { sortedMemberScores: scored, leagueMembers } = useLeagueData(hash);
+
+  // Members without scores (all of them, if the league never drafted) pick first, in their old draft order
+  const sortedMemberScores = useMemo<{ member: LeagueMember }[]>(() => {
+    const scoredIds = new Set(scored.map(({ member }) => member.memberId));
+    const unscored = (leagueMembers?.members ?? [])
+      .filter((member) => !scoredIds.has(member.memberId))
+      .sort((a, b) => b.draftOrder - a.draftOrder)
+      .map((member) => ({ member }));
+    return [...scored, ...unscored];
+  }, [scored, leagueMembers?.members]);
 
   const [selectedMembers, setSelectedMembers] = useState<Set<number>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
