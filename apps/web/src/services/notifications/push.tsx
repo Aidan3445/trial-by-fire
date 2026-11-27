@@ -75,7 +75,7 @@ export async function sendPushToUsers(
  * Send push messages to Expo's push service
  * Handles batching for large numbers of tokens
  */
-async function sendPushMessages(tokens: string[], message: PushMessage) {
+export async function sendPushMessages(tokens: string[], message: PushMessage) {
   const messages: ExpoPushMessage[] = tokens.map((token) => ({
     to: token,
     title: message.title,

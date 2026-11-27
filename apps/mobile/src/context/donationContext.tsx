@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { useAuth } from '@clerk/expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,30 +8,46 @@ import Button from '~/components/common/button';
 import FundingTracker from '~/components/sys/donation/fundingTracker';
 import { useDonationStatus, useFunding, useOptOut, useThankDonations } from '~/hooks/user/useFunding';
 import { useLeagues } from '~/hooks/user/useLeagues';
+import { useFetch } from '~/hooks/helpers/useFetch';
+import { type SurveySeason, useSurveyAnswers } from '~/hooks/user/useSurveyAnswers';
+import SeasonSurvey from '~/components/sys/survey/seasonSurvey';
+import { type SurveyFinishResult } from '~/types/survey';
 
 export const BUY_ME_A_COFFEE_URL = 'https://www.buymeacoffee.com/aidanweinberg';
 const ASKED_SESSION_KEY = 'donation_alert_session';
+// Per season, so the season end ask only shows once
+const SEASON_END_KEY_PREFIX = 'donation_season_end_';
 // After they come back from Buy Me a Coffee, watch for the webhook
 const WATCH_POLL_MS = 5000;
 const WATCH_MS = 2 * 60 * 1000;
 
+type DonationView = 'ask' | 'survey' | 'seasonEnd' | 'thanks';
+
 type DonationContextValue = {
   // Open Buy Me a Coffee, then watch for their tip when the user comes back
   startDonation: () => void;
-  // Thank them for playing a finished season and ask for next season
-  askSeasonEnd: () => void;
+  // Ask about a finished season, then maybe for support toward the next one.
+  // False if something else is showing, so nothing was asked.
+  askSurvey: (_season: SurveySeason) => boolean;
+  // Whether this modal is showing or waiting to show
+  modalOpen: boolean;
+  // Another modal is up, so hold this one until it closes
+  setOtherModalOpen: (_open: boolean) => void;
 };
 
 const DonationContext = createContext<DonationContextValue>({
   startDonation: () => undefined,
-  askSeasonEnd: () => undefined,
+  askSurvey: () => false,
+  modalOpen: false,
+  setOtherModalOpen: () => undefined,
 });
 
 /**
  * Asks for donations toward running costs once per login, for users with an
  * active league who haven't donated or opted out this season. Thanks them once
  * Buy Me a Coffee tells us about a tip from their email.
- * At the end of a season, thanks league members and asks for next season.
+ * At the end of a season, asks league members a short survey, then if they plan
+ * to play again, thanks them and asks for next season.
  */
 export function DonationProvider({ children }: { children: ReactNode }) {
   const { isSignedIn, sessionId } = useAuth();
@@ -40,10 +56,20 @@ export function DonationProvider({ children }: { children: ReactNode }) {
   const { data: status, refetch: refetchStatus } = useDonationStatus();
   const { mutate: markThanked } = useThankDonations();
   const { mutate: optOut } = useOptOut();
+  const postData = useFetch('POST');
 
-  const [view, setView] = useState<'ask' | 'seasonEnd' | 'thanks' | null>(null);
+  const [view, setView] = useState<DonationView | null>(null);
   const [thankedAmount, setThankedAmount] = useState(0);
   const [watching, setWatching] = useState(false);
+  const [otherModalOpen, setOtherModalOpen] = useState(false);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+
+  const [surveySeason, setSurveySeason] = useState<SurveySeason | null>(null);
+  const surveyAnswers = useSurveyAnswers(surveySeason?.seasonId ?? null);
+  const { flush: flushSurvey, reset: resetSurvey } = surveyAnswers;
+  const [finishingSurvey, setFinishingSurvey] = useState(false);
+  const finishingRef = useRef(false);
 
   const unmet = useMemo(() => funding?.goals.filter((goal) => !goal.fulfilled) ?? [], [funding]);
   const unthanked = status?.unthanked ?? null;
@@ -103,10 +129,57 @@ export function DonationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Don't cover up another view
-  const askSeasonEnd = useCallback(() => setView((current) => current ?? 'seasonEnd'), []);
+  const askSurvey = useCallback((season: SurveySeason) => {
+    if (viewRef.current !== null) return false;
+    viewRef.current = 'survey';
+    resetSurvey();
+    setSurveySeason(season);
+    setView('survey');
+    return true;
+  }, [resetSurvey]);
 
-  const value = useMemo(() => ({ startDonation, askSeasonEnd }), [startDonation, askSeasonEnd]);
+  /**
+   * Save anything pending, mark the survey finished, then ask for support
+   * toward next season if they plan to play and haven't been asked.
+   */
+  const finishSurvey = useCallback(async () => {
+    if (!surveySeason || finishingRef.current) return;
+    finishingRef.current = true;
+    setFinishingSurvey(true);
+
+    let askDonation = false;
+    try {
+      await flushSurvey();
+      const res = await postData('/api/survey/finish', { body: { seasonId: surveySeason.seasonId } });
+      if (res.ok) ({ askDonation } = (await res.json()) as SurveyFinishResult);
+      else console.error('Failed to finish survey', res.status);
+    } catch (error) {
+      console.error('Failed to finish survey', error);
+    }
+
+    const askedKey = `${SEASON_END_KEY_PREFIX}${surveySeason.seasonId}`;
+    const showSeasonEnd = askDonation && !!funding && !(await AsyncStorage.getItem(askedKey));
+    if (showSeasonEnd) await AsyncStorage.setItem(askedKey, 'asked');
+    setView((current) => (current === null || current === 'survey'
+      ? (showSeasonEnd ? 'seasonEnd' : null)
+      : current));
+    setFinishingSurvey(false);
+    finishingRef.current = false;
+  }, [surveySeason, flushSurvey, postData, funding]);
+
+  const value = useMemo(() => ({
+    startDonation,
+    askSurvey,
+    modalOpen: view !== null,
+    setOtherModalOpen,
+  }), [startDonation, askSurvey, view]);
   const close = () => {
+    // Closing the survey finishes it. It's already sliding away, so hide it while that saves
+    if (view === 'survey') {
+      setView((current) => (current === 'survey' ? null : current));
+      void finishSurvey();
+      return;
+    }
     // Shown until dismissed, then never again for these donations
     if (view === 'thanks') markThanked();
     setView(null);
@@ -130,7 +203,17 @@ export function DonationProvider({ children }: { children: ReactNode }) {
   return (
     <DonationContext.Provider value={value}>
       {children}
-      <Modal visible={view !== null && !!funding} onClose={close}>
+      <Modal
+        visible={view !== null && (view === 'survey' || !!funding) && !otherModalOpen}
+        onClose={close}>
+        {view === 'survey' && surveySeason && (
+          <SeasonSurvey
+            season={surveySeason}
+            answers={surveyAnswers}
+            finishing={finishingSurvey}
+            onFinish={() => void finishSurvey()} />
+        )}
+
         {funding && (view === 'ask' || view === 'seasonEnd') && (
           <View className='gap-3'>
             <View className='gap-1'>

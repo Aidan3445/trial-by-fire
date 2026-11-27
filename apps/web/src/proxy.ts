@@ -7,6 +7,7 @@ import { leagueSchema } from '~/server/db/schema/leagues';
 import { and, count, eq } from 'drizzle-orm';
 import { leagueMemberSchema } from '~/server/db/schema/leagueMembers';
 import { systemSchema } from '~/server/db/schema/system';
+import { leagueSeasonOver, syncLeagueEnd } from '~/services/seasons/mutation/endSeason';
 
 
 /* Routing Logic
@@ -118,17 +119,24 @@ async function leagueRoute(req: NextRequest, userId: string) {
     const hash = pathname.split('/')[2]!;
     const currentRoute = pathname.split('/')[3];
 
-    const leagueStatus = await db
-      .select({ leagueStatus: leagueSchema.status })
+    const league = await db
+      .select({
+        seasonId: leagueSchema.seasonId,
+        status: leagueSchema.status,
+        neverDrafted: leagueSchema.neverDrafted,
+        seasonOver: leagueSeasonOver(),
+      })
       .from(leagueSchema)
       .innerJoin(leagueMemberSchema, eq(leagueMemberSchema.leagueId, leagueSchema.leagueId))
       .where(and(
         eq(leagueSchema.hash, hash),
         eq(leagueMemberSchema.userId, userId)))
-      .then((leagues) => leagues[0]?.leagueStatus);
-    if (!leagueStatus) {
+      .then((leagues) => leagues[0]);
+    if (!league) {
       return NextResponse.redirect(new URL('/leagues', req.url));
     }
+    // End the league first if its season is over, so it routes to the hub and not predraft
+    const { status: leagueStatus } = await syncLeagueEnd(league);
 
     let expectedRoute: string | undefined;
     if (leagueStatus === 'Predraft') {

@@ -59,7 +59,6 @@ export default function WhileYouWait({
         </Text>
         {titleEpisode && (
           <MarqueeText
-            center
             text={`${titleEpisode.episodeNumber}: ${titleEpisode.title}`}
             className='text-base text-muted-foreground'>
             <AirStatus

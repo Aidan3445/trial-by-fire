@@ -54,25 +54,6 @@ export default function ShotInTheDark({ className }: ShotInTheDarkProps) {
 
   if (uiState === 'hidden') return null;
 
-  // Already used this season
-  if (uiState === 'used') {
-    return (
-      <View
-        className={cn(
-          'rounded-lg border-2 border-primary/20 bg-primary/5 p-4 opacity-50',
-          className
-        )}>
-        <View className='flex-row items-center gap-2 mb-2'>
-          <ShieldCheck size={20} color={colors.mutedForeground} />
-          <Text className='font-bold text-muted-foreground'>Shot in the Dark</Text>
-        </View>
-        <Text className='text-base text-muted-foreground'>
-          Shot in the Dark has been used this season
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <>
       <View

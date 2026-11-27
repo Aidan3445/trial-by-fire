@@ -4,11 +4,16 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Button } from '~/components/common/button';
 import FundingTracker from '~/components/sys/donation/fundingTracker';
-import { SEASON_END_EVENT, startDonation, takeDonationPending } from '~/components/sys/donation/startDonation';
+import {
+  startDonation, SURVEY_EVENT, type SurveyEventDetail, takeDonationPending,
+} from '~/components/sys/donation/startDonation';
+import SeasonSurvey from '~/components/sys/survey/seasonSurvey';
 import { useDonationStatus, useFunding, useOptOut, useThankDonations } from '~/hooks/user/useFunding';
 import { useLeagues } from '~/hooks/user/useLeagues';
 
 const ASKED_SESSION_KEY = 'donation-alert-session';
+// Same key the season end ask used before the survey, so no one is asked twice
+const SEASON_END_KEY_PREFIX = 'donation-season-end-';
 // After they come back from Buy Me a Coffee, watch for the webhook
 const WATCH_POLL_MS = 5000;
 const WATCH_MS = 2 * 60 * 1000;
@@ -39,7 +44,8 @@ export function DonationManager() {
   const { mutate: markThanked } = useThankDonations();
   const { mutate: optOut } = useOptOut();
 
-  const [view, setView] = useState<'ask' | 'seasonEnd' | 'thanks' | null>(null);
+  const [view, setView] = useState<'ask' | 'survey' | 'seasonEnd' | 'thanks' | null>(null);
+  const [survey, setSurvey] = useState<SurveyEventDetail | null>(null);
   const [thankedAmount, setThankedAmount] = useState(0);
   const [watching, setWatching] = useState(false);
 
@@ -92,12 +98,37 @@ export function DonationManager() {
     };
   }, [watching, refetchStatus]);
 
-  // Podium of a finished season: don't cover up another view
+  // End of season survey from a finished league
   useEffect(() => {
-    const onSeasonEnd = () => setView((current) => current ?? 'seasonEnd');
-    window.addEventListener(SEASON_END_EVENT, onSeasonEnd);
-    return () => window.removeEventListener(SEASON_END_EVENT, onSeasonEnd);
+    const onSurvey = (event: Event) => setSurvey((event as CustomEvent<SurveyEventDetail>).detail);
+    window.addEventListener(SURVEY_EVENT, onSurvey);
+    return () => window.removeEventListener(SURVEY_EVENT, onSurvey);
   }, []);
+  // Waits for whatever is showing to close
+  useEffect(() => {
+    if (survey && view === null) setView('survey');
+  }, [survey, view]);
+
+  if (view === 'survey' && survey) {
+    // Skipping it entirely or saying they won't be back means no donation ask
+    const onFinish = ({ askDonation }: { askDonation: boolean }) => {
+      const key = `${SEASON_END_KEY_PREFIX}${survey.seasonId}`;
+      let alreadyAsked = false;
+      try {
+        alreadyAsked = !!localStorage.getItem(key);
+        if (askDonation) localStorage.setItem(key, 'asked');
+      } catch {
+        // Storage blocked: ask anyway
+      }
+      setSurvey(null);
+      setView(askDonation && !alreadyAsked && funding ? 'seasonEnd' : null);
+    };
+    return (
+      <Overlay onDismiss={() => undefined}>
+        <SeasonSurvey seasonId={survey.seasonId} seasonName={survey.seasonName} onFinish={onFinish} />
+      </Overlay>
+    );
+  }
 
   if (!view || !funding) return null;
   const close = () => {

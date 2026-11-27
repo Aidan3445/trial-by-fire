@@ -25,7 +25,9 @@ export const leagueSchema = createTable(
     name: varchar('league_name', { length: 64 }).notNull(),
     status: leagueStatus('league_status').notNull().default('Predraft'),
     seasonId: integer('season_id').references(() => seasonSchema.seasonId, { onDelete: 'cascade' }).notNull(),
-    startWeek: integer('start_week')
+    startWeek: integer('start_week'),
+    // Set when the season ended before the league finished drafting
+    neverDrafted: boolean('never_drafted').notNull().default(false),
   },
   (table) => [
     uniqueIndex('league_hash_unq_idx').on(table.hash),

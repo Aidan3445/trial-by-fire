@@ -22,6 +22,7 @@
     "test:coverage": "vitest run --coverage --config ./vitest.config.ts",
     "test:watch": "vitest watch --config ./vitest.config.ts",
     "qstash:cron": "tsx --env-file=.env ./scripts/setupCron.ts",
+    "qstash:season-cron": "tsx --env-file=.env ./scripts/setupSeasonCron.ts",
     "icons": "tsx scripts/generateIcons.ts"
   },
   "dependencies": {
@@ -76,7 +77,7 @@
     "embla-carousel-react": "^8.5.1",
     "lucide-react": "^0.469.0",
     "nanoid": "^5.0.9",
-    "next": "^16.2.0",
+    "next": "^16.4.6",
     "postgres": "^3.4.5",
     "react": "19.3.0",
     "react-day-picker": "^9.13.0",

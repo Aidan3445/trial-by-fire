@@ -2,63 +2,34 @@ import 'server-only';
 
 import getTribesTimeline from '~/services/seasons/query/tribesTimeline';
 import getEliminations from '~/services/seasons/query/eliminations';
+import { findTribeCastaways } from '~/lib/utils';
 
 /**
   * Get the tribe members of each tribe at a given episode
+  * Uses the same membership rules as the event timeline and scoring,
+  * so castaways eliminated before this episode are left out
   * @param seasonId The season id
-  * @param episodeId The episode id
+  * @param episodeNumber The episode number
   * @returns the castaways and tribes that are active for the selected episode
   * @returnsObj `Record<tribeId, castawayId[]>`
   */
 export default async function getTribeMembers(seasonId: number, episodeNumber: number) {
-  const tribesTimelineReq = getTribesTimeline(seasonId);
-  const eliminationsReq = getEliminations(seasonId);
+  const [tribesTimeline, eliminations] = await Promise.all([
+    getTribesTimeline(seasonId),
+    getEliminations(seasonId),
+  ]);
 
-  const [tribesTimeline, eliminations] = await Promise.all([tribesTimelineReq, eliminationsReq]);
+  // only tribes that exist by this episode
+  const tribeIds = new Set<number>();
+  Object.entries(tribesTimeline).forEach(([ep, tribeUpdates]) => {
+    if (parseInt(ep, 10) > episodeNumber) return;
+    Object.keys(tribeUpdates).forEach((tribeId) => tribeIds.add(parseInt(tribeId, 10)));
+  });
 
   const currentTribes: Record<number, number[]> = {};
-  const eliminatedCastaways = new Set<number>();
-
-  for (let ep = 1; ep <= episodeNumber; ep++) {
-    const tribeUpdates = tribesTimeline[ep];
-    if (tribeUpdates) {
-      Object.entries(tribeUpdates).forEach(([tribeId, castawayIds]) => {
-        const tid = parseInt(tribeId);
-
-        castawayIds.forEach(castawayId => {
-          Object.keys(currentTribes).forEach(existingTribeId => {
-            const etid = parseInt(existingTribeId);
-            const index = currentTribes[etid]?.indexOf(castawayId);
-            if (index !== undefined && index > -1) {
-              currentTribes[etid]?.splice(index, 1);
-            }
-          });
-        });
-
-        // add to the tribe rather than replace it so partial updates
-        // (e.g. a single castaway joining) don't drop existing members
-        currentTribes[tid] ??= [];
-        currentTribes[tid].push(...castawayIds);
-      });
-    }
-
-    if (ep > 2) {
-      const previousEliminations = eliminations[ep - 2];
-      if (previousEliminations) {
-        previousEliminations.forEach(({ castawayId }) => {
-          eliminatedCastaways.add(castawayId);
-
-          Object.keys(currentTribes).forEach(tribeId => {
-            const tid = parseInt(tribeId);
-            const index = currentTribes[tid]?.indexOf(castawayId);
-            if (index !== undefined && index > -1) {
-              currentTribes[tid]?.splice(index, 1);
-            }
-          });
-        });
-      }
-    }
-  }
+  tribeIds.forEach((tribeId) => {
+    currentTribes[tribeId] = findTribeCastaways(tribesTimeline, eliminations, tribeId, episodeNumber);
+  });
 
   return currentTribes;
 }

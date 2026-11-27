@@ -13,7 +13,7 @@ export function useTribeMembers(seasonId: number | null, episodeNumber: number |
   const refreshConfig = useRefreshConfig(isEpisodeAiring);
 
   return useQuery<Record<number, number[]>>({
-    queryKey: ['tribeMembers', seasonId],
+    queryKey: ['tribeMembers', seasonId, episodeNumber],
     queryFn: async () => {
       if (!seasonId || !episodeNumber) {
         return {};

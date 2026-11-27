@@ -33,9 +33,10 @@ export function startDonation() {
   window.open(BUY_ME_A_COFFEE_LINK, '_blank', 'noopener,noreferrer');
 }
 
-export const SEASON_END_EVENT = 'donation-season-end';
+export const SURVEY_EVENT = 'season-survey';
+export type SurveyEventDetail = { seasonId: number; seasonName: string };
 
-// Show the end of season ask, thanking them for playing 
-export function askSeasonEndDonation() {
-  window.dispatchEvent(new Event(SEASON_END_EVENT));
+// Show the end of season survey, which can lead into the season end ask
+export function askSeasonSurvey(detail: SurveyEventDetail) {
+  window.dispatchEvent(new CustomEvent<SurveyEventDetail>(SURVEY_EVENT, { detail }));
 }

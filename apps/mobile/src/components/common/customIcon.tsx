@@ -50,6 +50,8 @@ export function createIcon(
           height={scaledSize}
           viewBox={viewBox}
           fill={fill ?? color ?? 'currentColor'}
+          // Lets paths that use fill='currentColor' pick up the icon color
+          color={color}
           stroke={color}
           strokeWidth={computedStrokeWidth}
           strokeLinecap='round'

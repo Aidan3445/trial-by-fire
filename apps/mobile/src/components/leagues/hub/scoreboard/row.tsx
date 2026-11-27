@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, Pressable, DeviceEventEmitter } from 'react-native';
 import { cn } from '~/lib/utils';
 import { type LeagueMember } from '~/types/leagueMembers';
 import { type EnrichedCastaway } from '~/types/castaways';
@@ -10,6 +10,7 @@ import MarqueeText from '~/components/common/marquee';
 import CastawayModal from '~/components/shared/castaways/castawayModal';
 import { PlaceIcon } from '~/components/icons/generated';
 import { rankBadgeColor, rankTextColor } from '~/lib/colors';
+import { FOCUS_SECONDARY_PICK_EVENT, useSecondaryPick } from '~/hooks/leagues/mutation/useSecondaryPick';
 
 interface MemberRowProps {
   place: number;
@@ -136,11 +137,11 @@ export default function MemberRow({
         </View>
       ) : (
         <View className='w-24 justify-center'>
-          <Text
-            allowFontScaling={false}
-            className='text-base md:text-lg font-medium text-muted-foreground'>
-            {secondaryPick === null ? 'Hidden' : isAiring ? 'No Pick' : 'Pending'}...
-          </Text>
+          {member.loggedIn && !overrideHash && secondaryPick === undefined && !isAiring ? (
+            <PickNow />
+          ) : (
+            <PendingText label={secondaryPick === null ? 'Hidden' : isAiring ? 'No Pick' : 'Pending'} />
+          )}
         </View>
       ))}
       {leagueSettings && leagueSettings.survivalCap > 0 && (
@@ -156,5 +157,40 @@ export default function MemberRow({
         </View>
       )}
     </View>
+  );
+}
+
+function PendingText({ label }: { label: string }) {
+  return (
+    <Text
+      allowFontScaling={false}
+      className='text-base md:text-lg font-medium text-muted-foreground'>
+      {label}...
+    </Text>
+  );
+}
+
+/** Your own missing secondary pick: jumps down to the weekly picks, on the secondary slide */
+function PickNow() {
+  const { active, loaded, hasPick, nextEpisode } = useSecondaryPick();
+
+  if (!active || !loaded || hasPick || nextEpisode?.airStatus !== 'Upcoming') {
+    return <PendingText label='Pending' />;
+  }
+
+  return (
+    <Pressable
+      onPress={() => DeviceEventEmitter.emit(FOCUS_SECONDARY_PICK_EVENT)}
+      accessibilityRole='button'
+      accessibilityLabel={`Make your secondary pick for episode ${nextEpisode.episodeNumber}`}
+      hitSlop={6}
+      className='self-start flex-row items-center gap-1 rounded-md bg-primary px-2 py-1 active:opacity-80'>
+      <View className='size-1.5 rounded-full bg-amber-400' />
+      <Text
+        allowFontScaling={false}
+        className='text-xs font-bold uppercase tracking-wider text-primary-foreground'>
+        Pick now
+      </Text>
+    </Pressable>
   );
 }

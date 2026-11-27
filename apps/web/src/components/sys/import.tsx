@@ -16,7 +16,7 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from '~/components/common/alertDialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/common/tooltip';
-import { Circle, Check, X, Info } from 'lucide-react';
+import { Circle, Check, X, Info, Plus } from 'lucide-react';
 import { type CastawayInsert, type EnrichedCastaway } from '~/types/castaways';
 import { type TribeInsert, type Tribe } from '~/types/tribes';
 import { type Episode } from '~/types/episodes';
@@ -25,6 +25,8 @@ import { type EventWithReferences, type BaseEventName } from '~/types/events';
 import { BaseEventNames } from '~/lib/events';
 import { cn } from '~/lib/utils';
 import createEpisode from '~/actions/sys/createEpisode';
+import updateEpisode from '~/actions/sys/updateEpisode';
+import EpisodeEditor, { defaultRuntime, type EpisodeDraft } from '~/components/sys/episodes/editor';
 import createTribe from '~/actions/sys/createTribe';
 import createCastaway from '~/actions/sys/createCastaway';
 import createSeason from '~/actions/sys/createSeason';
@@ -141,8 +143,8 @@ export default function Import() {
 
     setSeason(data.season);
     setCastaways(data.castaways);
-    setTribes(data.tribes);
-    setEpisodes(data.episodes);
+    setTribes(data.tribes.filter(t => !t.tribeName.includes('[')));
+    setEpisodes(data.episodes.filter(ep => ep.episodeNumber > 0));
     setEpisodeDetails(data.episodeDetails);
     setTribeSwaps(data.tribeSwaps ?? []);
   };
@@ -153,7 +155,7 @@ export default function Import() {
       return;
     }
     try {
-      await createSeason(data.seasonName, season.premiereDate, season.finaleDate ?? undefined);
+      await createSeason(data.seasonName, season.premiereDate);
       await Promise.all(tribes.map(tribe => createTribe(data.seasonName, tribe)));
       await Promise.all(castaways.map(castaway => createCastaway(data.seasonName, castaway)));
       await invalidateAll();
@@ -180,6 +182,19 @@ export default function Import() {
     }
     return map;
   }, [episodeDetails, tribeSwaps]);
+
+  // Fandom's episodes, plus any in the database that fandom doesn't list yet
+  const allEpisodes = useMemo(() => {
+    const listed = new Set(episodes.map((episode) => episode.episodeNumber));
+    const dbOnly = (seasonData?.episodes ?? [])
+      .filter((episode) => !listed.has(episode.episodeNumber))
+      .map((episode) => ({
+        episodeNumber: episode.episodeNumber,
+        title: episode.title,
+        airDate: new Date(episode.airDate).toISOString(),
+      }));
+    return [...episodes, ...dbOnly].sort((a, b) => a.episodeNumber - b.episodeNumber);
+  }, [episodes, seasonData?.episodes]);
 
   // Unmatched swaps (episodeNumber = 0)
   const unmatchedSwaps = tribeSwaps.filter(s => s.episodeNumber === 0);
@@ -241,20 +256,28 @@ export default function Import() {
       </span>
 
       <div className='overflow-x-scroll flex gap-4 pb-2'>
-        {episodes.map((episode, index) => (
+        {allEpisodes.map((episode) => (
           <ImportEpisode
-            key={index}
+            key={episode.episodeNumber}
             {...episode}
             seasonName={reactForm.watch('seasonName')}
+            seasonFinaleDate={season?.finaleDate ?? null}
             parsedEvents={mergedEpisodeDetails.get(episode.episodeNumber) ?? []}
             seasonData={seasonData ?? null}
             allDbEpisodes={seasonData?.episodes ?? []}
             onImported={invalidateAll} />
         ))}
+        {seasonId && (
+          <AddEpisode
+            seasonName={reactForm.watch('seasonName')}
+            episodes={allEpisodes}
+            takenNumbers={allEpisodes.map((episode) => episode.episodeNumber)}
+            onAdded={invalidateAll} />
+        )}
       </div>
 
       {unmatchedSwaps.length > 0 && (
-        <div className='bg-destructive/10 border border-destructive/30 rounded-lg p-4 space-y-2'>
+        <div className='bg-card/40 border border-destructive/30 rounded-lg p-4 space-y-2'>
           <h3 className='font-bold text-destructive'>Unmatched Tribe Events (episode unknown)</h3>
           <p className='text-xs text-muted-foreground'>
             These tribe swap/merge events couldn&apos;t be auto-matched to an episode.
@@ -296,6 +319,8 @@ interface ImportEpisodeProps {
   title: string;
   airDate: string;
   seasonName: string;
+  // From the season's airing dates, to guess which episode is the finale
+  seasonFinaleDate: Date | string | null;
   parsedEvents: ParsedEvent[];
   seasonData: {
     castaways: EnrichedCastaway[];
@@ -308,65 +333,102 @@ interface ImportEpisodeProps {
 }
 
 function ImportEpisode({
-  seasonName, episodeNumber, title, airDate,
+  seasonName, episodeNumber, title, airDate, seasonFinaleDate,
   parsedEvents, seasonData, allDbEpisodes, onImported,
 }: ImportEpisodeProps) {
-  const [isMerge, setIsMerge] = useState(false);
-  const [isFinale, setIsFinale] = useState(false);
-  const [runtime, setRuntime] = useState(90);
-
+  const [editing, setEditing] = useState(false);
   const dbEpisode = seasonData?.episodes.find(ep => ep.episodeNumber === episodeNumber);
+  const fandom = { title: title.replaceAll('"', ''), airDate: new Date(airDate) };
+  // Leagues end once the finale's runtime is over, so guess it well.
+  // The wiki only lists the finale date once it's announced.
+  const guessFinale = !!seasonFinaleDate
+    && new Date(seasonFinaleDate).toDateString() === fandom.airDate.toDateString();
+
+  // What's in the database, else what fandom lists
+  const current: EpisodeDraft = dbEpisode ? {
+    episodeNumber: dbEpisode.episodeNumber,
+    title: dbEpisode.title,
+    airDate: new Date(dbEpisode.airDate),
+    runtime: dbEpisode.runtime,
+    isMerge: dbEpisode.isMerge,
+    isFinale: dbEpisode.isFinale,
+  } : {
+    episodeNumber,
+    ...fandom,
+    runtime: defaultRuntime(episodeNumber, guessFinale),
+    isMerge: false,
+    isFinale: guessFinale,
+  };
+
   const existingEvents = dbEpisode
     ? seasonData?.baseEvents[episodeNumber]
     : undefined;
 
-  const handleSubmit = async () => {
+  const handleSave = async (draft: EpisodeDraft) => {
     try {
-      await createEpisode(seasonName, {
-        episodeNumber,
-        title: title.replaceAll('"', ''),
-        airDate: new Date(airDate),
-        isMerge,
-        isFinale,
-        runtime,
-      });
+      if (dbEpisode) {
+        await updateEpisode({ episodeId: dbEpisode.episodeId, ...draft });
+      } else {
+        await createEpisode(seasonName, draft);
+      }
       await onImported();
-      alert('Episode imported successfully');
+      setEditing(false);
     } catch (error) {
-      console.error('Error importing episode', error);
-      alert('Error importing episode');
+      console.error('Error saving episode', error);
+      alert(`Error ${dbEpisode ? 'updating' : 'importing'} episode`);
     }
   };
 
   return (
-    <div className='items-center bg-card rounded-lg p-4 min-w-[280px]'>
-      <h2 className='font-bold'>Episode {episodeNumber}</h2>
-      <p>{title}</p>
-      <p>{new Date(airDate).toDateString()}</p>
-      {dbEpisode && (
-        <span className='text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded-full'>
-          DB ID: {dbEpisode.episodeId}
-        </span>
-      )}
-      <form action={() => handleSubmit()}>
-        <label className='inline-flex items-center space-x-2'>
-          <input type='checkbox' checked={isMerge} onChange={() => setIsMerge(!isMerge)} />
-          <span>Is Merge</span>
-        </label>
-        <label className='inline-flex items-center space-x-2 ml-4'>
-          <input type='checkbox' checked={isFinale} onChange={() => setIsFinale(!isFinale)} />
-          <span>Is Finale</span>
-        </label>
-        <label className='inline-flex items-center space-x-2 ml-4'>
-          <span>Runtime (minutes):</span>
-          <input
-            type='number'
-            value={runtime}
-            onChange={(e) => setRuntime(parseInt(e.target.value, 10))}
-            className='w-16 text-right rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50' />
-        </label>
-        <Button type='submit'>Import Episode</Button>
-      </form>
+    <div className='flex flex-col gap-1 bg-card rounded-lg p-4 min-w-70'>
+      <h2 className='font-bold'>Episode {current.episodeNumber}</h2>
+      <p>{current.title}</p>
+      <p className='text-sm'>{current.airDate.toLocaleString()}</p>
+      <p className='text-sm text-muted-foreground'>{current.runtime} minutes</p>
+      <div className='flex flex-wrap gap-1'>
+        {dbEpisode ? (
+          <span className='text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded-full'>
+            DB ID: {dbEpisode.episodeId}
+          </span>
+        ) : (
+          <span className='text-xs bg-destructive/20 text-destructive px-2 py-1 rounded-full'>
+            Not in DB
+          </span>
+        )}
+        {current.isMerge && (
+          <span className='text-xs bg-blue-500/20 text-blue-500 px-2 py-1 rounded-full'>Merge</span>
+        )}
+        {current.isFinale && (
+          <span className='text-xs bg-primary/20 text-primary px-2 py-1 rounded-full'>Finale</span>
+        )}
+      </div>
+
+      <AlertDialog open={editing} onOpenChange={setEditing}>
+        <AlertDialogTrigger asChild>
+          <Button className='mt-2 w-full'>
+            {dbEpisode ? 'Edit Episode' : 'Import Episode'}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent className='max-w-xl' customOverlay>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dbEpisode ? 'Edit' : 'Import'} Episode {episodeNumber}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dbEpisode ? 'Already imported; saving updates it.' : 'Check what fandom lists before importing.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogCancel className='absolute top-2 right-2 h-min p-1'>
+            <X stroke='white' />
+          </AlertDialogCancel>
+          <EpisodeEditor
+            initial={current}
+            existing={!!dbEpisode}
+            takenNumbers={allDbEpisodes
+              .filter((ep) => ep.episodeId !== dbEpisode?.episodeId)
+              .map((ep) => ep.episodeNumber)}
+            reference={{ source: 'Fandom', ...fandom }}
+            onSave={handleSave} />
+        </AlertDialogContent>
+      </AlertDialog>
 
       {parsedEvents.length > 0 && (
         <AlertDialog>
@@ -403,6 +465,76 @@ function ImportEpisode({
         </AlertDialog>
       )}
     </div>
+  );
+}
+
+// ── Add Episode Card ──
+
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+
+interface AddEpisodeProps {
+  seasonName: string;
+  episodes: { episodeNumber: number; airDate: string }[];
+  takenNumbers: number[];
+  onAdded: () => Promise<void>;
+}
+
+/**
+  * Add an episode fandom doesn't list yet
+  */
+function AddEpisode({ seasonName, episodes, takenNumbers, onAdded }: AddEpisodeProps) {
+  const [open, setOpen] = useState(false);
+
+  // The next number, a week after the last episode at the same time
+  const last = episodes.reduce<AddEpisodeProps['episodes'][number] | undefined>((latest, episode) =>
+    !latest || episode.episodeNumber > latest.episodeNumber ? episode : latest, undefined);
+  const episodeNumber = (last?.episodeNumber ?? 0) + 1;
+  const initial: EpisodeDraft = {
+    episodeNumber,
+    title: '',
+    airDate: last ? new Date(new Date(last.airDate).getTime() + WEEK) : new Date(),
+    runtime: defaultRuntime(episodeNumber, false),
+    isMerge: false,
+    isFinale: false,
+  };
+
+  const handleSave = async (draft: EpisodeDraft) => {
+    try {
+      await createEpisode(seasonName, draft);
+      await onAdded();
+      setOpen(false);
+    } catch (error) {
+      console.error('Error adding episode', error);
+      alert('Error adding episode');
+    }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <button
+          type='button'
+          className='flex flex-col items-center justify-center gap-2 min-w-70 rounded-lg border-2 border-dashed border-primary/30 p-4 text-muted-foreground hover:bg-primary/5 hover:text-primary'>
+          <Plus />
+          <span className='font-bold'>Add Episode</span>
+          <span className='text-xs'>For episodes fandom doesn&apos;t list yet</span>
+        </button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className='max-w-xl' customOverlay>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Add Episode</AlertDialogTitle>
+          <AlertDialogDescription>Adds an episode to {seasonName}.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogCancel className='absolute top-2 right-2 h-min p-1'>
+          <X stroke='white' />
+        </AlertDialogCancel>
+        <EpisodeEditor
+          initial={initial}
+          existing={false}
+          takenNumbers={takenNumbers}
+          onSave={handleSave} />
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

@@ -7,6 +7,9 @@ const config = {
     ignoreBuildErrors: false,
   },
   crossOrigin: 'anonymous',
+  experimental: {
+    agentUpgrade: 'security',
+  },
   async headers() {
     return [
       {

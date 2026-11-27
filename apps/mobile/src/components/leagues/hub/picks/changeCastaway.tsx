@@ -5,11 +5,12 @@ import { colors } from '~/lib/colors';
 import SearchableSelect from '~/components/common/searchableSelect';
 import ColorRow from '~/components/shared/colorRow';
 import ShotInTheDark from '~/components/leagues/hub/picks/shotInTheDark';
-import { useChangeCastaway } from '~/hooks/leagues/mutation/useChangeCastaway';
+import { useChangeCastaway, isFinallyEliminated } from '~/hooks/leagues/mutation/useChangeCastaway';
 import Modal from '~/components/common/modal';
 import { getContrastingColor } from '@uiw/color-convert';
 import Button from '~/components/common/button';
 import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker';
+import { SnuffedIcon } from '~/components/icons/generated';
 
 export default function ChangeCastaway() {
   const {
@@ -26,6 +27,8 @@ export default function ChangeCastaway() {
     closedDialog,
     markDialogClosed,
     uiState,
+    remainingActions,
+    hasPrimaryPick,
     hoursRemainingForPriority,
   } = useChangeCastaway();
 
@@ -33,12 +36,8 @@ export default function ChangeCastaway() {
   // Picks are locked while an episode airs; show how this one is going instead
   if (isEpisodeAiring) return <EpisodeTracker />;
 
-  const isActiveAfterRedemption = (castaway: typeof availableCastaways[number]) =>
-    castaway.redemption?.some((r) => r.secondEliminationEpisode === null) ?? false;
-
   const mainPickOptions = availableCastaways.map((castaway) => {
-    const isFinallyEliminated = !!(castaway.eliminatedEpisode && !isActiveAfterRedemption(castaway));
-    const isDisabled = castaway.castawayId !== +selected && !!(castaway.pickedBy || isFinallyEliminated);
+    const isDisabled = castaway.castawayId !== +selected && !!(castaway.pickedBy || isFinallyEliminated(castaway));
     return {
       value: castaway.castawayId,
       label: castaway.fullName,
@@ -71,7 +70,7 @@ export default function ChangeCastaway() {
 
   return (
     <>
-      <View className='rounded-xl border-2 border-primary/20 bg-card p-2 gap-4'>
+      <View className='w-full rounded-xl border-2 border-primary/20 bg-card p-2 gap-4'>
 
         {/* Primary pick section */}
         {uiState === 'no-episode' ? (
@@ -154,7 +153,8 @@ export default function ChangeCastaway() {
           </View>
         )}
 
-        <ShotInTheDark />
+        {/* Shot in the Dark protects a survivor pick, so it's moot without one */}
+        {hasPrimaryPick && <ShotInTheDark />}
       </View>
 
       <Modal visible={dialogOpen && !closedDialog} onClose={markDialogClosed}>
@@ -162,13 +162,39 @@ export default function ChangeCastaway() {
           <Text className='text-xl font-black uppercase tracking-tight text-foreground text-center'>
             Oh no!
           </Text>
-          <Text className='text-base text-muted-foreground'>
-            Your survivor was eliminated, but you get another chance.
-            {'\n\n'}
-            Choose from the remaining castaways to continue earning points.
-            {'\n\n'}
-            You're still in it, good luck!
-          </Text>
+          {uiState !== 'no-castaways' ? (
+            <Text className='text-base text-muted-foreground'>
+              Your survivor was eliminated, but you get another chance.
+              {'\n\n'}
+              Choose from the remaining castaways to continue earning points.
+              {'\n\n'}
+              You're still in it, good luck!
+            </Text>
+          ) : remainingActions.length > 0 ? (
+            <View className='gap-2'>
+              <Text className='text-base text-muted-foreground'>
+                Your survivor was eliminated and there are no castaways left to pick,
+                but you can still earn points with:
+              </Text>
+              <View className='gap-1 pl-2'>
+                {remainingActions.map((action) => (
+                  <Text key={action} className='text-base text-foreground'>• {action}</Text>
+                ))}
+              </View>
+              <Text className='text-base text-muted-foreground'>
+                You're still in it, good luck!
+              </Text>
+            </View>
+          ) : (
+            <View className='items-center gap-3'>
+              <SnuffedIcon width={160} height={119} color={colors.primary} accessibilityLabel='Snuffed torch' />
+              <Text className='self-stretch text-base text-muted-foreground'>
+                Your survivor was eliminated and there are no castaways left to pick.
+                {'\n\n'}
+                The Tribe has spoken
+              </Text>
+            </View>
+          )}
           <Button
             onPress={markDialogClosed}
             className='rounded-lg bg-primary p-3 active:opacity-80'>

@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { cn } from '~/lib/utils';
-import { hasEvents } from '~/lib/events';
 import { useRefresh } from '~/hooks/helpers/refresh/useRefresh';
 import SeasonsHeader from '~/components/seasons/header/view';
 import { useSeasonsData } from '~/hooks/seasons/useSeasonsData';
@@ -23,8 +22,8 @@ export default function SeasonsScreen() {
     if (!scoreData) return null;
     const selected = scoreData.find(season => season.season.name === selectedSeason);
     if (selected) return selected;
-    // default to the most recent season that has events
-    const fallback = scoreData.find(season => hasEvents(season.baseEvents)) ?? scoreData[0];
+    // default to the most recent season with a cast
+    const fallback = scoreData.find(season => season.castaways.length > 0) ?? scoreData[0];
     if (fallback) {
       setSelectedSeason(fallback.season.name);
       return fallback;

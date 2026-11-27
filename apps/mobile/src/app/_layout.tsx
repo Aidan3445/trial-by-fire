@@ -8,6 +8,7 @@ import LoadingScreen from '~/components/auth/loadingScreen';
 import { useDeepLinkHandler } from '~/hooks/routing/useDeepLinkHandler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useRequestPushPermission } from '~/hooks/user/useRequestPushPermissions';
+import UpdateGate from '~/components/sys/updateGate';
 
 // Suppress specific warning from react-native-reanimated-carousel
 const originalWarn = console.warn;
@@ -58,6 +59,7 @@ export default function RootLayout() {
       <ClerkLoaded>
         <KeyboardProvider>
           <InitialLayout />
+          <UpdateGate />
         </KeyboardProvider>
       </ClerkLoaded>
     </ClerkProvider>

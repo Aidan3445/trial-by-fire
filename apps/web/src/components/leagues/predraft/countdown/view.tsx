@@ -47,6 +47,28 @@ export function DraftCountdown({ overrideHash, className }: DraftCountdownProps)
     router.push(`/leagues/${league.hash}/draft`);
   };
 
+  // Drafts can't be scheduled or started until the cast is out
+  if (league?.castReady === false) {
+    return (
+      <Card className={cn('border-2 border-primary/20 shadow-lg shadow-primary/10', className)}>
+        <CardHeader className='flex items-center gap-3 h-8 mb-2 px-0'>
+          <span className='h-4 md:h-6 w-1 bg-primary rounded-full' />
+          <h2 className='md:text-xl font-black uppercase tracking-tight leading-none text-nowrap'>
+            Draft Status
+          </h2>
+          <Badge className='hidden sm:flex p-0 bg-primary/20 text-primary border-primary/40 border-2 font-black text-xs pointer-events-none tracking-wider'>
+            <Calendar className='w-3 h-3 mr-1 shrink-0 stroke-primary' />
+            WAITING ON CAST
+          </Badge>
+        </CardHeader>
+        <CardContent className='bg-accent border-2 border-primary/30 rounded-lg p-4 text-sm text-muted-foreground text-pretty'>
+          The draft opens once the {league.season} cast is announced.
+          Invite friends and set your rules in the meantime.
+        </CardContent>
+      </Card>
+    );
+  }
+
   const isDraftLive = league?.status === 'Draft';
   const isDraftReady = leagueSettings?.draftDate && leagueSettings.draftDate.getTime() <= Date.now();
   const isScheduled = leagueSettings?.draftDate && leagueSettings.draftDate.getTime() > Date.now();

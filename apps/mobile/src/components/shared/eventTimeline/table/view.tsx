@@ -3,6 +3,7 @@ import MarqueeText from '~/components/common/marquee';
 import { View, Text } from 'react-native';
 import EpisodeEventsTableBody from '~/components/shared/eventTimeline/table/body';
 import { cn, findTribeCastaways } from '~/lib/utils';
+import { scoringEventName } from '~/lib/events';
 import { type Prediction, type EventWithReferences } from '~/types/events';
 import { type SeasonsDataQuery } from '~/types/seasons';
 import type { LeagueData } from '~/components/shared/eventTimeline/filters';
@@ -90,8 +91,13 @@ export default function EpisodeEvents({
           );
           if (matchingEvent) {
             if (eventEpNum !== episode.episodeNumber) {
-              if (!enrichmentEvents.some((e) => e.eventId === matchingEvent.eventId))
-                enrichmentEvents.push(matchingEvent);
+              // every result with this name, so unpredicted ones still show
+              allEvents[eventEpNum]?.forEach((sibling) => {
+                if (sibling.eventName === prediction.eventName
+                  && !enrichmentEvents.some((e) => e.eventId === sibling.eventId)) {
+                  enrichmentEvents.push(sibling);
+                }
+              });
             }
             return true;
           }
@@ -114,8 +120,13 @@ export default function EpisodeEvents({
         );
         if (matchingEvent) {
           if (eventEpNum !== episodeNumber) {
-            if (!enrichmentEvents.some((e) => e.eventId === matchingEvent.eventId))
-              enrichmentEvents.push(matchingEvent);
+            // every result with this name, so unpredicted ones still show
+            allEvents[eventEpNum]?.forEach((sibling) => {
+              if (sibling.eventName === prediction.eventName
+                && !enrichmentEvents.some((e) => e.eventId === sibling.eventId)) {
+                enrichmentEvents.push(sibling);
+              }
+            });
           }
           return true;
         }
@@ -194,7 +205,11 @@ export default function EpisodeEvents({
           const memberMatch = filters.member.length === 0 || eventMembers.some((ref) => filters.member.includes(ref));
           const eventMatch = filters.event.length === 0 || filters.event.includes(event.eventName);
           const keep = castawayMatch && tribeMatch && memberMatch && eventMatch;
-          const hasPredictions = filteredPredictions[numKey]?.some((p) => p.eventId === event.eventId);
+          const hasPredictions = filteredPredictions[numKey]?.some((p) =>
+            p.eventId === event.eventId
+            // sibling results nobody predicted still back the prediction row
+            || (p.eventEpisodeNumber === numKey
+              && p.eventName === (scoringEventName(event.eventName) ?? event.eventName)));
           if (keep) return { ...event, predOnly: false };
           else if (hasPredictions) return { ...event, predOnly: true };
           return null;

@@ -1,4 +1,6 @@
 import { useAuth } from '@clerk/expo';
+import { appVersionHeaders, reportUpgradeRequired } from '~/lib/appVersion';
+import { type AppVersionInfo, UPGRADE_REQUIRED_STATUS } from '~/types/app';
 
 /**
  * A custom hook to perform authenticated fetch requests.
@@ -37,12 +39,20 @@ export function useFetch(fetchMethod: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
+        ...appVersionHeaders(),
         ...headers
       },
       ...(body && { body: JSON.stringify(body) })
     });
 
     if (debug) console.log(`Response from ${endpoint}: `, response.status, response.statusText);
+
+    // Too old for the API: show the update screen instead of breaking
+    if (response.status === UPGRADE_REQUIRED_STATUS) {
+      void response.clone().json()
+        .then((info: AppVersionInfo) => reportUpgradeRequired(info))
+        .catch(() => undefined);
+    }
 
     return response;
   };

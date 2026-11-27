@@ -13,6 +13,7 @@ import SelectionHistory from '~/components/leagues/hub/scoreboard/popover/select
 import SurvivalStreaks from '~/components/leagues/hub/scoreboard/popover/survivalStreaks';
 import { PlaceIcon, PointsIcon } from '~/components/icons/generated';
 import { rankBadgeColor } from '~/lib/scores';
+import { focusSecondaryPick, useSecondaryPick } from '~/hooks/leagues/enrich/useSecondaryPick';
 
 interface MemberRowProps {
   place: number;
@@ -126,7 +127,9 @@ export default function MemberRow({
         </TableCell>
       ) : (
         <TableCell className='px-3 py-3 w-0 text-left text-muted-foreground italic'>
-          {secondaryPick === null ? 'Hidden' : isAiring ? 'No Pick' : 'Pending'}...
+          {member.loggedIn && !overrideHash && secondaryPick === undefined && !isAiring
+            ? <PickNow />
+            : `${secondaryPick === null ? 'Hidden' : isAiring ? 'No Pick' : 'Pending'}...`}
         </TableCell>
       ))}
       <TableCell className='w-0'>
@@ -142,5 +145,23 @@ export default function MemberRow({
         </div>
       </TableCell>
     </TableRow>
+  );
+}
+
+/** Your own missing secondary pick: jumps down to the weekly picks, on the secondary slide */
+function PickNow() {
+  const { active, loaded, hasPick, nextEpisode } = useSecondaryPick();
+
+  if (!active || !loaded || hasPick || nextEpisode?.airStatus !== 'Upcoming') return 'Pending...';
+
+  return (
+    <button
+      type='button'
+      onClick={focusSecondaryPick}
+      aria-label={`Make your secondary pick for episode ${nextEpisode.episodeNumber}`}
+      className='not-italic inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-xs font-bold uppercase tracking-wider text-nowrap text-primary-foreground hover:opacity-90 cursor-pointer'>
+      <span className='size-1.5 rounded-full bg-amber-400' />
+      Pick now
+    </button>
   );
 }

@@ -130,12 +130,13 @@ export default function SearchableSelect<T extends string | number>({
                 <Button
                   key={key}
                   className={cn(
-                    'flex-row items-center rounded-lg px-3 py-2.5 active:bg-primary/10',
+                    'flex-row items-center rounded-lg px-3 py-2.5',
+                    !item.disabled && 'active:bg-primary/10',
                     isSelected ? 'bg-primary/10' : 'bg-primary/5',
                     item.disabled && 'opacity-50',
                     index > 0 && 'mt-1'
                   )}
-                  disabled={item.disabled}
+                  activeOpacity={item.disabled ? 1 : 0.7}
                   onPress={() => {
                     if (item.disabled) return;
                     onSelect(item.value!);

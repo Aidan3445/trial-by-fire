@@ -1,7 +1,8 @@
 import { Text, View, Platform, Keyboard } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { ArrowLeft } from 'lucide-react-native';
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import Carousel from 'react-native-reanimated-carousel';
 import Button from '~/components/common/button';
 import RecreateLeagueHeader from '~/components/leagues/actions/create/recreate/header/view';
@@ -23,6 +24,7 @@ interface PageConfig {
 
 export default function RecreateLeagueScreen() {
   const { data: leagues } = useLeagues();
+  const { hash: presetHash } = useLocalSearchParams<{ hash?: string }>();
 
   const [selectedHash, setSelectedHash] = useState<string | null>(null);
 
@@ -40,6 +42,20 @@ export default function RecreateLeagueScreen() {
   ];
 
   const { props, ref, progress, container: { width, onLayout } } = useCarousel<PageConfig>(pages);
+
+  // Skip straight to choosing members, if it's a league they can clone
+  const presetApplied = useRef(false);
+  useEffect(() => {
+    if (presetApplied.current || !presetHash || !leagues) return;
+    presetApplied.current = true;
+    const clonable = leagues.some(({ league, member }) =>
+      league.hash === presetHash && league.status === 'Inactive' && member.role === 'Owner');
+    if (!clonable) return;
+    setSelectedHash(presetHash);
+    // After the carousel has mounted
+    // eslint-disable-next-line no-undef
+    setTimeout(() => ref.current?.scrollTo({ index: 1, animated: false }), 0);
+  }, [presetHash, leagues, ref]);
 
   const leagueSelected = selectedHash !== null;
   const membersSelected = selectedMembers.size > 0;

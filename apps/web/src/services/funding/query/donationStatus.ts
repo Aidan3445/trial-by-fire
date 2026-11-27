@@ -2,6 +2,7 @@ import 'server-only';
 
 import { and, desc, eq, or, sum } from 'drizzle-orm';
 import { db } from '~/server/db';
+import { seasonPremiere } from '~/services/seasons/query/seasonDates';
 import { fundingDonationSchema, fundingUserSchema } from '~/server/db/schema/funding';
 import { leagueMemberSchema } from '~/server/db/schema/leagueMembers';
 import { leagueSchema } from '~/server/db/schema/leagues';
@@ -21,7 +22,7 @@ export async function getActiveSeasonId(userId: string) {
     .innerJoin(leagueSchema, eq(leagueSchema.leagueId, leagueMemberSchema.leagueId))
     .innerJoin(seasonSchema, eq(seasonSchema.seasonId, leagueSchema.seasonId))
     .where(and(eq(leagueMemberSchema.userId, userId), eq(leagueSchema.status, 'Active')))
-    .orderBy(desc(seasonSchema.premiereDate))
+    .orderBy(desc(seasonPremiere))
     .limit(1)
     .then((rows) => rows[0]?.seasonId ?? null);
 }

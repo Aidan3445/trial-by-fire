@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, DeviceEventEmitter } from 'react-native';
 import Carousel, { Pagination } from 'react-native-reanimated-carousel';
 import { colors } from '~/lib/colors';
 import { useCarousel } from '~/hooks/ui/useCarousel';
@@ -14,9 +14,19 @@ import { type MakePredictionsProps } from '~/components/leagues/actions/events/p
 import MarqueeText from '~/components/common/marquee';
 import DescriptionCell from '~/components/leagues/actions/events/predictions/description';
 import { PointsIcon } from '~/components/icons/generated';
-import { useSecondaryPick } from '~/hooks/leagues/mutation/useSecondaryPick';
+import { FOCUS_SECONDARY_PICK_EVENT, useSecondaryPick } from '~/hooks/leagues/mutation/useSecondaryPick';
 import SecondaryPickForm from '~/components/leagues/hub/picks/secondaryPick/form';
 import PicksRail from '~/components/leagues/actions/events/predictions/picksRail';
+
+/**
+ * After finishing slide `from`, the next unfinished slide to its right,
+ * else the first unfinished one before it, else -1 once everything is done
+ */
+function nextOpenIndex(steps: { done: boolean }[], from: number) {
+  const right = steps.findIndex((step, index) => index > from && !step.done);
+  if (right !== -1) return right;
+  return steps.findIndex((step, index) => index < from && !step.done);
+}
 
 type Slide =
   | { kind: 'prediction'; key: string; prediction: MakePrediction }
@@ -29,7 +39,7 @@ export default function PredictionCards({
   tribes,
   wallet,
   totalBet,
-  setBetTotal,
+  setFormBets,
   includeSecondary,
 }: MakePredictionsProps) {
   const shauhinActive = useShauhinActive();
@@ -140,10 +150,8 @@ export default function PredictionCards({
   }, []);
 
   useEffect(() => {
-    if (!setBetTotal) return;
-    const total = Object.values(formBetValues).reduce((sum, val) => sum + val, 0);
-    setBetTotal(total);
-  }, [formBetValues, setBetTotal]);
+    setFormBets?.(formBetValues);
+  }, [formBetValues, setFormBets]);
 
   const secondary = useSecondaryPick();
   const showSecondary = !!includeSecondary && secondary.active;
@@ -163,7 +171,7 @@ export default function PredictionCards({
     [slides, secondary.hasPick]);
 
   // Slides hold forms, so skip per-frame progress re-renders; the rail only needs the slide index
-  const { ref, props, progressProps, index: current, scrollNext, setCarouselData } = useCarousel(slides, { liveProgress: false });
+  const { ref, props, progressProps, index: current, setCarouselData } = useCarousel(slides, { liveProgress: false });
 
   useEffect(() => {
     setCarouselData(slides);
@@ -182,6 +190,27 @@ export default function PredictionCards({
     const firstOpen = steps.findIndex((step) => !step.done);
     if (firstOpen > 0) scrollToIndex(firstOpen, false);
   }, [includeSecondary, ref, slides.length, showSecondary, secondary.loaded, steps, scrollToIndex]);
+
+  // Submitting moves on to the next pick still to make, wrapping back to any skipped ones
+  const stepsRef = useRef(steps);
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
+  const advanceFrom = useCallback((from: number) => {
+    const steps = stepsRef.current;
+    const target = nextOpenIndex(steps, from);
+    if (target !== -1) scrollToIndex(target);
+    else if (from + 1 < steps.length) scrollToIndex(from + 1);
+  }, [scrollToIndex]);
+
+  // The scoreboard's "Pick now" asks for the secondary slide
+  useEffect(() => {
+    if (!showSecondary) return;
+    const subscription = DeviceEventEmitter.addListener(FOCUS_SECONDARY_PICK_EVENT, () => {
+      scrollToIndex(stepsRef.current.length - 1);
+    });
+    return () => subscription.remove();
+  }, [showSecondary, scrollToIndex]);
 
   if (slides.length === 0) return null;
 
@@ -284,11 +313,11 @@ export default function PredictionCards({
           ? 240
           : 200}
         data={slides}
-        renderItem={({ item }) => item.kind === 'secondary' ? (
+        renderItem={({ item, index }) => item.kind === 'secondary' ? (
           <View className='mx-2 rounded-lg border-2 border-primary/20 bg-accent/50 overflow-hidden'>
             {secondaryHeader}
             <DescriptionCell label='Secondary Pick' description={secondary.description} />
-            <SecondaryPickForm className='bg-card/50 justify-end' />
+            <SecondaryPickForm className='bg-card/50 justify-end' onSubmitted={() => advanceFrom(index)} />
           </View>
         ) : (
           <View className='mx-2 rounded-lg border-2 border-primary/20 bg-accent/50 overflow-hidden'>
@@ -328,7 +357,7 @@ export default function PredictionCards({
               updateBetTotal={updateFormBetValue}
               totalBet={totalBet}
               maxBet={rules?.shauhinMode?.enabled ? rules.shauhinMode.maxBet : undefined}
-              onSubmitSuccess={scrollNext} />
+              onSubmitSuccess={() => advanceFrom(index)} />
           </View>
         )}
         loop={false} />

@@ -1,10 +1,11 @@
 import 'server-only';
 
 import { db } from '~/server/db';
-import { and, eq, not } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { customEventSchema } from '~/server/db/schema/customEvents';
 import { leagueSchema } from '~/server/db/schema/leagues';
 import { type VerifiedLeagueMemberAuth } from '~/types/api';
+import { assertCustomEventsOpen } from '~/services/leagues/query/customEventsOpen';
 
 /**
  * Delete a base event for the season
@@ -19,10 +20,10 @@ export default async function deleteCustomEventLogic(
   auth: VerifiedLeagueMemberAuth,
   customEventId: number
 ) {
-  if (auth.status === 'Inactive') throw new Error('League is inactive');
   if (auth.role === 'Member') {
     throw new Error('User not authorized to delete league events');
   }
+  await assertCustomEventsOpen(auth);
 
   // Delete the league in a transaction
   return db.transaction(async (trx) => {
@@ -32,9 +33,7 @@ export default async function deleteCustomEventLogic(
         leagueId: leagueSchema.leagueId,
       })
       .from(leagueSchema)
-      .where(and(
-        eq(leagueSchema.leagueId, auth.leagueId),
-        not(eq(leagueSchema.status, 'Inactive'))))
+      .where(eq(leagueSchema.leagueId, auth.leagueId))
       .then((res) => res[0]);
     if (!league) throw new Error('League not found');
 

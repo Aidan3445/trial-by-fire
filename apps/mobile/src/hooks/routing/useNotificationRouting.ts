@@ -173,7 +173,17 @@ export function useNotificationRouting() {
       case 'reminder_secondary':
       case 'reminder_both':
       case 'episode_finished':
+      case 'new_season':
         navigateToLeagues();
+        break;
+
+      case 'new_season_clone':
+        // Straight to cloning their league for the new season
+        if (data.leagueHash) {
+          router.push({ pathname: '/(modals)/recreate', params: { hash: data.leagueHash } });
+        } else {
+          navigateToLeagues();
+        }
         break;
 
       case 'live_scoring_optin':

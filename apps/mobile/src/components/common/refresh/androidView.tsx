@@ -1,6 +1,6 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, type ReactNode, type Ref } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, RefreshControl } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { KeyboardAwareScrollView, type KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { colors } from '~/lib/colors';
 
 interface AndroidRefreshViewProps {
@@ -10,6 +10,7 @@ interface AndroidRefreshViewProps {
   handleScroll?: (_event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   header?: ReactNode;
   children: ReactNode;
+  scrollRef?: Ref<KeyboardAwareScrollViewRef>;
 }
 
 export function AndroidRefreshView({
@@ -19,11 +20,13 @@ export function AndroidRefreshView({
   handleScroll,
   header,
   children,
+  scrollRef,
 }: AndroidRefreshViewProps) {
   return (
     <Fragment>
       {header}
       <KeyboardAwareScrollView
+        ref={scrollRef}
         scrollEnabled={!disableScroll}
         className='w-full'
         showsVerticalScrollIndicator={false}

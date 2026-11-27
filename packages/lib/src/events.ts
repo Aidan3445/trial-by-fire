@@ -1,4 +1,4 @@
-import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate, type Predictions, type Events, type Tribe, type EnrichedEvent, type EventReference } from '@survivor/types';
+import { type ScoringBaseEventName, type BaseEventName, type ReferenceType, type LivePredictionTemplate, type Predictions, type Events, type Tribe, type EnrichedEvent, type EventReference, type LeagueRules, type KeyEpisodes, type PredictionTiming } from '@survivor/types';
 
 export const EventSources = ['Base', 'Custom'] as const;
 export const EventTypes = ['Direct', 'Prediction'] as const;
@@ -261,3 +261,53 @@ export const tribeNameTaken = (name: string, takenNames: string[]) =>
 /** Whether a season's events have at least one event in any episode */
 export const hasEvents = (events: Events) =>
   Object.values(events).some((episode) => Object.keys(episode).length > 0);
+
+/**
+  * What a member can still do for points once they can no longer pick a survivor
+  * @param rules The league's unfiltered rules
+  * @param secondaryPickEnabled Whether the league uses secondary picks
+  * @param keyEpisodes The key episodes for the league's season
+  * @returns Labels for each remaining kind of action, empty when nothing is left
+  */
+export function getRemainingActions({
+  rules,
+  secondaryPickEnabled,
+  keyEpisodes,
+}: {
+  rules: LeagueRules | null | undefined,
+  secondaryPickEnabled: boolean,
+  keyEpisodes: KeyEpisodes | null | undefined,
+}) {
+  // Nothing is left once the finale has aired
+  if (keyEpisodes?.previousEpisode?.isFinale) return [];
+
+  const timings = new Set<PredictionTiming>([
+    ...Object.values(rules?.basePrediction ?? {})
+      .filter((rule) => rule.enabled)
+      .flatMap((rule) => rule.timing),
+    ...(rules?.custom ?? [])
+      .filter((rule) => rule.eventType === 'Prediction')
+      .flatMap((rule) => rule.timing),
+  ]);
+
+  const mergeEpisode = keyEpisodes?.mergeEpisode;
+  const mergeAired = !!mergeEpisode && mergeEpisode.airStatus !== 'Upcoming';
+
+  const actions: string[] = [];
+  if (timings.has('Weekly')
+    || timings.has('Weekly (Postmerge only)')
+    || (timings.has('Weekly (Premerge only)') && !mergeAired)) {
+    actions.push('Weekly predictions');
+  }
+  // After merge predictions open once the merge airs and close after the next episode
+  if (timings.has('After Merge') && (!mergeAired || !!keyEpisodes?.previousEpisode?.isMerge)) {
+    actions.push('After merge predictions');
+  }
+  if (timings.has('Before Finale')) {
+    actions.push('Before finale predictions');
+  }
+  if (secondaryPickEnabled) {
+    actions.push('Secondary picks');
+  }
+  return actions;
+}

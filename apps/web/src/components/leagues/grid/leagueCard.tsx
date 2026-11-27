@@ -30,7 +30,11 @@ export default function LeagueCard({ league, member, currentSelection, seasonNam
         </div>
 
         <div className='mt-auto space-y-2'>
-          {currentSelection ? (
+          {league.neverDrafted ? (
+            <p className='text-sm text-left'>
+              <span className='font-bold text-muted-foreground'>Never drafted</span>
+            </p>
+          ) : currentSelection ? (
             <div className='flex items-center gap-1 text-sm'>
               <span className='font-bold text-muted-foreground'>Draft:</span>
               <span className='italic'>{currentSelection.fullName}</span>

@@ -1,10 +1,13 @@
 import 'server-only';
 
 import { db } from '~/server/db';
-import { and, asc, gte, isNull, lte, ne, or } from 'drizzle-orm';
+import { asc, ne } from 'drizzle-orm';
 import { seasonSchema } from '~/server/db/schema/seasons';
 import { type Season } from '~/types/seasons';
 import { unstable_cache } from 'next/cache';
+import {
+  parseSeasonDate, seasonColumns, seasonFinaleEnd, seasonHasCast, seasonPremiere, toSeason,
+} from '~/services/seasons/query/seasonDates';
 
 /**
   * Get the current seasons
@@ -22,24 +25,25 @@ export default async function getCurrentSeasons() {
   )();
 }
 
+/**
+  * A season is current while it has a cast and either its finale hasn't
+  * finished, or it's the newest season with a cast. So the season that just
+  * ended stays current (through the finale and the offseason) until the next
+  * season's cast is added, and seasons with no cast are never current.
+  */
 async function fetchCurrentSeasons(): Promise<Season[]> {
-  const now = new Date().toISOString();
-  // We consider seasons starting within the next 3 months as current
-  const threeMonthsFromNow = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
-
-  return db
-    .select()
+  const now = Date.now();
+  const seasons = await db
+    .select({ ...seasonColumns, finaleEnd: seasonFinaleEnd, hasCast: seasonHasCast })
     .from(seasonSchema)
-    .where(and(
-      ne(seasonSchema.seasonId, process.env.NODE_ENV === 'production' ? -1 : 0),
-      lte(seasonSchema.premiereDate, threeMonthsFromNow),
-      or(
-        isNull(seasonSchema.finaleDate),
-        gte(seasonSchema.finaleDate, now))))
-    .orderBy(asc(seasonSchema.premiereDate))
-    .then(rows => rows.map(row => ({
-      ...row,
-      premiereDate: new Date(`${row.premiereDate} Z`),
-      finaleDate: row.finaleDate ? new Date(`${row.finaleDate} Z`) : null
-    })));
+    .where(ne(seasonSchema.seasonId, process.env.NODE_ENV === 'production' ? -1 : 0))
+    .orderBy(asc(seasonPremiere));
+
+  const withCast = seasons.filter((season) => season.hasCast);
+  const newestWithCast = withCast.at(-1);
+  return withCast
+    .filter((season) => season === newestWithCast
+      || !season.finaleEnd
+      || parseSeasonDate(season.finaleEnd).getTime() > now)
+    .map(({ finaleEnd: _finaleEnd, hasCast: _hasCast, ...season }): Season => toSeason(season));
 }

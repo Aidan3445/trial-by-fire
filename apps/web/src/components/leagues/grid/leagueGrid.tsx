@@ -12,7 +12,8 @@ interface LeagueGridProps {
 }
 
 export default function LeagueGrid({ leagues, isInactive = false }: LeagueGridProps) {
-  const { data: seasons } = useSeasons(isInactive);
+  // All seasons, so next season's leagues sort correctly before it's current
+  const { data: seasons } = useSeasons(true);
 
   if (leagues.length === 0) return null;
 
@@ -61,19 +62,26 @@ export default function LeagueGrid({ leagues, isInactive = false }: LeagueGridPr
     );
   }
 
+  // Next season's leagues can exist while this one airs: airing season first
   return (
-    <Card className='relative overflow-hidden transition-opacity border-2 border-primary/20'>
-      <CardHeader className='flex items-center justify-start gap-4 mb-4 relative z-10'>
-        <div className='h-6 w-1 bg-primary rounded-full' />
-        <h2 className='text-xl font-black uppercase tracking-tight leading-none'>
-          {leagues[0]!.league.season}
-        </h2>
-      </CardHeader>
-      <CardContent className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 relative z-10'>
-        {leagues.map((leagueItem) => (
-          <LeagueCard key={leagueItem.league.hash} {...leagueItem} />
-        ))}
-      </CardContent>
-    </Card>
+    <section className='space-y-6'>
+      {leaguesBySeason.toReversed().map((seasonLeagues) => (
+        <Card
+          key={seasonLeagues[0]!.league.seasonId}
+          className='relative overflow-hidden transition-opacity border-2 border-primary/20'>
+          <CardHeader className='flex items-center justify-start gap-4 mb-4 relative z-10'>
+            <div className='h-6 w-1 bg-primary rounded-full' />
+            <h2 className='text-xl font-black uppercase tracking-tight leading-none'>
+              {seasonLeagues[0]!.league.season}
+            </h2>
+          </CardHeader>
+          <CardContent className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 relative z-10'>
+            {seasonLeagues.map((leagueItem) => (
+              <LeagueCard key={leagueItem.league.hash} {...leagueItem} />
+            ))}
+          </CardContent>
+        </Card>
+      ))}
+    </section>
   );
 }

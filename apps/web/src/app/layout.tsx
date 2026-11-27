@@ -20,7 +20,7 @@ const DevHarnessListener = process.env.NODE_ENV === 'development'
 
 //import { RebrandNotice } from '~/components/sys/rebrand';
 //import { LateLeagueTip } from '~/components/sys/lateLeagueTip';
-//import { SeasonOverNotice } from '~/components/sys/seasonOverNotice';
+import { SeasonOverNotice } from '~/components/sys/seasonOverNotice';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -70,6 +70,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
                 </Suspense>
                 <SignedIn>
                   <DonationManager />
+                  <SeasonOverNotice />
                 </SignedIn>
                 <DevHarnessListener />
               </SidebarProvider>

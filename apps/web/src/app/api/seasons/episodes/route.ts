@@ -36,8 +36,11 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+      // Dates arrive as strings over JSON
       const newEpisodes = await Promise.all(
-        body.episodes.map(async (episode) => await createEpisodeLogic(body.seasonName, episode)
+        body.episodes.map(async (episode) => await createEpisodeLogic(
+          body.seasonName,
+          { ...episode, airDate: new Date(episode.airDate) })
           .then(({ newEpisodeId }) => newEpisodeId)));
       return NextResponse.json(newEpisodes, { status: 201 });
     } catch (error) {
@@ -56,7 +59,10 @@ export async function PUT(request: NextRequest) {
     }
 
     try {
-      const success = await updateEpisodeLogic(body);
+      const success = await updateEpisodeLogic({
+        ...body,
+        airDate: body.airDate ? new Date(body.airDate) : undefined,
+      });
       return NextResponse.json(success, { status: 200 });
     } catch (error) {
       console.error('Failed to update episode', error);

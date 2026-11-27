@@ -11,10 +11,9 @@ import { createSeasonLogic } from '~/services/seasons/mutation/createSeason';
 export default async function createSeason(
   seasonName: string,
   premiereDate: Date,
-  finaldeData?: Date
 ) {
   try {
-    return await requireSystemAdminAuth(createSeasonLogic)(seasonName, new Date(premiereDate).toUTCString(), finaldeData ? new Date(finaldeData).toUTCString() : undefined);
+    return await requireSystemAdminAuth(createSeasonLogic)(seasonName, new Date(premiereDate).toUTCString());
   } catch (e) {
     let message: string;
     if (e instanceof Error) message = e.message;

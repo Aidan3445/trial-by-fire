@@ -4,7 +4,7 @@ import { createTable } from '~/server/db/schema/createTable';
 import { leagueSchema } from '~/server/db/schema/leagues';
 import { episodeSchema } from '~/server/db/schema/episodes';
 import { castawaySchema } from '~/server/db/schema/castaways';
-import { boolean, check, index, integer, pgEnum, primaryKey, serial, smallint, unique, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, check, index, integer, pgEnum, primaryKey, serial, smallint, timestamp, unique, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import { DISPLAY_NAME_MAX_LENGTH, LeagueMemberRoles } from '~/lib/leagues';
 import { sql } from 'drizzle-orm';
 
@@ -19,7 +19,8 @@ export const leagueMemberSchema = createTable(
     displayName: varchar('display_name', { length: DISPLAY_NAME_MAX_LENGTH }).notNull(),
     color: varchar('color', { length: 7 }).notNull(),
     role: leagueMemberRole('role').notNull().default('Member'),
-    draftOrder: smallint('draft_order')
+    draftOrder: smallint('draft_order'),
+    cloneRequestedAt: timestamp('clone_requested_at', { mode: 'date', withTimezone: true }),
   },
   (table) => [
     uniqueIndex('member_league_user_unq_idx').on(table.leagueId, table.userId),

@@ -41,8 +41,18 @@ export default function SysAdminScreen() {
           </Button>
           <Button
             className='w-full bg-primary p-4 rounded-lg items-center justify-center'
-            onPress={() => router.push('/baseEvent')}>
+            onPress={() => router.push(`/baseEvent?hash=${hash}`)}>
             <Text className='text-white text-xl'>Create Base Event</Text>
+          </Button>
+          <Button
+            className='w-full bg-primary p-4 rounded-lg items-center justify-center'
+            onPress={() => router.push(`/episodes?hash=${hash}`)}>
+            <Text className='text-white text-xl'>Episode Management</Text>
+          </Button>
+          <Button
+            className='w-full bg-primary p-4 rounded-lg items-center justify-center'
+            onPress={() => router.push('/manualPush')}>
+            <Text className='text-white text-xl'>Manual Push</Text>
           </Button>
           {LIVE_EVENTS_ENABLED && (
             <Button

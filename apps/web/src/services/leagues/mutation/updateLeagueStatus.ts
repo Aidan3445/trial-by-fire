@@ -7,6 +7,7 @@ import { type VerifiedLeagueMemberAuth } from '~/types/api';
 import { type LeagueStatus } from '~/types/leagues';
 import getKeyEpisodes from '~/services/seasons/query/getKeyEpisodes';
 import { sendPushToUsers } from '~/services/notifications/push';
+import { seasonCastReady } from '~/services/seasons/query/castReady';
 
 /**
   * Update the league status to the next stage
@@ -36,6 +37,9 @@ export default async function updateLeagueStatusLogic(
     let keyEpisodes;
     switch (league.status) {
       case 'Predraft':
+        if (!await seasonCastReady(auth.seasonId)) {
+          throw new Error('The draft can start once the cast is announced');
+        }
         newStatus = 'Draft';
         break;
       case 'Draft':
@@ -53,7 +57,11 @@ export default async function updateLeagueStatusLogic(
 
     const update = await trx
       .update(leagueSchema)
-      .set({ status: newStatus, startWeek: keyEpisodes?.nextEpisode?.episodeNumber ?? null })
+      .set({
+        status: newStatus,
+        // Only set when the league starts playing, so ending it keeps its start week
+        ...(newStatus === 'Active' ? { startWeek: keyEpisodes?.nextEpisode?.episodeNumber ?? null } : {}),
+      })
       .where(eq(leagueSchema.leagueId, auth.leagueId))
       .returning({ status: leagueSchema.status })
       .then((res) => res[0]);

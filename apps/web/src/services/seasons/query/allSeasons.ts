@@ -5,6 +5,7 @@ import { desc, ne } from 'drizzle-orm';
 import { seasonSchema } from '~/server/db/schema/seasons';
 import { type Season } from '~/types/seasons';
 import { unstable_cache } from 'next/cache';
+import { seasonColumns, seasonPremiere, toSeason } from '~/services/seasons/query/seasonDates';
 
 /**
   * Get all seasons
@@ -24,13 +25,9 @@ export default async function getAllSeasons() {
 
 async function fetchAllSeasons() {
   return db
-    .select()
+    .select(seasonColumns)
     .from(seasonSchema)
     .where(ne(seasonSchema.seasonId, process.env.NODE_ENV === 'production' ? -1 : 0))
-    .orderBy(desc(seasonSchema.premiereDate))
-    .then(rows => rows.map(row => ({
-      ...row,
-      premiereDate: new Date(`${row.premiereDate} Z`),
-      finaleDate: row.finaleDate ? new Date(`${row.finaleDate} Z`) : null
-    } as Season)));
+    .orderBy(desc(seasonPremiere))
+    .then(rows => rows.map((row): Season => toSeason(row)));
 }

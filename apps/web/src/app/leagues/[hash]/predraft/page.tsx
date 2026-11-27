@@ -18,10 +18,13 @@ import Spacer from '~/components/shared/floatingActions/spacer';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TutorialPrompt from '~/components/shared/tutorial/prompt';
+import CreateBaseEvent from '~/components/leagues/actions/events/base/create';
+import { useSysAdmin } from '~/hooks/user/useSysAdmin';
 
 export default function PredraftPage() {
   const params = useSearchParams();
   const [tab, setTab] = useState('league');
+  const { data: sysAdminId } = useSysAdmin();
   const [manageMembersFirst, setManageMembersFirst] = useState(false);
   const [showPrompt, setShowPrompt] = useState(params.has('new') || params.has('join'));
 
@@ -48,6 +51,8 @@ export default function PredraftPage() {
     <Tabs className='w-full overflow-hidden' value={tab} onValueChange={handleTabChange}>
       <TabsList className='sticky flex w-full px-10 rounded-none z-50 bg-accent'>
         <TabsTrigger className='flex-1' value='league'>League</TabsTrigger>
+        {/* Base events are season wide, so sys admins can log them from any league */}
+        {sysAdminId && <TabsTrigger className='flex-1' value='base'>Base</TabsTrigger>}
         <TabsTrigger className='flex-none w-fit' value='settings'>Settings</TabsTrigger>
       </TabsList>
       <ScrollArea
@@ -74,6 +79,11 @@ export default function PredraftPage() {
             <ShauhinMode />
             <CustomEvents />
           </TabsContent>
+          {sysAdminId && (
+            <TabsContent value='base'>
+              <CreateBaseEvent />
+            </TabsContent>
+          )}
           <TabsContent value='settings' className='space-y-4'>
             {manageMembersFirst && (
               <div className='w-full flex flex-wrap gap-4 justify-center'>

@@ -12,12 +12,15 @@ import {
 } from '~/components/common/alertDialog';
 import { getContrastingColor } from '@uiw/color-convert';
 import { useEffect, useMemo, useState } from 'react';
+import { SnuffedIcon } from '~/components/icons/generated';
 import ColorRow from '~/components/shared/colorRow';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLeagueActionDetails } from '~/hooks/leagues/enrich/useLeagueActionDetails';
 import chooseCastaway from '~/actions/chooseCastaway';
 import { type LeagueMember } from '~/types/leagueMembers';
 import { useEliminations } from '~/hooks/seasons/useEliminations';
+import { useLeagueRules } from '~/hooks/leagues/useLeagueRules';
+import { getRemainingActions } from '~/lib/events';
 import { Card, CardContent } from '~/components/common/card';
 import ShotInTheDark from '~/components/leagues/hub/picks/shotInTheDark/view';
 import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker/view';
@@ -25,6 +28,16 @@ import EpisodeTracker from '~/components/leagues/hub/picks/episodeTracker/view';
 const formSchema = z.object({
   castawayId: z.coerce.number({ required_error: 'Please select a castaway' }),
 });
+
+// Out for good: eliminated and not currently back in through redemption
+function isFinallyEliminated(castaway: {
+  eliminatedEpisode?: number | null;
+  redemption?: { secondEliminationEpisode: number | null }[] | null;
+}) {
+  const activeAfterRedemption =
+    castaway.redemption?.some((r) => r.secondEliminationEpisode === null) ?? false;
+  return !!castaway.eliminatedEpisode && !activeAfterRedemption;
+}
 
 export default function ChangeCastaway() {
   const queryClient = useQueryClient();
@@ -34,8 +47,18 @@ export default function ChangeCastaway() {
     keyEpisodes,
     leagueMembers,
     membersWithPicks,
+    settings,
   } = useLeagueActionDetails();
   const { data: eliminations } = useEliminations(league?.seasonId ?? null);
+  // Unfiltered rules: the action details rules only cover the current timing
+  const { data: rules } = useLeagueRules();
+
+  // What's left to play for when there's no survivor to swap to
+  const remainingActions = useMemo(() => getRemainingActions({
+    rules,
+    secondaryPickEnabled: !!settings?.secondaryPickEnabled,
+    keyEpisodes,
+  }), [rules, settings, keyEpisodes]);
 
   const reactForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -95,16 +118,24 @@ export default function ChangeCastaway() {
     }, { pickPriority: [], elim: [] } as { pickPriority: LeagueMember[], elim: LeagueMember[] });
   }, [eliminations, keyEpisodes, membersWithPicks]);
 
+  // Dismissal is remembered per league and elimination episode, so it only returns after a new elimination
+  const dialogKey = league?.hash && keyEpisodes?.previousEpisode
+    ? `closedDialog:${league.hash}:${keyEpisodes.previousEpisode.episodeNumber}`
+    : null;
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [closedDialog, setClosedDialog] = useState(false);
+  const [closedAt, setClosedAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (leagueMembers?.loggedIn && elim.some(member => member.memberId === leagueMembers.loggedIn?.memberId)) {
       setDialogOpen(true);
     }
-    setClosedDialog(localStorage.getItem('closedDialog') ?
-      Date.now() - JSON.parse(localStorage.getItem('closedDialog')!) < 1000 * 60 * 10 : false);
-  }, [elim, leagueMembers]);
+    try {
+      const stored = dialogKey ? Number(localStorage.getItem(dialogKey)) : 0;
+      setClosedAt(stored > 0 ? stored : null);
+    } catch {
+      setClosedAt(null);
+    }
+  }, [elim, leagueMembers, dialogKey]);
 
 
 
@@ -126,8 +157,11 @@ export default function ChangeCastaway() {
     ?? null;
 
   const markModalClosed = () => {
-    setClosedDialog(true);
-    localStorage.setItem('closedDialog', JSON.stringify(Date.now()));
+    const now = Date.now();
+    setClosedAt(now);
+    try {
+      if (dialogKey) localStorage.setItem(dialogKey, String(now));
+    } catch { /* storage unavailable */ }
   };
 
   if (league?.status === 'Inactive') return null;
@@ -138,8 +172,11 @@ export default function ChangeCastaway() {
   // After the finale there is no next episode to wait for
   const seasonOver = !!keyEpisodes?.previousEpisode?.isFinale;
   const noUpcomingEpisode = !!keyEpisodes && !keyEpisodes.nextEpisode && !seasonOver;
+  // Nobody left to swap to once every castaway is either taken or out for good
   const allCastawaysTaken = (availableCastaways.length > 0 || seasonOver)
-    && availableCastaways.every(castaway => castaway.pickedBy);
+    && !availableCastaways.some(castaway => !castaway.pickedBy && !isFinallyEliminated(castaway));
+  // With castaways left to pick the dialog returns after 10 minutes; with none left it stays dismissed
+  const closedDialog = closedAt !== null && (allCastawaysTaken || Date.now() - closedAt < 1000 * 60 * 10);
   const loggedInMemberId = leagueMembers?.loggedIn?.memberId;
 
   const priorityTimeLeft = keyEpisodes?.previousEpisode
@@ -233,9 +270,7 @@ export default function ChangeCastaway() {
                                 <SelectGroup>
                                   {availableCastaways.map((castaway) =>
                                     currentSurvivorPick?.castawayId !== castaway.castawayId &&
-                                      (castaway.pickedBy ??
-                                        (castaway.eliminatedEpisode && !castaway.redemption?.some((r) =>
-                                          r.secondEliminationEpisode === null)))
+                                      (!!castaway.pickedBy || isFinallyEliminated(castaway))
                                       ? (
                                         <SelectLabel
                                           key={castaway.castawayId}
@@ -287,7 +322,8 @@ export default function ChangeCastaway() {
                 </div>
               )}
 
-              <ShotInTheDark />
+              {/* Shot in the Dark protects a survivor pick, so it's moot without one */}
+              {(!allCastawaysTaken || !!currentSurvivorPick) && <ShotInTheDark />}
             </CardContent>
           </form>
         </Card>
@@ -299,13 +335,40 @@ export default function ChangeCastaway() {
             <AlertDialogTitle className='text-center'>
               Oh no!
             </AlertDialogTitle>
-            <AlertDialogDescription className='text-left'>
-              Your survivor was eliminated, but you get another chance.
-              <br />
-              Choose from the reaming castaways to continue earning points.
-              <br />
-              {'You\'re still in it, good luck!'}
-            </AlertDialogDescription>
+            {!allCastawaysTaken ? (
+              <AlertDialogDescription className='text-left'>
+                Your survivor was eliminated, but you get another chance.
+                <br />
+                Choose from the remaining castaways to continue earning points.
+                <br />
+                {'You\'re still in it, good luck!'}
+              </AlertDialogDescription>
+            ) : remainingActions.length > 0 ? (
+              <AlertDialogDescription asChild className='text-left'>
+                <div className='flex flex-col gap-2'>
+                  <span>
+                    Your survivor was eliminated and there are no castaways left to pick,
+                    but you can still earn points with:
+                  </span>
+                  <ul className='list-disc pl-6 text-foreground'>
+                    {remainingActions.map((action) => <li key={action}>{action}</li>)}
+                  </ul>
+                  <span>{'You\'re still in it, good luck!'}</span>
+                </div>
+              </AlertDialogDescription>
+            ) : (
+              <AlertDialogDescription asChild className='text-left'>
+                <div className='flex flex-col items-center gap-3'>
+                  <SnuffedIcon width={160} height={119} className='text-primary' aria-label='Snuffed torch' />
+                  <span className='self-start'>
+                    Your survivor was eliminated and there are no castaways left to pick.
+                    <br />
+                    <br />
+                    The Tribe has spoken
+                  </span>
+                </div>
+              </AlertDialogDescription>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction className='w-full' onClick={markModalClosed}>

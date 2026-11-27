@@ -1,5 +1,6 @@
 import 'server-only';
 import { db } from '~/server/db';
+import { seasonPremiere } from '~/services/seasons/query/seasonDates';
 import { and, count, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import { leagueSchema } from '~/server/db/schema/leagues';
 import { seasonSchema } from '~/server/db/schema/seasons';
@@ -27,6 +28,10 @@ export default async function getUserLeagues(userId: string) {
         status: leagueSchema.status,
         season: seasonSchema.name,
         seasonId: seasonSchema.seasonId,
+        startWeek: leagueSchema.startWeek,
+        neverDrafted: leagueSchema.neverDrafted,
+        castReady: sql<boolean>`EXISTS (
+          SELECT 1 FROM ${castawaySchema} WHERE ${castawaySchema.seasonId} = ${leagueSchema.seasonId})`,
       },
       member: {
         memberId: leagueMemberSchema.memberId,
@@ -83,7 +88,7 @@ export default async function getUserLeagues(userId: string) {
       eq(leagueMemberSchema.userId, userId),
       isNotNull(leagueMemberSchema.draftOrder)
     ))
-    .orderBy(desc(seasonSchema.premiereDate))
+    .orderBy(desc(seasonPremiere))
     .then((rows) => rows
       .map((row) => {
         if (row.currentSelection?.castawayId === null) {

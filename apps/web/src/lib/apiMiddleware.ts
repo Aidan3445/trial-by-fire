@@ -4,9 +4,13 @@ import { NextResponse } from 'next/server';
 import { auth, leagueMemberAuth, systemAdminAuth } from '~/lib/auth';
 import type { LeagueRouteParams, VerifiedLeagueMemberAuth } from '~/types/api';
 import { type LeagueMemberRole } from '~/types/leagueMembers';
+import { outdatedAppResponse } from '~/lib/appVersion';
 
 export function withAuth(handler: (_userId: string) => Promise<NextResponse>) {
   return async () => {
+    const outdated = await outdatedAppResponse();
+    if (outdated) return outdated;
+
     const { userId } = await auth();
 
     if (!userId) {
@@ -20,6 +24,9 @@ export function withAuth(handler: (_userId: string) => Promise<NextResponse>) {
 function withLeagueAuth(minimumPermissions: LeagueMemberRole) {
   return function(handler: (_auth: VerifiedLeagueMemberAuth) => Promise<NextResponse>) {
     return async (context: LeagueRouteParams) => {
+      const outdated = await outdatedAppResponse();
+      if (outdated) return outdated;
+
       const { hash } = await context.params;
 
       const auth = await leagueMemberAuth(hash);

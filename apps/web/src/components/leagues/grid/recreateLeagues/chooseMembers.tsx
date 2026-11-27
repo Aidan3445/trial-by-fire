@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertDialogDescription } from '~/components/common/alertDialog';
 import { ScrollArea, ScrollBar } from '~/components/common/scrollArea';
 import { Button } from '~/components/common/button';
 import ColorRow from '~/components/shared/colorRow';
-import { useSeasons } from '~/hooks/seasons/useSeasons';
-import { useLeagueData } from '~/hooks/leagues/enrich/useLeagueData';
+import { useTargetSeason } from '~/hooks/seasons/useTargetSeason';
+import { useCloneOrder } from '~/hooks/leagues/enrich/useCloneOrder';
 import { useRouter } from 'next/navigation';
 import recreateLeague from '~/actions/recreateLeague';
 
@@ -16,22 +16,16 @@ interface ChooseMembersProps {
 }
 
 export default function ChooseMembers({ hash, onSuccess }: ChooseMembersProps) {
-  const { data: seasons } = useSeasons(true);
-  const { sortedMemberScores } = useLeagueData(hash);
+  const { cloneOrder, league } = useCloneOrder(hash);
+  // Clones go in the next unfinished season after the original's
+  const { season: currentSeason } = useTargetSeason(league?.seasonId);
   const [selectedMembers, setSelectedMembers] = useState<Set<number>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const currentSeason = useMemo(() => {
-    if (!seasons || seasons.length === 0) return null;
-    return seasons[0];
-  }, [seasons]);
-
   useEffect(() => {
-    if (sortedMemberScores) {
-      setSelectedMembers(new Set(sortedMemberScores.map(({ member }) => member.memberId)));
-    }
-  }, [sortedMemberScores]);
+    setSelectedMembers(new Set(cloneOrder.map((member) => member.memberId)));
+  }, [cloneOrder]);
 
   const toggleMember = (memberId: number, isLoggedIn: boolean) => {
     if (isLoggedIn) return;
@@ -46,10 +40,9 @@ export default function ChooseMembers({ hash, onSuccess }: ChooseMembersProps) {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const sortedSelectedMembers = sortedMemberScores
-        .toReversed()
-        .filter(({ member }) => selectedMembers.has(member.memberId))
-        .map(({ member }) => member.memberId);
+      const sortedSelectedMembers = cloneOrder
+        .filter((member) => selectedMembers.has(member.memberId))
+        .map((member) => member.memberId);
 
       const { newHash } = await recreateLeague(hash, sortedSelectedMembers);
       alert('League cloned successfully!');
@@ -79,7 +72,7 @@ export default function ChooseMembers({ hash, onSuccess }: ChooseMembersProps) {
           You can change this later.
         </p>
         <div className='space-y-2'>
-          {sortedMemberScores?.toReversed().map(({ member }) => (
+          {cloneOrder.map((member) => (
             <ColorRow key={member.memberId} color={member.color}>
               <input
                 type='checkbox'

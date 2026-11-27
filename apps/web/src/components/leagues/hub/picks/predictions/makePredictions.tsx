@@ -17,7 +17,6 @@ export default function MakePredictions() {
     predictionRuleCount,
     keyEpisodes,
     predictionsMade,
-    basePredictionsMade,
     rules
   } = useLeagueActionDetails();
   const { active: secondaryActive } = useSecondaryPick();
@@ -28,21 +27,22 @@ export default function MakePredictions() {
   const tribes = useMemo(() =>
     Object.values(actionDetails ?? {}).map(({ tribe }) => tribe), [actionDetails]);
 
-  const [formBetTotal, setFormBetTotal] = useState(0);
-  const pendingBetTotal = useMemo(() =>
-    Object.values(basePredictionsMade ?? {})
-      .flatMap(preds => preds)
-      .filter(p => p.eventId === null && (p.bet ?? 0) > 0)
-      .reduce((total, p) => total + (p.bet ?? 0), 0),
-    [basePredictionsMade]);
-  const submittedBetTotal = useMemo(() => predictionsMade
-    .reduce((total, p) => total +
-      (p.eventId !== null
-        ? 0
-        : (p.bet ?? 0)), 0), [predictionsMade]);
+  const [formBets, setFormBets] = useState<Record<string, number>>({});
+  // Bets on predictions that haven't resolved yet, by event name
+  const submittedBets = useMemo(() =>
+    Object.fromEntries(predictionsMade
+      .filter((p) => p.eventId === null)
+      .map((p) => [p.eventName, p.bet ?? 0])),
+  [predictionsMade]);
+  const submittedBetTotal = Object.values(submittedBets).reduce((total, bet) => total + bet, 0);
+  // Edits laid over what's saved, worked out in the same render so saved bets
+  // never show as pending while the form catches up
+  const formBetTotal = Object.values({ ...submittedBets, ...formBets }).reduce((total, bet) => total + bet, 0);
   const balance = useMemo(() =>
-    (scores?.Member[leagueMembers?.loggedIn?.memberId ?? -1]?.slice().pop() ?? 0) - submittedBetTotal - pendingBetTotal,
-    [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal, pendingBetTotal]);
+    (scores?.Member[leagueMembers?.loggedIn?.memberId ?? -1]?.slice().pop() ?? 0) - submittedBetTotal,
+    [scores?.Member, leagueMembers?.loggedIn?.memberId, submittedBetTotal]);
+
+  const pendingBalance = balance + submittedBetTotal - formBetTotal;
 
   if ((predictionRuleCount === 0 && !secondaryActive) || !keyEpisodes?.nextEpisode) return null;
   // Locked while an episode airs; the episode tracker shows those predictions
@@ -58,10 +58,10 @@ export default function MakePredictions() {
               <>
                 <br />
                 <span className={cn('text-xs rounded-sm text-muted-foreground p-0.5 bg-amber-400', {
-                  'bg-red-400': balance - formBetTotal < 0,
+                  'bg-red-400': pendingBalance < 0,
                   'bg-green-400': formBetTotal < submittedBetTotal
                 })}>
-                  Pending Balance: {balance - formBetTotal}<PointsIcon className='inline mb-1 w-4 h-min fill-muted-foreground' />
+                  Pending Balance: {pendingBalance}<PointsIcon className='inline mb-1 w-4 h-min fill-muted-foreground' />
                 </span>
               </>
             )}
@@ -90,9 +90,9 @@ export default function MakePredictions() {
               predictionsMade={predictionsMade}
               castaways={castaways}
               tribes={tribes}
-              wallet={balance}
+              wallet={balance + submittedBetTotal}
               totalBet={formBetTotal}
-              setBetTotal={setFormBetTotal}
+              setFormBets={setFormBets}
               includeSecondary />
           )}
       </CardContent>
