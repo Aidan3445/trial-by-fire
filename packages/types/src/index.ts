@@ -11,3 +11,4 @@ export * from './notifications';
 export * from './seasons';
 export * from './survey';
 export * from './tribes';
+export * from './manualPush';

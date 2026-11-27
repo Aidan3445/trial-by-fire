@@ -11,19 +11,19 @@ import { colors } from '~/lib/colors';
 
 interface ManagerHeaderProps {
   title: string;
-  seasonNames: string[];
-  value: string;
-  setValue: (_: string) => void;
+  // Leave out for managers that aren't about one season
+  seasonNames?: string[];
+  value?: string;
+  setValue?: (_: string) => void;
 }
 
 /**
-  * Header for the sys admin managers (base events, episodes, ...): back, title and a season picker
+  * Header for the sys admin managers (base events, episodes, ...): back, title and an optional season picker
   */
 export default function ManagerHeader({ title, seasonNames, value, setValue }: ManagerHeaderProps) {
   const router = useRouter();
   const height = useHeaderHeight(Platform.OS === 'ios' ? 0 : undefined);
 
-  const seasonOptions = seasonNames.map((name) => ({ label: name, value: name }));
 
   return (
     <View
@@ -46,11 +46,13 @@ export default function ManagerHeader({ title, seasonNames, value, setValue }: M
             {title}
           </Text>
           <View className='h-6 w-1 bg-primary rounded-full' />
-          <SelectSeason
-            seasons={seasonOptions}
-            value={value}
-            setValue={setValue}
-            className='right-4 top-1/2 translate-y-[-50%]' />
+          {seasonNames && setValue && (
+            <SelectSeason
+              seasons={seasonNames.map((name) => ({ label: name, value: name }))}
+              value={value ?? ''}
+              setValue={setValue}
+              className='right-4 top-1/2 translate-y-[-50%]' />
+          )}
         </View>
       </View>
     </View>

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { systemAdminAuth } from '~/lib/auth';
 import Import from '~/components/sys/import';
+import ManualPush from '~/components/sys/manualPush';
 import { Button } from '~/components/common/button';
 import { resetServersideCache } from '~/services/seasons/reset';
 
@@ -13,6 +14,7 @@ export default async function SystemPage() {
   return (
     <main className='w-full p-4 space-y-4 overflow-y-auto h-[95svh]'>
       <Import />
+      <ManualPush />
       <Button
         onClick={async () => {
           'use server';
